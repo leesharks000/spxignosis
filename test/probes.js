@@ -239,6 +239,23 @@ else {
   t("provenance: a construction is marked as one", provenanceOf({ kind: "entity", commission: "construct", T: { kind: "null" } }).class === "construction");
 }
 
+// 15. the sentence request at the point of contact (2026-10-21).
+{
+  const { parsePage, locate, requestId, nonEntriesFor, MODES } = await import("../src/sentence.js");
+  const { makeReader } = await import("../src/reader.js");
+  t("sentence: a Wikipedia address is read by title or by revision; other hosts are declined", parsePage("https://en.wikipedia.org/wiki/Sophistical_Refutations").title === "Sophistical Refutations" && parsePage("https://en.wikipedia.org/w/index.php?title=X&oldid=123").oldid === 123 && parsePage("https://example.com/a").unsupported);
+  const cl = [{ id: "W1", text: "Aristotle wrote the Organon, a collection of logical works.[3]" }, { id: "W2", text: "According to Aristotle, this is the first work to treat the subject of deductive reasoning in ancient Greece." }];
+  t("sentence: found by its text as the caller holds it, footnote markers and quotes aside", locate(cl, "According to Aristotle, this is the first work to treat the subject of deductive reasoning in ancient Greece").claim?.id === "W2" && locate(cl, "Aristotle wrote the Organon, a collection of logical works.").claim?.id === "W1");
+  const miss = locate(cl, "Aristotle invented the printing press in the Organon era.");
+  t("sentence: a sentence not on the page is not read, and the closest are offered", miss.claim === null && miss.closest.length > 0);
+  t("sentence: the request id depends on the sentence, the page and the mode", requestId({ text: "A b.", url: "u", mode: "opening" }) === requestId({ text: " a  B. ", url: "u", mode: "opening" }) && requestId({ text: "A b.", url: "u", mode: "opening" }) !== requestId({ text: "A b.", url: "u", mode: "preliminary" }));
+  const c0 = { text_sha256: "h" }, s0 = [{ text_sha256: "s" }];
+  t("sentence: a preliminary reading is keyed apart from an opening and is one pass", claimKey(c0, s0, "m", makeReader("anthropic", "m", { passes: 1 })) !== claimKey(c0, s0, "m", makeReader("anthropic", "m")) && MODES.preliminary.passes === 1 && MODES.opening.passes === 2);
+  const fl = JSON.parse(readFileSync(`${NON}/ledgers/se-183b34/field.json`, "utf8")).field_claims;
+  const anyQ = Object.values(fl).find((c) => c.quote && c.quote.length > 60).quote;
+  t("sentence: where /non already holds the sentence, the entry is named", nonEntriesFor(anyQ).some((x) => x.row === "se-183b34"));
+}
+
 // 8. the execution budget and a failed call.
 {
   const prev = process.env.GNOSIS_READER; process.env.GNOSIS_READER = "anthropic"; const key = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;

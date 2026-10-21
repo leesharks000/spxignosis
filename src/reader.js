@@ -80,25 +80,28 @@ async function anthropicPass(input, pass, model) {
   return { reading, usage: j.usage, model, sampling: "model defaults (temperature, top_p and top_k omitted)" };
 }
 
-export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", model = process.env.GNOSIS_MODEL || "claude-sonnet-5-5") {
+// passes: 2 for an opening (two independent readings, reconciled); 1 for a preliminary reading, which is a reading of
+// its own kind, keyed apart and never presented as an opening.
+export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", model = process.env.GNOSIS_MODEL || "claude-sonnet-5-5", { passes: nPasses = 2 } = {}) {
+  const suffix = nPasses === 1 ? "/preliminary" : "";
   if (kind === "replay") {
     return {
-      id: `replay/${READER_PROTOCOL}`, mode: "replay",
+      id: `replay/${READER_PROTOCOL}${suffix}`, mode: "replay", passes: nPasses,
       async read(claim, srcs, article) {
         const r = load(`replays/${article.oldid}/${claim.id}.json`);
         if (!r) return null;
-        return { passes: r.passes.map((p) => ({ reading: p.reading, model: p.model, usage: null })), input: inputFor(claim, srcs, article) };
+        return { passes: r.passes.slice(0, nPasses).map((p) => ({ reading: p.reading, model: p.model, usage: null })), input: inputFor(claim, srcs, article) };
       },
     };
   }
   return {
-    id: `anthropic:${model}/${READER_PROTOCOL}`, mode: "live",
+    id: `anthropic:${model}/${READER_PROTOCOL}${suffix}`, mode: "live", passes: nPasses,
     async read(claim, srcs, article, wide) {
       const input = inputFor(claim, srcs, article, wide);
       const passes = [];
       // The second pass may run on another model (GNOSIS_MODEL_2); its model is recorded with the reading.
       const model2 = process.env.GNOSIS_MODEL_2 || model;
-      try { for (const n of [1, 2]) passes.push(await anthropicPass(input, n, n === 2 ? model2 : model)); }
+      try { for (const n of nPasses === 1 ? [1] : [1, 2]) passes.push(await anthropicPass(input, n, n === 2 ? model2 : model)); }
       catch (e) { e.spent = [...passes.map((p) => ({ model: p.model, usage: p.usage })), ...(e.spent || [])]; throw e; }
       return { passes, input };
     },

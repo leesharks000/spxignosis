@@ -23,7 +23,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.8.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.9.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -235,7 +235,7 @@ export async function quoteEntity(spec, { tier = "opening" } = {}) {
 
 // S3 over a set of sentences: each read against the sources it cites, two passes, code checks, reconciliation; the
 // claim ledger serves any sentence whose state matches. Shared by the encyclopedia path and the constructed article.
-async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage }) {
+export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage }) {
   const entries = [], evidence = [], breaches = [];
   let completed = 0, charge = 0, actual = 0;
   for (const c of claims) {
@@ -261,7 +261,7 @@ async function readSentences({ claims, sources, pinned, model, reader, priceOf, 
     let verdict;
     const fam = (m) => (/claude/.test(m || "") ? "anthropic" : String(m || "").split(/[-:/]/)[0]);
     if (valid.length === 2) verdict = reconcile({ ...valid[0].reading, __family: fam(valid[0].model) }, { ...valid[1].reading, __family: fam(valid[1].model) });
-    else if (valid.length === 1) verdict = { status: "single-valid", support: valid[0].reading.support };
+    else if (valid.length === 1) verdict = { status: reader.passes === 1 ? "preliminary" : "single-valid", support: valid[0].reading.support };
     else verdict = { status: "withheld" };
     if (!fromLedger && verdict.status !== "withheld") save(`ledger/claims/${key}.json`, { key, claim: c.id, oldid: pinned.oldid, model, created: new Date().toISOString(), passes: r.passes.map((p) => ({ model: p.model, reading: p.reading })) });
     // A contested claim carries both readings; no single paraphrase stands for it.
