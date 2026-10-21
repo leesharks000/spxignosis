@@ -26,12 +26,18 @@ export function packageRow(row, ledger, { result_id, service, article, audit, ro
   const ko = row.objects.KO, P = row.objects.P;
   const by = claimIndex(row, ledger);
   const flagged = new Set((audit?.breaches || []).filter((b) => b.check === "reverse-entailment").map((b) => b.at));
-  const unitMark = (n) => (flagged.has(`KO${n}`) ? " [not entailed by its cited claims: reverse entailment audit]" : "");
-  const cited = [...new Set((ko.sentences || []).flatMap((s) => s.claims || []))].filter((id) => by[id]);
-  const verification = audit?.ran ? `reverse entailment audit by two raters (agreement ${audit.agreement}); ${audit.breaches.length} units marked` : "reverse entailment audit not run (replay mode has no recorded audit)";
+  const unjudged = new Set(audit?.missing || []);
+  const MARK = " [not entailed by its cited claims: reverse entailment audit]", UNJ = " [not checked: the audit returned no judgment for this unit]";
+  const unitMark = (id) => (flagged.has(id) ? MARK : unjudged.has(id) ? UNJ : "");
+  const ledeClaims = (P.lede?.claims || []).filter((id) => by[id]);
+  const cited = [...new Set([...ledeClaims, ...(ko.sentences || []).flatMap((s) => s.claims || []), ...(P.open || []).flatMap((o) => o.rests_on || [])])].filter((id) => by[id]);
+  const verification = !audit?.ran ? "reverse entailment audit not run (replay mode has no recorded audit)"
+    : !audit.complete ? `reverse entailment audit incomplete: ${(audit.missing || []).length} of ${audit.units} units unjudged; ${flagged.size} marked`
+    : `reverse entailment audit by two raters (agreement ${audit.agreement}); ${flagged.size} units marked`;
+  const unitState = (id) => (!audit?.ran ? "not audited" : flagged.has(id) ? "not entailed" : unjudged.has(id) ? "unjudged" : "entailed");
   const md = [
-    `# ${ko.title}`, "", `**${ko.title}** ${P.lede?.text || ""}`, "",
-    ...paras(ko).flatMap((p) => [p.map((s) => `${s.text}${unitMark(s.n)} ${(s.claims || []).map((c) => `[${c}]`).join("")}`).join(" "), ""]),
+    `# ${ko.title}`, "", `**${ko.title}** ${P.lede?.text || ""}${unitMark("P-lede")} ${ledeClaims.map((c) => `[${c}]`).join("")}`, "",
+    ...paras(ko).flatMap((p) => [p.map((s) => `${s.text}${unitMark(`KO${s.n}`)} ${(s.claims || []).map((c) => `[${c}]`).join("")}`).join(" "), ""]),
     ...((P.open || []).length ? ["## Open questions", "", ...P.open.map((o) => `- ${o.question} (rests on ${(o.rests_on || []).join(", ")}; ${o.modality}). What would resolve it: ${o.would_resolve}`), ""] : []),
     "## Claims", "", ...cited.map((id) => { const c = by[id]; return `- **${id}** ${c.label}, ${c.locus} (${c.modality}): “${c.quote}”${c.url ? ` <${c.url}>` : ""}`; }), "",
     "## The article at the address", "",
@@ -42,9 +48,9 @@ export function packageRow(row, ledger, { result_id, service, article, audit, ro
   ].join("\n");
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(ko.title)}</title>
 <style>:root{--bg:#fffdf8;--fg:#1d1b16;--mut:#6b6458;--flag:#a33}@media (prefers-color-scheme:dark){:root{--bg:#16140f;--fg:#ece6d8;--mut:#a59e90;--flag:#e88}}body{background:var(--bg);color:var(--fg);font:17px/1.6 Georgia,serif;max-width:46rem;margin:0 auto;padding:1.5rem 16px}.c,.m{color:var(--mut);font-size:.82em}.flag{color:var(--flag);font-size:.82em}q.wp{font-style:italic}</style>
-<script type="application/ld+json">${JSON.stringify(jsonld(row, by, cited, { result_id, service, article, rowUrl }))}</script></head><body>
-<h1>${esc(ko.title)}</h1><p><b>${esc(ko.title)}</b> ${esc(P.lede?.text || "")}</p>
-${paras(ko).map((p) => `<p>${p.map((s) => `${esc(s.text)}${flagged.has(`KO${s.n}`) ? ' <span class="flag">[not entailed by its cited claims]</span>' : ""} ${(s.claims || []).map((c) => `<a class="c" href="#c-${esc(c)}">[${esc(c)}]</a>`).join("")}`).join(" ")}</p>`).join("\n")}
+<script type="application/ld+json">${JSON.stringify(jsonld(row, by, cited, { result_id, service, article, rowUrl, ledeState: unitState("P-lede"), verificationText: verification })).replace(/</g, "\\u003c")}</script></head><body>
+<h1>${esc(ko.title)}</h1><p><b>${esc(ko.title)}</b> ${esc(P.lede?.text || "")}${unitMark("P-lede") ? ` <span class="flag">${esc(unitMark("P-lede").trim())}</span>` : ""} ${ledeClaims.map((c) => `<a class="c" href="#c-${esc(c)}">[${esc(c)}]</a>`).join("")}</p>
+${paras(ko).map((p) => `<p>${p.map((s) => `${esc(s.text)}${unitMark(`KO${s.n}`) ? ` <span class="flag">${esc(unitMark(`KO${s.n}`).trim())}</span>` : ""} ${(s.claims || []).map((c) => `<a class="c" href="#c-${esc(c)}">[${esc(c)}]</a>`).join("")}`).join(" ")}</p>`).join("\n")}
 ${(P.open || []).length ? `<h2>Open questions</h2><ul>${P.open.map((o) => `<li>${esc(o.question)} <span class="m">rests on ${esc((o.rests_on || []).join(", "))}; ${esc(o.modality)}. What would resolve it: ${esc(o.would_resolve)}</span></li>`).join("")}</ul>` : ""}
 <h2>Claims</h2><ol>${cited.map((id) => { const c = by[id]; return `<li id="c-${esc(id)}"><b>${esc(id)}</b> ${c.url ? `<a href="${esc(c.url)}">${esc(c.label)}</a>` : esc(c.label)}, ${esc(c.locus)} <span class="m">(${esc(c.modality)})</span>: “${esc(c.quote)}”</li>`; }).join("")}</ol>
 <h2>The article at the address</h2><p>${esc(row.delta?.T_vs_LB || "")}</p><p>${esc(row.delta?.LB_vs_LBA || "")}</p>
@@ -53,16 +59,17 @@ ${(P.open || []).length ? `<h2>Open questions</h2><ul>${P.open.map((o) => `<li>$
 </body></html>`;
   const files = {
     "article.md": md, "article.html": html,
-    "article.jsonld": JSON.stringify(jsonld(row, by, cited, { result_id, service, article, rowUrl }), null, 1),
-    "article.json": JSON.stringify({ title: ko.title, lede: P.lede, sentences: ko.sentences, open: P.open, claims: Object.fromEntries(cited.map((id) => [id, by[id]])), case: row.ontology?.case?.value, rho: row.ontology?.rho?.value, delta: row.delta, audit }, null, 1),
+    "article.jsonld": JSON.stringify(jsonld(row, by, cited, { result_id, service, article, rowUrl, ledeState: unitState("P-lede"), verificationText: verification }), null, 1),
+    "article.json": JSON.stringify({ title: ko.title, lede: { ...P.lede, verification: unitState("P-lede") }, sentences: (ko.sentences || []).map((s) => ({ ...s, verification: unitState(`KO${s.n}`) })), open: P.open, verification, claims: Object.fromEntries(cited.map((id) => [id, by[id]])), case: row.ontology?.case?.value, rho: row.ontology?.rho?.value, delta: row.delta, audit }, null, 1),
     "LICENSE.txt": `The knowledge object in this package is composed by ${service.name} from the sources the Wikipedia article "${article.title}" (revision ${article.oldid}, ${article.url}) cites and from the Crimson Hexagonal Archive, and is released under CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Sentences of the Wikipedia article quoted in this package are by its contributors, licensed CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/. Quotations of other sources are short quotations for commentary, attributed in place.\n`,
   };
-  return { files, verification, flagged: [...flagged] };
+  return { files, verification, flagged: [...flagged], unjudged: [...unjudged] };
 }
 
-function jsonld(row, by, cited, { result_id, service, article, rowUrl }) {
+function jsonld(row, by, cited, { result_id, service, article, rowUrl, ledeState = "not audited", verificationText = "" }) {
   return {
     "@context": "https://schema.org", "@type": "Article", name: row.objects.KO.title, abstract: row.objects.P.lede?.text,
+    additionalProperty: [{ "@type": "PropertyValue", name: "lede verification", value: ledeState }, { "@type": "PropertyValue", name: "verification", value: verificationText }],
     about: { "@type": "Thing", name: row.objects.KO.title }, isBasedOn: [{ "@type": "Dataset", name: "The Negative of the Negative (/non)", url: rowUrl }],
     citation: [...new Set(cited.map((id) => by[id].url).filter(Boolean))],
     license: "https://creativecommons.org/licenses/by/4.0/",

@@ -40,6 +40,7 @@ export const POLICY = {
   floor_per_claim: { check: 0.01, ledger: 0.02, opening: 0.03, portable: 0.05 },
   ledgered_per_claim: { check: 0.005, ledger: 0.01, opening: 0.015, portable: 0.02 }, // a reading already in the ledger
   floor_s7: 1.0, // the archive's consultation and the /non row, fresh
+  s7_budget_ratio: 1.5, // model spending on S7 stops at price / ratio
   ledgered_s7: 0.10, // a /non row already composed for the same input
   portable_package: 0.25, // the knowledge object packaged, charged when the audit marks no unit
   ledgered_package: 0.05,

@@ -93,7 +93,9 @@ export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", mode
     async read(claim, srcs, article, wide) {
       const input = inputFor(claim, srcs, article, wide);
       const passes = [];
-      for (const n of [1, 2]) passes.push(await anthropicPass(input, n, model));
+      // The second pass may run on another model (GNOSIS_MODEL_2); its model is recorded with the reading.
+      const model2 = process.env.GNOSIS_MODEL_2 || model;
+      for (const n of [1, 2]) passes.push(await anthropicPass(input, n, n === 2 ? model2 : model));
       return { passes, input };
     },
   };

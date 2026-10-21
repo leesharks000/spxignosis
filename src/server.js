@@ -5,6 +5,7 @@ import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { decodePaymentResponseHeader } from "@x402/core/http";
 import { quote, runOpening, SERVICE } from "./run.js";
+import { publicationState } from "./s7/publish.js";
 import { load, save } from "./util.js";
 
 const NETWORK = process.env.GNOSIS_NETWORK || "eip155:84532"; // Base Sepolia
@@ -21,6 +22,8 @@ app.get("/", (_req, res) => res.json({
     "POST /v1/quote": "free. body {oldid, tier?: check|ledger|opening|portable, claims?: [ids]}. Pins the revision, resolves its sources and, at the opening and portable tiers, runs the archive traversal; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
     "POST /v1/openings/{quote_id}": "paid (x402). Runs the opening for a quote; returns the composition result and the result id. A quote already paid returns its result without a second charge.",
+    "GET /v1/results/{result_id}/publication": "the /non row's publication, observed now: composed, checked, landed, public",
+    "GET /v1/openings/{quote_id}/progress": "the stage a running opening has reached",
     "GET /v1/receipts/{quote_id}": "the settlement receipt (transaction, payer, amount) and any refund owed or sent",
     "GET /v1/results/{result_id}/composition": "the usable result",
     "GET /v1/results/{result_id}/evidence": "the full evidence record: tuples, spans, hashes, validations, breaches, cost",
@@ -47,11 +50,22 @@ const receiptOf = (id) => load(`receipts/${id}.json`);
 // Recovery runs before the payment middleware: a quote that has a receipt returns its result without a second charge.
 // The quote id is the bearer of the purchase, as it was of the quote.
 app.post("/v1/openings/:quote_id", (req, res, next) => {
+  // A quote that does not exist or has expired is refused here, before the payment layer can issue a challenge.
+  const q = load(`quotes/${req.params.quote_id}.json`);
+  if (!q) return res.status(404).json({ error: "unknown quote; no payment was requested" });
   const rc = receiptOf(req.params.quote_id);
-  if (!rc?.settlement?.success) return next();
+  if (!rc?.settlement?.success) {
+    if (Date.parse(q.expires) < Date.now()) return res.status(410).json({ error: "quote expired; no payment was requested" });
+    return next();
+  }
   const out = load(`delivered/${req.params.quote_id}.json`);
   if (!out) return res.status(500).json({ error: "paid quote has a receipt but no stored result; it is queued for review", receipt: rc });
   res.json({ ...out, recovered: true, receipt: rc });
+});
+app.get("/v1/openings/:quote_id/progress", (req, res) => {
+  const p = load(`progress/${req.params.quote_id}.json`);
+  if (!p) return res.status(404).json({ error: "no progress recorded for this quote" });
+  res.json(p);
 });
 app.get("/v1/receipts/:quote_id", (req, res) => {
   const rc = receiptOf(req.params.quote_id);
@@ -67,7 +81,8 @@ app.use(paymentMiddleware({
       price: (ctx) => {
         const id = (ctx.adapter?.getPath?.() || ctx.path || "").split("/").pop();
         const q = load(`quotes/${id}.json`);
-        return q ? `$${q.max_price_usd.toFixed(2)}` : "$0.01";
+        if (!q) throw new Error("unknown quote"); // unreachable: the route above refuses an unknown quote first
+        return `$${q.max_price_usd.toFixed(2)}`;
       },
     }],
     description: "SPXI-gnΩsis: opens a pinned Wikipedia revision. Each sentence kept verbatim and checked against what its cited source says; the entity composed with the Crimson Hexagonal Archive admitted by the archive's own procedure, as a public /non row.",
@@ -80,7 +95,7 @@ app.post("/v1/openings/:quote_id", async (req, res) => {
   if (!q) return res.status(404).json({ error: "unknown quote" });
   if (Date.parse(q.expires) < Date.now()) return res.status(410).json({ error: "quote expired" });
   try {
-    const r = await runOpening(q.quote_id);
+    const r = await runOpening(q.quote_id, { onProgress: (p) => save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }) });
     // A status of 400 or above cancels settlement in the middleware: no claim completed, no charge.
     if (r.composition.summary.completed === 0) return res.status(502).json({ error: "no claim could be completed; no charge", result_id: r.result_id });
     const out = { result_id: r.result_id, reused: r.reused, summary: r.composition.summary, billing: r.record?.billing, composition: r.composition, portable: r.portable_dir ? `/v1/results/${r.result_id}/portable/manifest.json` : undefined };
@@ -107,6 +122,11 @@ const file = (name, type) => (req, res) => {
   if (!body) return res.status(404).json({ error: "unknown result" });
   res.type(type).send(body);
 };
+app.get("/v1/results/:id/publication", async (req, res) => {
+  const s7 = load(`results/${req.params.id}/s7.json`);
+  if (!s7) return res.status(404).json({ error: "no /non row for this result" });
+  res.json(await publicationState(s7));
+});
 app.get("/v1/results/:id/composition", file("composition.json", "application/json"));
 app.get("/v1/results/:id/evidence", file("evidence.json", "application/json"));
 app.get("/v1/results/:id/opened.html", file("opened.html", "text/html"));

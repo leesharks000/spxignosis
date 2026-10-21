@@ -12,11 +12,11 @@ process.env.GNOSIS_READER = "replay";
 const [tier = "portable"] = process.argv.slice(2);
 const q = await quote(1361634710, { tier });
 const src = await runS7(fromNonRow("se-183b34", join(STORE, "calibration/se-183b34")), { service: { name: "SPXI-gnΩsis", version: "stand-in" } });
-const V2 = "datasets/negative-of-the-negative/v2", to = join(STORE, "s7", q.s7.row, "landing");
+const V2 = "datasets/negative-of-the-negative/v2", to = join(STORE, "s7", q.s7.row, "runs", `stand-in-${q.s7.key}`, "landing");
 mkdirSync(join(to, V2, "rows"), { recursive: true });
 cpSync(join(src.landing.dir, V2, "ledgers/se-183b34"), join(to, V2, "ledgers", q.s7.row), { recursive: true });
 const row = { ...src.row, row: q.s7.row, stand_in: "the se-183b34 re-run, laid here for testing the composed path; not a reading of this entity" };
 writeFileSync(join(to, V2, "rows", `${q.s7.row}.json`), JSON.stringify(row, null, 1));
-save(`s7/${q.s7.row}/by-key/${q.s7.key}.json`, { row_key: q.s7.row, entity: q.s7.row, non_url: q.s7.non_url, composed: true, case: row.ontology.case.value, rho: row.ontology.rho.value,
+save(`s7/${q.s7.row}/by-key/${q.s7.key}.json`, { row_key: q.s7.row, entity: q.s7.row, non_url: q.s7.non_url, landing: to, composed: true, case: row.ontology.case.value, rho: row.ontology.rho.value,
   breaches: row.breaches.length, audit: { ran: false, breaches: [] }, cost_usd: 0, mode: "replay", stand_in: row.stand_in });
 console.log(JSON.stringify({ laid: q.s7.row, key: q.s7.key }));

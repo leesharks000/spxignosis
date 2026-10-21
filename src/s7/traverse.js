@@ -13,7 +13,12 @@ export function archiveRelease() {
   const git = (...a) => { try { return execFileSync("git", ["-C", ARCHIVE, ...a], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); } catch { return null; } };
   const reg = join(ARCHIVE, "data/registry.json"), cg = join(ARCHIVE, "data/citation-graph.json"), sc = join(ARCHIVE, "scripts/non_traverse.py");
   const h = (p) => (existsSync(p) ? sha256(readFileSync(p)) : null);
-  return { archive_commit: git("rev-parse", "HEAD"), registry_sha256: h(reg), citation_graph_sha256: h(cg), traverse_script_sha256: h(sc) };
+  const commit = git("rev-parse", "HEAD");
+  const dirty = commit ? git("status", "--porcelain", "--", "data/registry.json", "data/citation-graph.json", "data/blog-index.json", "scripts/non_traverse.py", "data/texts") : null;
+  const warnings = [];
+  if (!commit) warnings.push("the archive is not a git checkout here: the release is identified by file hashes only");
+  if (dirty) warnings.push("the archive checkout has uncommitted changes to the files the procedure reads: the commit alone does not identify them; the file hashes do");
+  return { archive_commit: commit, registry_sha256: h(reg), citation_graph_sha256: h(cg), traverse_script_sha256: h(sc), ...(warnings.length ? { warnings } : {}) };
 }
 
 export function configFor(input, hopFrom) {

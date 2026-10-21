@@ -35,7 +35,7 @@ function depPacket(dep, cands) {
   const passages = [...byPara.entries()].sort((a, b) => a[0] - b[0]).map(([pi, cs]) => ({
     cands: cs.map((c) => `${c.cand_id}${c.kind ? " (" + c.kind + (c.categories ? ": " + c.categories.join(", ") : "") + ")" : c.objects ? " (R: " + c.objects.join(", ") + ")" : ""}`),
     sentences: cs.map((c) => c.sentence),
-    paragraph: pi >= 0 ? (paras[pi] || "").slice(0, 2400) : null,
+    paragraph: pi >= 0 ? (paras[pi] || "").slice(0, 2400) : cs.find((c) => c.paragraph_of_citing) ? `the citing paragraph of #${cs.find((c) => c.cited_by).cited_by}: ${cs.find((c) => c.paragraph_of_citing).paragraph_of_citing}` : null,
   }));
   return { ...depMeta(dep), opening: paragraphs(text).slice(0, 2).join(" ").slice(0, 900), passages };
 }
@@ -138,7 +138,22 @@ export function hopScreen(input, trav, admittedPassages = []) {
           strength: why === "cites" ? 100 : why === "names" ? 50 : shared.length + shared.filter((w) => w.length >= 7 || /\d/.test(w)).length });
       }
     });
-    if (cands.length) screened.push({ h, cands: cands.sort((x, y) => y.strength - x.strength || x.para - y.para).slice(0, 12).map(({ strength, ...c }) => c) });
+    // A forward hop: the admitted deposit cites the candidate, and the bearing can stand in the citing sentence (a
+    // candidate that predates the entity's name says nothing of it in its own text). Those citing sentences count.
+    const d = reg.get(h.dep) || {};
+    const citesCand = [new RegExp(`#${h.dep}(?!\\d)`), d.hex ? new RegExp(`AXN[:\\-]${d.hex}\\b`, "i") : null].filter(Boolean);
+    for (const v of h.via_admitted) {
+      paragraphs(depText(v).text).forEach((p, pi) => {
+        for (const s of p.split(/(?<=[.!?])\s+(?=[A-Z“"'(\[*#])/)) {
+          if (!citesCand.some((r) => r.test(s))) continue;
+          // The citing sentence's paragraph is read for bearing (#1690 §3.4: "its sentence or its paragraph").
+          const shared = vocab.size ? [...new Set(toks(p))].filter((w) => vocab.has(w)) : [];
+          const bears = aliases.some((r) => r.test(p)) ? "names" : shared.length >= 2 ? `shares ${shared.slice(0, 4).join(", ")}` : null;
+          if (bears) cands.push({ cand_id: `${h.cand_ids[0]}.c${cands.length + 1}`, para: null, sentence: s.slice(0, 900), paragraph_of_citing: p.slice(0, 1800), kind: `H-cited-by #${v}, ${bears} (in its paragraph)`, cited_by: v, strength: 80 + shared.length });
+        }
+      });
+    }
+    if (cands.length) screened.push({ h, cands: cands.sort((x, y) => y.strength - x.strength || (x.para ?? -1) - (y.para ?? -1)).slice(0, 12).map(({ strength, ...c }) => c) });
     else screened_out.push(h);
   }
   return { screened, screened_out };

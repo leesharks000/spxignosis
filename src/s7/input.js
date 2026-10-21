@@ -60,12 +60,12 @@ export function fromWikipedia(pinned, claims, sources) {
 
 export function fromNonRow(rowKey, savedDir) {
   const row = JSON.parse(readFileSync(join(NON, "rows", `${rowKey}.json`), "utf8"));
-  const fieldLedger = JSON.parse(readFileSync(join(ARCHIVE, row.ledger.field), "utf8"));
-  const tPath = join(ARCHIVE, row.objects.T.path);
+  const fieldLedger = row.ledger?.field && existsSync(join(ARCHIVE, row.ledger.field)) ? JSON.parse(readFileSync(join(ARCHIVE, row.ledger.field), "utf8")) : { field: [] };
+  const tPath = join(ARCHIVE, row.objects.T?.path || "-");
   const T = existsSync(tPath) ? readFileSync(tPath, "utf8") : "";
   const summary = JSON.parse(readFileSync(join(NON, "traversal", rowKey, "summary.json"), "utf8"));
-  const field = fieldLedger.field.filter((b) => b.saved?.text).map((b) => {
-    const p = join(savedDir, b.saved.text);
+  const field = (fieldLedger.field || []).filter((b) => b.saved?.text).map((b) => {
+    const p = savedDir ? join(savedDir, b.saved.text) : "";
     const text = existsSync(p) ? readFileSync(p, "utf8") : "";
     return { id: b.id, kind: "card", card: b.card, url: b.url, text, text_sha256: text ? sha256(text) : null,
       availability: text ? "fetched" : "unavailable", fetched: b.fetched, expected_sha256: b.sha256?.text || null };
@@ -78,6 +78,6 @@ export function fromNonRow(rowKey, savedDir) {
     field,
     aliases: summary.config.aliases,
     traversal_config: summary.config,
-    prefix: (JSON.parse(readFileSync(join(ARCHIVE, row.ledger.archive), "utf8"))[0]?.id.match(/^[A-Za-z]+/) || [null])[0],
+    prefix: existsSync(join(ARCHIVE, row.ledger?.archive || "-")) ? (JSON.parse(readFileSync(join(ARCHIVE, row.ledger.archive), "utf8"))[0]?.id.match(/^[A-Za-z]+/) || [null])[0] : null,
   };
 }

@@ -34,11 +34,15 @@ async function live({ system, shared, task, model, maxTokens = 8000, temperature
   return { out: parseJSON(j.content.map((c) => c.text || "").join("")), usage: j.usage };
 }
 
-// A ledger of every pass the run made: stage, id, how, model, usage, cost.
-export function passLog() {
+// A ledger of every pass the run made: stage, id, how, model, usage, cost. The run carries an execution budget: once
+// spent cost reaches it, later passes are recorded as not run and the row is composed from what was read (a marked
+// partial result). A call that fails is recorded with its error and returns nothing; the run continues.
+export function passLog({ budget_usd = Infinity } = {}) {
   const calls = [];
+  const spent = () => calls.reduce((n, c) => n + (c.cost_usd || 0), 0);
   return {
-    calls,
+    calls, budget_usd,
+    exhausted() { return calls.some((c) => c.how === "not run: execution budget exhausted"); },
     async run({ row, stage, id, system, shared, task, model, maxTokens, temperature }) {
       if (mode() === "replay") {
         const r = load(`replays/s7/${row}/${stage}/${id}.json`);
@@ -46,9 +50,15 @@ export function passLog() {
         calls.push(entry);
         return r ? r.out : null;
       }
-      const { out, usage } = await live({ system, shared, task, model, maxTokens, temperature });
-      calls.push({ stage, id, how: `live:${model}`, model, usage, cost_usd: callCost(model, usage) || 0 });
-      return out;
+      if (spent() >= budget_usd) { calls.push({ stage, id, how: "not run: execution budget exhausted", model, usage: null, cost_usd: 0 }); return null; }
+      try {
+        const { out, usage } = await live({ system, shared, task, model, maxTokens, temperature });
+        calls.push({ stage, id, how: `live:${model}`, model, usage, cost_usd: callCost(model, usage) || 0 });
+        return out;
+      } catch (e) {
+        calls.push({ stage, id, how: `failed: ${String(e.message || e).slice(0, 200)}`, model, usage: null, cost_usd: 0 });
+        return null;
+      }
     },
     cost() { return Math.round(calls.reduce((n, c) => n + (c.cost_usd || 0), 0) * 1e5) / 1e5; },
   };

@@ -49,5 +49,6 @@ const onto = remap({ E_F: o.E_F, E_A: o.E_A, rho: o.rho, case: o.case, translati
 out("ontology", "pass1", onto); out("ontology", "pass2", onto);
 const ob = row.objects;
 out("compose", "pass1", remap({ KO: { title: ob.KO.title, sentences: ob.KO.sentences }, P: { title: ob.P.title, lede: ob.P.lede, sections: ob.P.sections, open: ob.P.open, rail: ob.P.rail },
-  KO_B: { title: ob.KO_B.title, sentences: ob.KO_B.sentences }, P_B: { title: ob.P_B.title, lede: ob.P_B.lede, sections: ob.P_B.sections, rail: ob.P_B.rail }, delta: row.delta, kernel: row.kernel, channel: [] }));
+  KO_B: { title: ob.KO_B.title, sentences: ob.KO_B.sentences }, P_B: { title: ob.P_B.title, lede: ob.P_B.lede, sections: ob.P_B.sections, rail: ob.P_B.rail }, kernel: row.kernel, channel: [] }));
+out("delta", "pass1", remap({ T_vs_LB: row.delta?.T_vs_LB, LB_vs_LBA: row.delta?.LB_vs_LBA }));
 console.log(JSON.stringify({ row: rowKey, dro: dro.length, hop: hop.length, archive_deps: Object.keys(byDep).length, field_sources: input.field.length, field_ids_mapped: Object.keys(fmap).length, archive_ids_mapped: Object.keys(amap).length }));

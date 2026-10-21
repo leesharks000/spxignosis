@@ -1,25 +1,24 @@
 // The opening job: S0–S9 for one pinned revision. S3 reads each sentence against the sources it cites (T against L_F(B));
 // at the opening and portable tiers S7–S8 consult the archive by its own procedure and compose the entity's /non row,
 // which is public; the portable tier packages the row's knowledge object.
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { pinRevision } from "./pin.js";
 import { segment } from "./segment.js";
 import { resolveSources } from "./resolve.js";
 import { makeReader, inputFor, READER_PROTOCOL, CALIBRATION } from "./reader.js";
 import { fromWikipedia } from "./s7/input.js";
-import { runS7 } from "./s7/run.js";
+import { runS7, s7Key } from "./s7/run.js";
 import { estimateS7 } from "./s7/estimate.js";
+import { publicationState } from "./s7/publish.js";
 import { archiveRelease } from "./s7/traverse.js";
-import { S7_PROTOCOL, MODELS as S7_MODELS, mode as s7mode } from "./s7/model.js";
-import { blogIndexSha } from "./s7/blog.js";
 import { validateReading, reconcile, NORMALIZATION } from "./validate.js";
 import { sha256, save, load, STORE } from "./util.js";
 import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.4.0", protocol: "EA-WIKI-OPEN-01 v0.9" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.4.1", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -32,6 +31,7 @@ export const TIERS = {
 
 function policyState() {
   const dir = join(STORE, "policies");
+  if (!existsSync(dir)) return { _none: "no policy texts saved in the store" };
   return Object.fromEntries(readdirSync(dir).map((f) => [f.replace(/\.wiki$/, "").replace(/_/g, " ").replace("Wikipedia ", "Wikipedia:"), sha256(readFileSync(join(dir, f), "utf8"))]));
 }
 
@@ -46,12 +46,6 @@ export function claimKey(claim, srcs, model, reader) {
 // Tiers that consult the archive and compose the entity's /non row.
 export const ADMITS = new Set(["opening", "portable"]);
 
-// The /non row is reusable when its whole input matches: T, every field source by hash, the entity's strings, the
-// archive release (commit, registry, citation graph, traversal script, blog index), the S7 protocol, models and mode.
-export function s7Key(input) {
-  return sha256(JSON.stringify({ T: input.T.sha256, field: input.field.map((b) => [b.id, b.text_sha256 || b.availability]), aliases: input.aliases,
-    release: archiveRelease(), blog: blogIndexSha(), protocol: S7_PROTOCOL, models: S7_MODELS, mode: s7mode() }));
-}
 
 export async function prepare(oldid, only) {
   const pinned = await pinRevision(oldid);
@@ -83,6 +77,9 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
     const e = ledgered ? null : estimateS7(input);
     s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e,
       est_cost_usd: ledgered ? 0 : e.est_cost_usd, price_usd: ledgered ? POLICY.ledgered_s7 : Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
+    // The execution budget: model spending stops at the quoted price divided by the budget ratio, so a run that costs
+    // more than estimated still clears its cost at the price it was quoted.
+    s7.budget_usd = Math.round((s7.price_usd / POLICY.s7_budget_ratio) * 100) / 100;
   }
   const package_price = tier === "portable" ? POLICY.portable_package : 0;
   const est_cost = lines.reduce((n, l) => n + l.est_cost_usd, 0) + (s7?.est_cost_usd || 0);
@@ -102,6 +99,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
       search_scope: ADMITS.has(tier) ? "the sources the article cites (the disclosed field B); and the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4): every deposit text and every blog post the blog–deposit map does not assign to a deposit, scanned for the entity's strings (the article's title and the names its lead gives) at D, R and O; one citation hop from the deposits admitted by reading, screened by string; admission by two reading passes" : "cited sources only at this tier",
       archive_release: s7?.estimate?.release || (s7 ? archiveRelease() : null),
       publication: ADMITS.has(tier) ? `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed: the opening contributes to the opened Wikipedia` : undefined,
+      execution_budget: s7 ? `model spending for the archive's consultation stops at $${s7.budget_usd} (the quoted line divided by ${POLICY.s7_budget_ratio}); passes beyond it are recorded as not run, and the row is composed from what was read, marked` : undefined,
       context_rule: "passages first; when a reading pass reports that the passages lack what a judgment needs, the passages are widened and the claim is read again, once",
       retrieval_budget: { max_sources: 100, max_bytes_per_source: 5_000_000 },
       stopping_rule: "every cited source fetched or recorded unavailable",
@@ -134,7 +132,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     // The same state was computed before: the result is served again, and billed against this quote, at the
     // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
     const composition = load(prior.composition_path), record = load(prior.composition_path.replace("composition", "evidence"));
-    const done = composition.entries.filter((e) => ["agreed", "single-valid", "contested"].includes(e.status)).map((e) => e.id);
+    const done = composition.entries.filter((e) => ["concordant", "concordant across families", "single-valid", "contested"].includes(e.status)).map((e) => e.id);
     let charge = done.reduce((n, id) => n + (priceOf[id] || 0), 0);
     if (q.s7 && prior.non_row) charge += POLICY.ledgered_s7;
     if (prior.portable_dir) charge += Math.min(q.package_price_usd || 0, POLICY.ledgered_package);
@@ -167,7 +165,8 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     const valid = checked.filter((p) => p.validation.ok);
     checked.filter((p) => !p.validation.ok).forEach((p) => breaches.push({ claim: c.id, model: p.model, breaches: p.validation.breaches }));
     let verdict;
-    if (valid.length === 2) verdict = reconcile(valid[0].reading, valid[1].reading);
+    const fam = (m) => (/claude/.test(m || "") ? "anthropic" : String(m || "").split(/[-:/]/)[0]);
+    if (valid.length === 2) verdict = reconcile({ ...valid[0].reading, __family: fam(valid[0].model) }, { ...valid[1].reading, __family: fam(valid[1].model) });
     else if (valid.length === 1) verdict = { status: "single-valid", support: valid[0].reading.support };
     else verdict = { status: "withheld" };
     if (!fromLedger && verdict.status !== "withheld") save(`ledger/claims/${key}.json`, { key, claim: c.id, oldid: pinned.oldid, model, created: new Date().toISOString(), passes: r.passes.map((p) => ({ model: p.model, reading: p.reading })) });
@@ -196,6 +195,9 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
         R_W: lead.attributization?.converted ? `${lead.attributization.operation} → ${lead.attributization.attribute}` : null,
         P_W: { required: "inline citation (WP:V)", available: srcs.map((s) => s.final_url || s.url) },
         "ρ_W": lead.notes || null,
+        // Elements of §5.2's tuple the 0.4 runner does not produce; named here so a reader sees the gap.
+        "∼_W": "unimplemented: substitutability under WP:V is not computed", K_W: "unimplemented: the closure kind is not computed (S4 not run)",
+        B_W: "unimplemented: S4's grammar ledger is not run", C_W: "unimplemented: talk-page and deletion pointers are not fetched", "λ": "unimplemented: qualifying-material location is not computed",
       } : null,
     });
   }
@@ -207,10 +209,10 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     const cached = load(`s7/${input.row}/by-key/${q.s7.key}.json`);
     if (cached?.composed) s7 = { ...cached, from_ledger: true };
     else {
-      const out = await runS7(input, { service: SERVICE, onProgress });
+      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd });
       s7 = { row_key: input.row, entity: input.entity.slug, non_url: NON_URL(input.entity.slug), landing: out.landing.dir, manifest: out.landing.manifest,
         composed: !!out.row.objects.KO, case: out.row.ontology?.case?.value || null, rho: out.row.ontology?.rho?.value || null, breaches: out.row.breaches.length,
-        audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length };
+        audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key };
       for (const c of out.run.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
       actual += out.run.cost_usd || 0;
       // Only a composed row is ledgered: a run that composed nothing is recomputed on the next request.
@@ -221,8 +223,10 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     if (s7.composed) s7.charge_usd = s7.from_ledger ? POLICY.ledgered_s7 : Math.min(q.s7.price_usd, Math.ceil(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin) * 100) / 100);
     charge += s7.charge_usd || 0;
     // Each sentence of the article, with what the archive's claims do to it (the ontology pass's alignment).
-    const row = load(`s7/${input.row}/landing/datasets/negative-of-the-negative/v2/rows/${input.row}.json`);
-    const ledger = load(`s7/${input.row}/landing/datasets/negative-of-the-negative/v2/ledgers/${input.row}/ledger-archive.json`) || [];
+    const V2 = "datasets/negative-of-the-negative/v2";
+    const rd = (rel) => (existsSync(join(s7.landing, rel)) ? JSON.parse(readFileSync(join(s7.landing, rel), "utf8")) : null);
+    const row = rd(`${V2}/rows/${input.row}.json`);
+    const ledger = rd(`${V2}/ledgers/${input.row}/ledger-archive.json`) || [];
     const byA = Object.fromEntries(ledger.map((c) => [c.id, c]));
     for (const a of row?.ontology?.t_alignment || []) {
       const e = entries.find((x) => x.id === a.t);
@@ -237,7 +241,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     licence_note: "Wikipedia sentences are CC BY-SA 4.0, attributed to the revision URL; the service's account is licensed to the caller under the service terms.",
     notice: "The treatment of this article's entities by composing systems may be recorded and measured.",
     non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,
-      landing: "the row, its ledgers, traversal and reading, in the archive's paths; public once landed", publication: "CC BY 4.0" } : undefined,
+      licence: "CC BY 4.0", publication: await publicationState(s7, { fetchPublic: false }), publication_endpoint: `/v1/results/${result_id}/publication` } : undefined,
     summary: { claims: entries.length, cited: entries.filter((e) => e.status !== "uncited").length, completed, contested: entries.filter((e) => e.status === "contested").length, withheld: entries.filter((e) => e.status === "withheld").length, unread: entries.filter((e) => e.status === "unread").length, from_ledger: entries.filter((e) => e.from_ledger).length },
     entries,
   };
@@ -251,8 +255,8 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       const pkg = packageRow(s7.row, s7.ledger, { result_id, service: SERVICE, article: q.article, audit: s7.audit, rowUrl: s7.non_url });
       const dir = `results/${result_id}/portable`;
       const manifest = writePackage(dir, pkg, { result_id, article: q.article, service: SERVICE, non_row: s7.row_key });
-      const clean = !!s7.audit?.ran && s7.audit.breaches.length === 0;
-      portable = { ok: true, dir, manifest, charged: clean, breaches: clean ? [] : [{ check: "package", detail: s7.audit?.ran ? `${s7.audit.breaches.length} units marked by the audit; the package fee is released` : "the audit did not run; the package fee is released" }] };
+      const clean = !!s7.audit?.ran && !!s7.audit.complete && s7.audit.breaches.length === 0;
+      portable = { ok: true, dir, manifest, charged: clean, breaches: clean ? [] : [{ check: "package", detail: !s7.audit?.ran ? "the audit did not run; the package fee is released" : !s7.audit.complete ? `the audit is incomplete (${(s7.audit.missing || []).length} units unjudged); the package fee is released` : `${s7.audit.breaches.length} units marked by the audit; the package fee is released` }] };
       if (clean) charge += q.package_price_usd || 0;
     }
   }
@@ -269,6 +273,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
   save(`results/${result_id}/evidence.json`, record);
   save(`results/${result_id}/opened.html`, renderOpenedHTML(composition, pinned));
   save(`results/${result_id}/annotations.jsonld`, annotations(composition));
+  if (s7) save(`results/${result_id}/s7.json`, { ...s7, row: undefined, ledger: undefined });
   const pointer = { result_id, composition_path: `results/${result_id}/composition.json`, portable_dir: portable?.ok ? portable.dir : undefined, non_row: s7?.composed ? s7.row_key : undefined };
   save(`results/by-state/${execution_key}.json`, pointer);
   return { ...pointer, composition, record, reused: false };

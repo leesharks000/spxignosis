@@ -16,7 +16,9 @@ export function buildRow(run) {
   const fieldSources = Object.fromEntries(input.field.map((b) => [b.id, b.card]));
   const aOk = arch.ledger.filter((x) => x.quote_ok).length, fOk = Object.values(field.claims).filter((x) => x.quote_ok).length;
   const live = run.mode === "live";
-  const breaches = [...(onto.breaches || []), ...(checks?.breaches || []), ...(audit?.breaches || [])];
+  const breaches = [...(release.warnings || []).map((w) => ({ check: "archive-release", detail: w })),
+    ...(run.budget?.exhausted ? [{ check: "budget", detail: `the execution budget ($${run.budget.budget_usd}) was spent before every pass ran; the row is composed from what was read` }] : []),
+    ...(run.budget?.failed_calls ? [{ check: "failed-calls", detail: `${run.budget.failed_calls} model calls failed; their passes are recorded as not read` }] : []), ...(onto.breaches || []), ...(checks?.breaches || []), ...(audit?.breaches || [])];
   const caseV = onto.case?.value, rhoV = onto.rho?.value;
   const T = input.kind === "wikipedia"
     ? { path: `${V2}/intake/${r}-${input.address.oldid}/T-revision.txt`, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: input.T.claims.reduce((n, x) => n + (x.cites || []).length, 0), url: input.T.url, licence: "CC BY-SA 4.0 (Wikipedia contributors; the revision URL is the attribution)",
@@ -53,7 +55,7 @@ export function buildRow(run) {
       L_B: { words: words(KO_B.sentences.map((s) => s.text).join(" ")), text: KO_B.sentences.map((s) => s.text).join(" "), note: "L_F(B) is realized as the field arm's expansion (objects.KO_B)." },
       L_BA: { words: words(KO.sentences.map((s) => s.text).join(" ")), text: KO.sentences.map((s) => s.text).join(" "), rail: [], note: `L(B ∪ A), the ${caseV} case, realized as the knowledge object (objects.KO); its rail is the compression's (objects.P.rail).` } };
     row.delta = c.delta; row.kernel = c.kernel || []; row.measure = checks?.measure; row.channel = c.channel || [];
-    row.audit = audit ? { rule: "v0.9 §5.3: reverse entailment by two independent raters", ran: audit.ran, units: audit.units, agreement: audit.agreement, breaches: audit.breaches.length } : null;
+    row.audit = audit ? { rule: "v0.9 §5.3: reverse entailment by two raters; every unit needs a judgment from both", ran: audit.ran, complete: !!audit.complete, units: audit.units, unjudged: audit.missing || [], agreement: audit.agreement, breaches: audit.breaches.length } : null;
   } else {
     row.objects.note = onto.status === "contested" ? "composition withheld: the two ontology readings differ on the case or ρ; both are carried in ontology.contested" : `composition not run: ontology ${onto.status}`;
   }
@@ -73,7 +75,9 @@ function lineages(ledger) {
 export function writeLanding(run, row) {
   const { input, trav, travH, dro, hop, arch, field, verdicts } = run;
   const blogFile = run.blog?.D?.length ? "candidates-BLOG.jsonl" : null;
-  const base = join(STORE, "s7", input.row, "landing");
+  // Each opening's tree is kept under its execution key and never overwritten; the entity's current row is a choice
+  // made at landing, and earlier openings stay inspectable.
+  const base = join(STORE, "s7", input.row, "runs", run.key, "landing");
   const put = (rel, data) => { const p = join(base, rel); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, typeof data === "string" ? data : JSON.stringify(data, null, 1) + "\n"); return rel; };
   const files = [];
   files.push(put(`${V2}/rows/${input.row}.json`, row));
@@ -98,7 +102,7 @@ export function writeLanding(run, row) {
     stage: `composed ${row.epoch} under EA-NEGONT-02 v0.9, #1690${row.ontology ? `, ${row.ontology.composition} case, ρ = ${row.ontology.rho?.value}` : ""} (draft, not frozen; ledgers unaudited; ${row.breaches.length} breaches recorded)`,
     addresses: [{ address: input.address.string, note: `T: ${input.address.surface}, ${input.address.date}` }] };
   files.push(put(`landing/panel-entry.json`, panel));
-  const manifest = { row: input.row, files: files.map((f) => ({ path: f, sha256: sha256(readFileSync(join(base, f))) })), note: "Each path mirrors the archive's; landing copies the tree and adds the panel entry to panel.json." };
+  const manifest = { row: input.row, key: run.key, files: files.map((f) => ({ path: f, sha256: sha256(readFileSync(join(base, f))) })), note: "Each path mirrors the archive's; landing copies the tree and adds the panel entry to panel.json." };
   put("landing/manifest.json", manifest);
   return { dir: base, files, manifest };
 }

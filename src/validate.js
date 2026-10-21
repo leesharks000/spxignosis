@@ -30,9 +30,12 @@ export function validateReading(reading, claim, sources) {
   return { ok: breaches.length === 0, breaches };
 }
 
-// Two passes: agreement requires the same answer on every distinction the instrument measures: the support classes,
-// whether an act was converted into an attribute, and whether what survives keeps authority to revise the description.
-// Anything else is contested, with both readings carried whole.
+// Two passes: they concur when they give the same answer on every distinction the instrument measures: the support
+// classes, whether an act was converted into an attribute, and whether what survives keeps authority to revise the
+// description. Anything else is contested, with both readings carried whole. Two passes of one model family concur or
+// differ; their concordance is a consistency check and is named so ("concordant"). Validation is the calibration of the
+// passes against the archive's /non readings (EA-WIKI-OPEN-01 §5.4); a second pass on another family is recorded by its
+// model and, where it concurs, the status is "concordant across families".
 export function reconcile(a, b) {
   const key = (r) => JSON.stringify({
     support: [...(r.support || [])].sort(),
@@ -41,6 +44,6 @@ export function reconcile(a, b) {
   });
   const ka = JSON.parse(key(a)), kb = JSON.parse(key(b));
   const differs = Object.keys(ka).filter((k) => JSON.stringify(ka[k]) !== JSON.stringify(kb[k]));
-  if (!differs.length) return { status: "agreed", support: a.support, attributization_converted: ka.converted, retains_authority: ka.authority };
+  if (!differs.length) return { status: a.__family && b.__family && a.__family !== b.__family ? "concordant across families" : "concordant", support: a.support, attributization_converted: ka.converted, retains_authority: ka.authority };
   return { status: "contested", differs, readings: [a, b].map((r) => ({ support: r.support, converted: r.attributization?.converted, retains_authority: r.attributization?.retains_authority, paraphrase: r.paraphrase?.defensible, changes: [...(r.paraphrase?.scope_changes || []), ...(r.paraphrase?.introduced || [])] })) };
 }
