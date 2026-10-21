@@ -3,7 +3,7 @@
 import { load } from "./util.js";
 import { windows, structure } from "./window.js";
 
-export const READER_PROTOCOL = "gnosis-S3/0.3";
+export const READER_PROTOCOL = "gnosis-S3/0.4";
 // Calibration release of the reading passes (§5.4). "uncalibrated" until a release is scored against the /non ledgers.
 export const CALIBRATION = process.env.GNOSIS_CALIBRATION || "uncalibrated";
 
@@ -61,7 +61,8 @@ async function anthropicPass(input, pass, model) {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
-      model, max_tokens: 4000, temperature: pass === 1 ? 0 : 0.7,
+      // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
+      model, max_tokens: 4000,
       system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: [
         { type: "text", text: "SOURCES\n" + JSON.stringify(rest), cache_control: { type: "ephemeral" } },
@@ -73,8 +74,10 @@ async function anthropicPass(input, pass, model) {
   if (!res.ok) throw new Error(`reader HTTP ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
   const text = j.content.map((c) => c.text || "").join("");
   const m = text.match(/\{[\s\S]*\}/);
-  const reading = JSON.parse(m ? m[0] : text);
-  return { reading, usage: j.usage, model };
+  // Usage is billed whether or not the reply parses: a pass that returns unparseable text still cost what it cost.
+  let reading;
+  try { reading = JSON.parse(m ? m[0] : text); } catch { const e = new Error("reader returned unparseable JSON"); e.spent = [{ model, usage: j.usage }]; throw e; }
+  return { reading, usage: j.usage, model, sampling: "model defaults (temperature, top_p and top_k omitted)" };
 }
 
 export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", model = process.env.GNOSIS_MODEL || "claude-sonnet-5-5") {
@@ -95,7 +98,8 @@ export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", mode
       const passes = [];
       // The second pass may run on another model (GNOSIS_MODEL_2); its model is recorded with the reading.
       const model2 = process.env.GNOSIS_MODEL_2 || model;
-      for (const n of [1, 2]) passes.push(await anthropicPass(input, n, n === 2 ? model2 : model));
+      try { for (const n of [1, 2]) passes.push(await anthropicPass(input, n, n === 2 ? model2 : model)); }
+      catch (e) { e.spent = [...passes.map((p) => ({ model: p.model, usage: p.usage })), ...(e.spent || [])]; throw e; }
       return { passes, input };
     },
   };

@@ -59,7 +59,7 @@ export function buildRow(run) {
     ...(run.dro?.division?.scanned ? { division: run.dro.division } : {}),
     composition_gnosis: { service: run.service, protocol: run.protocol, mode: run.mode, models: run.models, archive_release: release, passes: run.calls, cost_usd: run.cost_usd, seconds: run.seconds },
   };
-  if (onto.status === "read" || onto.status === "contested") {
+  if (onto.status === "read" || onto.status === "read (single pass)" || onto.status === "contested") {
     row.ontology = { composition: caseV, case: onto.case, E_F: onto.E_F, E_A: onto.E_A, rho: onto.rho, translation: onto.translation,
       receiving_texts: caseV === "equal" ? "equal-terms case: every field claim composed as received, beside the archive claims it stands with" : "witness case: each field claim carried whole beside its translation, with its receiving text where located",
       t_alignment: onto.t_alignment, ...(onto.contested ? { contested: onto.contested } : {}) };

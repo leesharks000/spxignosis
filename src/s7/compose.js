@@ -79,7 +79,7 @@ export function units(c) {
 export async function audit(log, input, composition, byId) {
   const us = units(composition).map((u) => ({ ...u, evidence: (u.claims || []).map((id) => byId[id] ? { id, quote: byId[id].quote, modality: byId[id].modality, source: byId[id].dep ? `#${byId[id].dep}` : byId[id].record ? `blog: ${byId[id].record.url}` : byId[id].source } : { id, missing: true }) }));
   const raters = [];
-  for (const n of [1, 2]) raters.push(await log.run({ row: input.row, stage: "audit", id: `rater${n}`, model: MODELS.reading, maxTokens: 12000, temperature: n === 1 ? 0 : 0.7,
+  for (const n of [1, 2]) raters.push(await log.run({ row: input.row, stage: "audit", id: `rater${n}`, model: MODELS.reading, maxTokens: 12000,
     system: AUDIT_INSTRUCTIONS, shared: "UNITS\n" + JSON.stringify(us), task: n === 2 ? "This is an independent second rating." : "Rate every unit." }));
   if (!raters[0] && !raters[1]) return { ran: false, complete: false, breaches: [], agreement: null, units: us.length };
   const get = (r, id) => (r?.units || []).find((x) => x.id === id && typeof x.entailed === "boolean");

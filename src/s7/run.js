@@ -1,4 +1,5 @@
 // S7–S8 end to end for one address: traversal, admission, extraction, ontology, composition, audit; then the /non row.
+import { ABOUT_RULE } from "./about.js";
 import { traverse, archiveRelease } from "./traverse.js";
 import { admitDRO, admitHop } from "./reading.js";
 import { extractArchive, extractField } from "./extract.js";
@@ -14,13 +15,17 @@ import { sha256 } from "../util.js";
 // The /non row is reusable when its whole input matches: T, every field source by hash, the entity's strings, the
 // archive release (commit, registry, citation graph, traversal script, blog index), the S7 protocol, models and mode.
 export function s7Key(input) {
-  return sha256(JSON.stringify({ T: input.T.sha256, field: input.field.map((b) => [b.id, b.text_sha256 || b.availability]), aliases: input.aliases,
+  // Everything the row is computed from: T, B, the strings, the names whose works count as the entity's, the division's
+  // rule, the archive's release, the protocol, models and mode.
+  return sha256(JSON.stringify({ T: input.T.sha256, field: input.field.map((b) => [b.id, b.text_sha256 || b.availability]), aliases: input.aliases, works_by: input.works_by || [], about: ABOUT_RULE,
     release: archiveRelease(), blog: blogIndexSha(), protocol: S7_PROTOCOL, models: MODELS, mode: mode() }));
 }
 
-export async function runS7(input, { service, onProgress = () => {}, budget_usd } = {}) {
+export async function runS7(input, { service, onProgress = () => {}, budget_usd, log: shared } = {}) {
   const key = s7Key(input);
-  const log = passLog({ budget_usd });
+  // The job's log, where the caller passes one (the construction and S7 then share one budget); else S7's own.
+  const log = shared || passLog({ budget_usd });
+  const start = log.calls.length;
   const t0 = Date.now();
   onProgress({ stage: "S7a", detail: "traversal" });
   const trav = traverse(input);
@@ -43,7 +48,7 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd 
   const ontoRaw = await readOntology(log, input, field.claims, arch.ledger, deps);
   const onto = settleOntology(ontoRaw, field.claims, arch.ledger);
   let composition = null, checks = null, aud = null;
-  if (onto.status === "read") {
+  if (onto.status === "read" || onto.status === "read (single pass)") {
     onProgress({ stage: "S8", detail: "composition" });
     const fs = Object.fromEntries(input.field.map((b) => [b.id, b.card]));
     composition = await compose(log, input, onto, field.claims, arch.ledger, fs);
@@ -55,8 +60,9 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd 
     }
   }
   const run = { key, input, trav, blog, travH, dro, hop, verdicts, arch, field, onto, composition, checks, audit: aud,
-    release: archiveRelease(), protocol: S7_PROTOCOL, models: MODELS, mode: mode(), calls: log.calls, cost_usd: log.cost(), seconds: (Date.now() - t0) / 1000, service,
-    budget: { budget_usd: Number.isFinite(log.budget_usd) ? log.budget_usd : null, exhausted: log.exhausted(), failed_calls: log.calls.filter((c) => c.how.startsWith("failed")).length } };
+    release: archiveRelease(), protocol: S7_PROTOCOL, models: MODELS, mode: mode(), calls: log.calls.slice(start), cost_usd: Math.round(log.calls.slice(start).reduce((n, c) => n + (c.cost_usd || 0), 0) * 1e5) / 1e5, seconds: (Date.now() - t0) / 1000, service,
+    budget: { budget_usd: Number.isFinite(log.budget_usd) ? log.budget_usd : null, shared_with_construction: !!shared && start > 0, exhausted: log.exhausted(),
+      failed_calls: log.calls.slice(start).filter((c) => c.how.startsWith("failed")).length, not_run: log.calls.slice(start).filter((c) => c.how.startsWith("not run")).length } };
   const row = buildRow(run);
   const landing = writeLanding(run, row);
   return { row, landing, run };

@@ -177,6 +177,46 @@ else {
   t("publication: a row whose T is attested and unseated carries the landing hold", /held from landing/.test(ps.hold || ""));
 }
 
+// 13. the review of 0.6.0 (ChatGPT, 2026-10-21), each finding reproduced, then fixed.
+{
+  const { passLog: pl } = await import("../src/s7/model.js");
+  const { makeReader } = await import("../src/reader.js");
+  const { s7Key } = await import("../src/s7/run.js");
+  const { settleOntology } = await import("../src/s7/ontology.js");
+  const { divide } = await import("../src/s7/about.js");
+  const realFetch = globalThis.fetch, prevKey = process.env.ANTHROPIC_API_KEY, prevR = process.env.GNOSIS_READER;
+  const bodies = [];
+  globalThis.fetch = async (url, opts) => { bodies.push(JSON.parse(opts.body)); return { ok: true, status: 200, json: async () => ({ content: [{ type: "text", text: "not json at all" }], usage: { input_tokens: 20000, output_tokens: 4000 } }) }; };
+  process.env.ANTHROPIC_API_KEY = "test"; process.env.GNOSIS_READER = "anthropic";
+  const l1 = pl(); const o1 = await l1.run({ row: "x", stage: "s", id: "1", system: "sys", task: "t", model: "claude-sonnet-5-5", maxTokens: 4000 });
+  t("model: no sampling parameter is sent (Sonnet 5.5 rejects non-default values; Haiku 5.5 asks they be omitted)", bodies.every((b) => !("temperature" in b) && !("top_p" in b) && !("top_k" in b)));
+  t("budget: a reply that does not parse is billed at its usage", o1 === null && l1.cost() > 0 && /did not parse/.test(l1.calls[0].how));
+  const l2 = pl({ budget_usd: 0.01 }); const n0 = bodies.length;
+  await l2.run({ row: "x", stage: "s", id: "1", system: "sys", task: "t", model: "claude-sonnet-5-5", maxTokens: 8000 });
+  t("budget: a call whose worst case would pass the budget is not made, so a $0.01 budget spends nothing", bodies.length === n0 && l2.cost() === 0 && l2.exhausted());
+  const rd = makeReader("anthropic", "claude-sonnet-5-5"); let spent = null;
+  try { await rd.read({ id: "W1", text: "x", section: "lead" }, [{ text: "y", text_sha256: "h" }], { oldid: 1, title: "x" }); } catch (e) { spent = e.spent; }
+  t("S3: a reading pass whose reply does not parse carries its usage to billing", spent && spent.length >= 1 && spent[0].usage.input_tokens === 20000);
+  globalThis.fetch = realFetch; process.env.GNOSIS_READER = prevR; if (prevKey) process.env.ANTHROPIC_API_KEY = prevKey; else delete process.env.ANTHROPIC_API_KEY;
+  const base = fromEntity({ name: "Lee Sharks" });
+  t("cache: the S7 key changes with the names whose works count as the entity's", s7Key(base) !== s7Key({ ...base, works_by: ["heteronyms"] }));
+  const c0 = claimKey({ text_sha256: "h" }, [{ text_sha256: "s" }], "m", { id: "a", mode: "live" }); process.env.GNOSIS_MODEL_2 = "other";
+  const c1 = claimKey({ text_sha256: "h" }, [{ text_sha256: "s" }], "m", { id: "a", mode: "live" }); delete process.env.GNOSIS_MODEL_2;
+  t("cache: the claim key changes with the second reader's model", c0 !== c1);
+  const one = settleOntology({ passes: [{ rho: { value: "extends" }, case: { value: "equal", loci: [] }, translation: [] }, null], F: [], A: [] }, {}, []);
+  t("ontology: one pass of two is a single-pass reading, kept, with a breach", one.status === "read (single pass)" && one.breaches.some((b) => b.check === "ontology-single-pass"));
+  const ex = fromEntity({ name: "Example Author" });
+  const dvx = divide(ex, [{ dep: 9e6, para: 0, sent: 0, sentence: "Example Author received the award in 2015." }, { dep: 9e6 + 1, para: 0, sent: 0, sentence: "Example Author (ORCID 0000-0000-0000-0000) founded the press in 2014." }], isByline, { force: true });
+  t("about/by: an accomplishment is read, with an ORCID beside the name or a verb outside the closed list", dvx.read.length === 2);
+  const { ARCHIVE: AR } = await import("../src/s7/input.js");
+  const rowRel = "datasets/negative-of-the-negative/v2/rows/se-183b34.json";
+  const want = createHash("sha256").update(readFileSync(`${AR}/${rowRel}`)).digest("hex");
+  globalThis.fetch = async (url) => ({ ok: true, status: 200, text: async () => (String(url).endsWith(".json") ? "{\"row\":\"se-183b34\",\"old\":true}" : "<html>se-183b34</html>") });
+  const stale = await publicationState({ composed: true, row_key: "se-183b34", non_url: "https://www.alexanarch.org/non/se-183b34/", manifest: { files: [{ path: rowRel, sha256: want }] }, audit: { ran: true, complete: true } });
+  globalThis.fetch = realFetch;
+  t("publication: a page naming the slug while serving an older row is landed, not public", stale.state === "landed" && stale.stages.public.version_matches === false);
+}
+
 // 8. the execution budget and a failed call.
 {
   const prev = process.env.GNOSIS_READER; process.env.GNOSIS_READER = "anthropic"; const key = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;

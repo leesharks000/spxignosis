@@ -23,7 +23,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.6.1", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.6.2", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -45,7 +45,7 @@ function policyState() {
 // release. A replayed reading can never serve a live run.
 export function claimKey(claim, srcs, model, reader) {
   return sha256(JSON.stringify({ claim: claim.text_sha256, sources: srcs.map((s) => s.text_sha256 || s.availability), policies: policyState(),
-    protocol: READER_PROTOCOL, model, adapter: reader.id, mode: reader.mode, calibration: CALIBRATION }));
+    protocol: READER_PROTOCOL, model, model_2: process.env.GNOSIS_MODEL_2 || model, adapter: reader.id, mode: reader.mode, calibration: CALIBRATION }));
 }
 
 // Tiers that consult the archive and compose the entity's /non row.
@@ -78,7 +78,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
   if (ADMITS.has(tier)) {
     const input = fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
-    const ledgered = !!load(`s7/${input.row}/by-key/${key}.json`)?.composed;
+    const ledgered = !!load(`s7/${input.row}/by-key/${key}.json`)?.complete;
     const e = ledgered ? null : await estimateS7(input);
     s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e,
       est_cost_usd: ledgered ? 0 : e.est_cost_usd, price_usd: ledgered ? POLICY.ledgered_s7 : Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
@@ -226,12 +226,13 @@ async function readSentences({ claims, sources, pinned, model, reader, priceOf, 
     const key = claimKey(c, srcs, model, reader);
     onProgress({ stage: "S3", detail: c.id });
     let r = load(`ledger/claims/${key}.json`), fromLedger = !!r, err = null, expanded = false;
-    if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); } }
+    const billFailed = (e) => { for (const p of e.spent || []) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; } };
+    if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); billFailed(e); } }
     // Windowing can drop the passage that revises a claim. When a pass says the passages lack what it needs,
     // widen them and read again, once; both readings' costs are counted.
     if (r && !fromLedger && r.passes.some((p) => p.reading?.needs_more_context)) {
       for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
-      try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; } } catch (e) { err = String(e.message || e); }
+      try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; } } catch (e) { err = String(e.message || e); billFailed(e); }
     }
     if (!r) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "unread", note: err || "no reading available for this claim" }); continue; }
     if (!fromLedger) for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
@@ -318,13 +319,15 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
   const state = {
     article: { oldid: pinned.oldid, html_sha256: pinned.html_sha256 || null, T: entityInput ? entityInput.T.sha256 : undefined }, claims: claims.map((c) => c.id),
     sources: Object.fromEntries(Object.entries(sources).map(([k, v]) => [k, v.map((s) => s.text_sha256 || s.availability)])),
-    policies: policyState(), s7: q.s7?.key || null, protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
+    policies: policyState(), s7: q.s7?.key || (entityInput && q.s7 ? s7Key(entityInput) : null), protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
   };
   const execution_key = sha256(JSON.stringify(state));
   const prior = load(`results/by-state/${execution_key}.json`);
   // A result is served again only when it is complete for its tier: at the tiers that compose the /non row, a result
   // whose row was not composed is recomputed.
-  if (prior && (!q.s7 || prior.non_row)) {
+  // Reuse needs a complete row: a partial one (a pass failed, was skipped by the budget, or the audit is incomplete) is
+  // delivered and recorded, and the next request recomputes it.
+  if (prior && (!q.s7 || (prior.non_row && prior.s7_complete))) {
     // The same state was computed before: the result is served again, and billed against this quote, at the
     // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
     const composition = load(prior.composition_path), record = load(prior.composition_path.replace("composition", "evidence"));
@@ -351,16 +354,22 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     const input = entityInput || fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
     const cached = load(`s7/${input.row}/by-key/${key}.json`);
-    if (cached?.composed) s7 = { ...cached, from_ledger: true };
+    if (cached?.complete) s7 = { ...cached, from_ledger: true };
     else {
-      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd });
+      // One log for the job: the construction's spending and S7's share the budget the quote declared.
+      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, log: preLog });
       s7 = { row_key: input.row, entity: input.entity.slug, non_url: NON_URL(input.entity.slug), landing: out.landing.dir, manifest: out.landing.manifest,
         composed: !!out.row.objects.KO, case: out.row.ontology?.case?.value || null, rho: out.row.ontology?.rho?.value || null, breaches: out.row.breaches.length,
         audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key, provenance: out.row.objects?.T?.provenance || null };
       for (const c of out.run.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
       actual += out.run.cost_usd || 0;
-      // Only a composed row is ledgered: a run that composed nothing is recomputed on the next request.
-      if (s7.composed) save(`s7/${input.row}/by-key/${key}.json`, s7);
+      // Composed, checked and complete are distinct. Only a complete row (composed; no pass failed or skipped by the
+      // budget; the audit complete) is ledgered for reuse. A partial row is kept under its execution key with its
+      // coverage, delivered as partial, and recomputed on the next request.
+      const notRun = out.run.budget.not_run || 0, failed = out.run.budget.failed_calls || 0;
+      s7.coverage = { composed: s7.composed, budget_exhausted: !!out.run.budget.exhausted, failed_passes: failed, passes_not_run: notRun, audit_complete: !!out.run.audit?.complete };
+      s7.complete = s7.composed && !s7.coverage.budget_exhausted && !failed && !notRun && s7.coverage.audit_complete;
+      save(`s7/${input.row}/${s7.complete ? "by-key" : "partial"}/${key}.json`, s7);
     }
     // The quoted S7 line is an upper bound (every candidate deposit costed as admitted); the charge is the measured cost
     // times the margin, at the floor, and never above the quote.
@@ -385,7 +394,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     ...(entityInput ? { entity: { name: entityInput.entity.name, wikipedia: q.wikipedia, T: entityInput.T.kind, construction: entityInput.T.construction || null } } : {}),
     licence_note: "Wikipedia sentences are CC BY-SA 4.0, attributed to the revision URL; the service's account is licensed to the caller under the service terms.",
     notice: "The treatment of this article's entities by composing systems may be recorded and measured.",
-    non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,
+    non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, complete: !!s7.complete, coverage: s7.coverage || null, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,
       licence: "CC BY 4.0", publication: await publicationState(s7, { fetchPublic: false }), publication_endpoint: `/v1/results/${result_id}/publication` } : undefined,
     summary: { claims: entries.length, cited: entries.filter((e) => e.status !== "uncited").length, completed, contested: entries.filter((e) => e.status === "contested").length, withheld: entries.filter((e) => e.status === "withheld").length, unread: entries.filter((e) => e.status === "unread").length, from_ledger: entries.filter((e) => e.from_ledger).length },
     entries,
@@ -419,7 +428,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
   save(`results/${result_id}/opened.html`, renderOpenedHTML(composition, pinned));
   save(`results/${result_id}/annotations.jsonld`, annotations(composition));
   if (s7) save(`results/${result_id}/s7.json`, { ...s7, row: undefined, ledger: undefined });
-  const pointer = { result_id, composition_path: `results/${result_id}/composition.json`, portable_dir: portable?.ok ? portable.dir : undefined, non_row: s7?.composed ? s7.row_key : undefined };
+  const pointer = { result_id, composition_path: `results/${result_id}/composition.json`, portable_dir: portable?.ok ? portable.dir : undefined, non_row: s7?.composed ? s7.row_key : undefined, s7_complete: !!s7?.complete };
   save(`results/by-state/${execution_key}.json`, pointer);
   return { ...pointer, composition, record, reused: false };
 }

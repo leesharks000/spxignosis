@@ -5,7 +5,7 @@
 // deposit, or name the entity) and the screened ones read the same way.
 import { depText, depMeta, paragraphs, registry, depOrder } from "./archive.js";
 import { MODELS, mode } from "./model.js";
-import { divide } from "./about.js";
+import { divide, triageAbout, triageSentences, worksLedger } from "./about.js";
 
 export const ADMISSION_INSTRUCTIONS = `The admission pass reads candidate passages from the Crimson Hexagonal Archive for one entity and decides, deposit by deposit, which are admitted to the entity's archive subset. It returns JSON only.
 
@@ -63,7 +63,7 @@ async function readBatches(log, input, stage, packets, model) {
   }
   for (const [bi, b] of batches(packets).entries()) {
     for (const n of [1, 2]) {
-      const out = await log.run({ row: input.row, stage, id: `${bi + 1}-pass${n}`, model, temperature: n === 1 ? 0 : 0.7,
+      const out = await log.run({ row: input.row, stage, id: `${bi + 1}-pass${n}`, model,
         system: ADMISSION_INSTRUCTIONS, shared: "ENTITY\n" + JSON.stringify(entity) + "\n\nCANDIDATES\n" + JSON.stringify(b),
         task: n === 2 ? "This is an independent second reading: it reaches its own decisions from the passages." : "Decide every deposit listed." });
       if (out?.verdicts) passes[n - 1].push(...out.verdicts);
@@ -106,7 +106,10 @@ export async function admitDRO(log, input, trav, blog = { D: [] }) {
   const aliasRe = input.aliases.map((a) => new RegExp(a.pattern, a.flags?.includes("i") ? "i" : ""));
   const screened = [];
   // Where the entity is also an author in the archive, only material about it is read; the rest is scanned (about.js).
-  const dv = divide(input, [...trav.D, ...trav.R, ...trav.O, ...blog.D], isByline);
+  const all = [...trav.D, ...trav.R, ...trav.O, ...blog.D];
+  let triage = null;
+  if (worksLedger(input).length) triage = await triageAbout(log, input, triageSentences(input, all, isByline), MODELS.triage);
+  const dv = divide(input, all, isByline, { triage });
   for (const c of dv.read) {
     if (dv.mode === "bearing" && isByline(c.sentence, aliasRe)) { screened.push(c); continue; }
     if (!byDep.has(c.dep)) byDep.set(c.dep, []);
@@ -118,9 +121,10 @@ export async function admitDRO(log, input, trav, blog = { D: [] }) {
   if (onlyBylines.length) r.not_admitted.push({ dep: onlyBylines, cands: screened.filter((c) => onlyBylines.includes(c.dep)).map((c) => c.cand_id),
     reason: "every candidate sentence is a byline or metadata line: the entity is named and nothing is said of it (string screen; gnosis S7)" });
   r.byline_screened = { sentences: screened.length, deposits_with_only_bylines: onlyBylines.length };
-  r.division = { mode: dv.mode, scanned: dv.scanned, basisOf: dv.basisOf };
+  r.division = { mode: dv.mode, screen: dv.screen, scanned: dv.scanned && (({ excluded, ...rest }) => ({ ...rest, excluded_counts: Object.fromEntries(Object.entries(excluded || {}).map(([k, v]) => [k, v.length])) }))(dv.scanned), basisOf: dv.basisOf };
   r.works = dv.works;
-  if (dv.scanned?.deposits) r.not_admitted.push({ dep: [], scanned: dv.scanned.deposits, reason: `scanned, not read: ${dv.scanned.deposits} deposits whose mentions are material by the entity or mentions of it, none about it (${dv.scanned.rule})` });
+  // Each scanned deposit is listed, by reason, so the division's decisions can be inspected and contested.
+  for (const [reason, deps] of Object.entries(dv.scanned?.excluded || {})) r.not_admitted.push({ dep: deps, scanned: true, reason: `scanned, not read (about/by): ${reason}` });
   return r;
 }
 

@@ -100,7 +100,8 @@ app.post("/v1/openings/:quote_id", async (req, res) => {
   try {
     const r = await runOpening(q.quote_id, { onProgress: (p) => save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }) });
     // A status of 400 or above cancels settlement in the middleware: no claim completed, no charge.
-    if (r.composition.summary.completed === 0) return res.status(502).json({ error: "no claim could be completed; no charge", result_id: r.result_id });
+    // Completion follows the commissioned operation: a composed row is delivered work even where T needed no S3 check.
+    if (r.composition.summary.completed === 0 && !r.non?.composed) return res.status(502).json({ error: "no claim could be completed; no charge", result_id: r.result_id });
     const out = { result_id: r.result_id, reused: r.reused, summary: r.composition.summary, billing: r.record?.billing, composition: r.composition, portable: r.portable_dir ? `/v1/results/${r.result_id}/portable/manifest.json` : undefined };
     const owed = r.record?.billing ? Math.round((q.max_price_usd - r.record.billing.charge_usd) * 1e6) / 1e6 : 0;
     if (owed > 0) out.refund_owed_usd = owed;

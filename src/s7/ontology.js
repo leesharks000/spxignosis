@@ -49,7 +49,7 @@ export async function readOntology(log, input, fieldClaims, archiveLedger, depTi
     + "\n\nFIELD LEDGER\n" + JSON.stringify(F) + "\n\nARCHIVE DEPOSITS\n" + JSON.stringify(depTitles) + "\n\nARCHIVE LEDGER\n" + JSON.stringify(A);
   const passes = [];
   for (const n of [1, 2]) passes.push(await log.run({ row: input.row, stage: "ontology", id: `pass${n}`, model: MODELS.reading, maxTokens: 16000,
-    temperature: n === 1 ? 0 : 0.7, system: ONTOLOGY_INSTRUCTIONS, shared,
+    system: ONTOLOGY_INSTRUCTIONS, shared,
     task: n === 2 ? "This is an independent second reading: it reaches its own case and relation from the ledgers." : "Read the entities, the relation, the case, the translation table and the alignment." }));
   return { passes, F: F.map((c) => c.id), A: archiveLedger.filter((c) => c.quote_ok).map((c) => c.id), compacted: cA.compacted ? { lineages: cA.lineages, size: cA.size, sent: cA.compacted_size } : null };
 }
@@ -77,5 +77,8 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
     breaches.push({ check: "reversibility", detail: `field claims absent from the translation table: ${missing.join(", ")}; carried as received, untranslated` });
     o.translation = [...(o.translation || []), ...missing.map((id) => ({ field_claims: [id], archive_claims: [], translation: "untranslated: no row was read for this claim; carried as received", receiving_text: null, received: `"${fieldClaims[id].quote}"`, marks: ["added_by_check"] }))];
   }
-  return { status: contested ? "contested" : "read", composition: o.case?.value, ...o, contested: contested ? { readings: [p1, p2].map((p) => ({ rho: p.rho, case: p.case })) } : undefined, breaches };
+  // One reading where two were asked: the reading is kept and the absent second judgment is a breach.
+  const single = !(p1 && p2);
+  if (single) breaches.push({ check: "ontology-single-pass", detail: `only pass ${p1 ? 1 : 2} of two returned a reading; ρ and the case rest on one judgment` });
+  return { status: contested ? "contested" : single ? "read (single pass)" : "read", composition: o.case?.value, ...o, contested: contested ? { readings: [p1, p2].map((p) => ({ rho: p.rho, case: p.case })) } : undefined, breaches };
 }
