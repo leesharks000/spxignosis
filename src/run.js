@@ -23,7 +23,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.6.2", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.7.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -151,8 +151,11 @@ async function prepareEntity(spec) {
     if (discernment.verdict !== "not admissible as T") return { snaps, capture: null, captures: null, discernment, supplied: true };
     snaps.length = 0; // not admitted: T falls to the registry or the construction, and the discernment is recorded
   }
-  // A quote already settled on a seated capture carries it; the run fetches the same cards again.
-  const captures = spec.transcript?.capture ? null : capturesFor([spec.name, ...(spec.aliases || [])], { pick: spec.capture || null });
+  // Construction composes the object with no T, so no capture is looked up for it. An operator has no bare address:
+  // it is opened only from a capture the caller names or a composition the caller supplies. A quote already settled on
+  // a seated capture carries it; the run fetches the same cards again.
+  const lookUp = !spec.transcript?.capture && spec.commission !== "construct" && (spec.kind !== "operator" || spec.capture);
+  const captures = lookUp ? capturesFor([spec.name, ...(spec.kind === "operator" ? spec.strings || [] : spec.aliases || [])], { pick: spec.capture || null }) : null;
   const capture = captures?.primary || null;
   const cards = capture?.cite_list || spec.transcript?.capture?.cite_list;
   if (cards) {
@@ -167,10 +170,24 @@ async function prepareEntity(spec) {
 const specWithCapture = (spec, capture) => (capture ? { ...spec, address: capture.q, transcript: { text: capture.transcript, surface: capture.surface, date: capture.date, auth: capture.auth,
   capture: { slug: capture.slug, entry: capture.entry, obs_id: capture.obs_id, addr_id: capture.addr_id, q: capture.q, cite_list: capture.cite_list } } } : spec);
 
+// Two commissions (operator, 2026-10-21). *open*: a composition already at an address (a capture seated in the
+// registry, or a supplied composition admitted through discernment) is read against its sources and against the
+// archive; the delta is the product. *construct*: the object (an entity, or an operator) is composed from the archive
+// and the sources the caller names, with no T; the article Wikipedia's policies would write is constructed only when
+// the caller asks for it as a comparison (compare: "encyclopedia"). With no commission named, a composition found or
+// supplied is opened, and otherwise the object is constructed.
 export async function quoteEntity(spec, { tier = "opening" } = {}) {
-  if (!spec?.name) throw new Error("entity.name is required");
-  if (!ADMITS.has(tier)) throw new Error("an entity without an article is opened at the opening or portable tier");
+  if (!spec?.name) throw new Error("object.name is required");
+  if (!ADMITS.has(tier)) throw new Error("an object without an article is commissioned at the opening or portable tier");
+  if (spec.kind && !["entity", "operator"].includes(spec.kind)) throw new Error("object.kind is entity or operator");
+  if (spec.kind === "operator" && !(spec.strings || []).length) throw new Error("an operator needs its strings: the phrases in which it is performed and in which entities speak it");
+  if (spec.commission && !["open", "construct"].includes(spec.commission)) throw new Error("commission is open or construct");
+  if (spec.commission === "construct" && spec.transcript) throw new Error("construct composes the object with no T; to read a composition, commission open");
   const { snaps, capture, captures, discernment, supplied } = await prepareEntity(spec);
+  if (spec.commission === "open" && !capture && !supplied)
+    throw new Error(discernment ? "nothing to open: the supplied composition was not admitted (see discernment), and no capture is seated at the object's addresses; the object can be constructed (commission: construct)"
+      : "nothing to open: no capture is seated at the object's addresses and none was supplied; the object can be constructed (commission: construct)");
+  spec = { ...spec, commission: spec.commission || (capture || supplied ? "open" : "construct") };
   const wikipedia = await wikipediaAt(spec.name);
   if (discernment && !supplied) { const { transcript, ...rest } = spec; spec = { ...rest, supplied_not_admitted: { discernment } }; }
   else if (supplied) spec = { ...spec, transcript: { ...spec.transcript, supplied: true, discernment } };
@@ -178,9 +195,10 @@ export async function quoteEntity(spec, { tier = "opening" } = {}) {
   const input = fromEntity(spec, { sources: snaps, wikipedia });
   const e = await estimateS7(input);
   const srcTok = input.field.reduce((n, b) => n + Math.min(estimateTokens(b.text), 9000), 0);
-  const construct = spec.transcript?.text ? 0 : callCost(S7_MODELS.reading, { input_tokens: srcTok + 2500, output_tokens: 6000 });
+  const compare = spec.commission === "construct" && spec.compare === "encyclopedia";
+  const construct = compare ? callCost(S7_MODELS.reading, { input_tokens: srcTok + 2500, output_tokens: 6000 }) : 0;
   // S3 reads each sentence of T against its sources: a capture's or a supplied composition's sentences against its cards.
-  const nSent = spec.transcript?.text ? (input.field.some((b) => b.text) ? Math.min(30, input.T.claims.length) : 0) : Math.min(30, input.field.filter((b) => b.text).length * 3);
+  const nSent = spec.transcript?.text ? (input.field.some((b) => b.text) ? Math.min(30, input.T.claims.length) : 0) : compare ? Math.min(30, input.field.filter((b) => b.text).length * 3) : 0;
   const perSentEst = estimateClaim(TIERS[tier].reader_model, Math.min(9000, Math.ceil(srcTok / Math.max(1, input.field.length))) + 2500);
   const sentence_price = priceClaim(tier, perSentEst, false);
   const s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key: null, ledgered: false, estimate: e, est_cost_usd: e.est_cost_usd,
@@ -195,9 +213,10 @@ export async function quoteEntity(spec, { tier = "opening" } = {}) {
     discernment: discernment || undefined,
     T_source: supplied ? { kind: discernment.mode === "attested composition" ? "composition supplied by the caller, admitted through discernment" : discernment.provenance, verdict: discernment.verdict, provenance: discernment.provenance, landing: discernment.landing }
       : capture ? { kind: captures.picked ? "capture named by the caller, seated in the registry" : "capture (the closed-ontology article)", primary: { slug: capture.slug, q: capture.q, surface: capture.surface, date: capture.date, obs_id: capture.obs_id }, bare_address_observations: captures.bare, related_captures: captures.related.length }
-      : (spec.sources || []).length ? { kind: "constructed article (Wikipedia's content policies, notability not applied)" } : { kind: "null composition" }, sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
-    tier, tier_steps: spec.transcript?.text ? `S3 on each sentence of T against its cards (at most 30), S7–S9${spec.transcript.supplied ? "; the supplied composition was discerned at the quote, and its row is held from landing until the registry seats it" : ""}` : "S0′ (the article constructed under Wikipedia's content policies, notability not applied), S3 on each constructed sentence, S7–S9",
-    reader_model: TIERS[tier].reader_model, lines: [], s7, construction: spec.transcript?.text ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
+      : compare ? { kind: "construction, with the article Wikipedia's content policies would write constructed as a comparison (notability not applied)" } : { kind: "construction: the object composed with no T" },
+    commission: spec.commission, object_kind: spec.kind || "entity", sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
+    tier, tier_steps: spec.transcript?.text ? `S3 on each sentence of T against its cards (at most 30), S7–S9${spec.transcript.supplied ? "; the supplied composition was discerned at the quote, and its row is held from landing until the registry seats it" : ""}` : compare ? "S0′ (the comparison article, under Wikipedia's content policies, notability not applied), S3 on each of its sentences, S7–S8" : "S7–S8: the object composed from the archive and the named sources, with no T",
+    reader_model: TIERS[tier].reader_model, lines: [], s7, construction: !compare ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
     sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
     estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
     pricing: { table: PRICE_TABLE.version, margin: POLICY.margin, rule: "the construction, each constructed sentence's check, and the archive's consultation with the row, each at max(floor, estimated cost × margin); the charge is for completed work only" },
@@ -301,8 +320,13 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       if (q.entity.transcript.supplied) entityInput.T = { ...entityInput.T, supplied: true, discernment: dn,
         note: dn.mode === "attested composition" ? "T is a composition supplied by the caller, admitted through discernment: its surface, address and date are the caller's attestation, not observed by the service; the row is held from landing until the registry's intake seats it as a capture" : `T is ${dn.provenance}` };
     }
+    else if (q.entity.commission === "construct" && q.entity.compare !== "encyclopedia") {
+      // Construction: the object is composed from the archive and the named sources (B), with no T to read.
+      claims = []; sources = {};
+      entityInput.T = { ...entityInput.T, kind: "null", note: `construction: the ${entityInput.object_kind === "operator" ? "operator" : "entity"} composed from the archive and the sources the caller named, with no composition at an address to read` };
+    }
     else {
-      onProgress({ stage: "S0′", detail: "constructing the article under Wikipedia's content policies" });
+      onProgress({ stage: "S0′", detail: "constructing the comparison article under Wikipedia's content policies" });
       construction = await constructArticle(preLog, entityInput);
       ({ claims, sources } = asClaims(construction.article, entityInput));
       const text = claims.map((c) => c.text).join("\n");

@@ -6,6 +6,7 @@
 import { depText, depMeta, paragraphs, registry, depOrder } from "./archive.js";
 import { MODELS, mode } from "./model.js";
 import { divide, triageAbout, triageSentences, worksLedger } from "./about.js";
+import { forKind } from "./object.js";
 
 export const ADMISSION_INSTRUCTIONS = `The admission pass reads candidate passages from the Crimson Hexagonal Archive for one entity and decides, deposit by deposit, which are admitted to the entity's archive subset. It returns JSON only.
 
@@ -53,7 +54,7 @@ function batches(packets) {
 }
 
 async function readBatches(log, input, stage, packets, model) {
-  const entity = { name: input.entity.name, type: input.entity.type, address: input.address.string,
+  const entity = { name: input.entity.name, type: input.entity.type, ...(input.object_description ? { description: input.object_description } : {}), address: input.address.string,
     first_sentence_of_T: (input.T.claims[0] || {}).text || "" };
   const passes = [[], []];
   // A recording holds the whole stage's verdicts for each pass; live runs read in batches.
@@ -64,7 +65,7 @@ async function readBatches(log, input, stage, packets, model) {
   for (const [bi, b] of batches(packets).entries()) {
     for (const n of [1, 2]) {
       const out = await log.run({ row: input.row, stage, id: `${bi + 1}-pass${n}`, model,
-        system: ADMISSION_INSTRUCTIONS, shared: "ENTITY\n" + JSON.stringify(entity) + "\n\nCANDIDATES\n" + JSON.stringify(b),
+        system: forKind(ADMISSION_INSTRUCTIONS, input), shared: (input.object_kind === "operator" ? "OPERATOR\n" : "ENTITY\n") + JSON.stringify(entity) + "\n\nCANDIDATES\n" + JSON.stringify(b),
         task: n === 2 ? "This is an independent second reading: it reaches its own decisions from the passages." : "Decide every deposit listed." });
       if (out?.verdicts) passes[n - 1].push(...out.verdicts);
     }

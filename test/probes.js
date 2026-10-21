@@ -217,6 +217,28 @@ else {
   t("publication: a page naming the slug while serving an older row is landed, not public", stale.state === "landed" && stale.stages.public.version_matches === false);
 }
 
+// 14. the commissions and the operator (2026-10-21: "i agree with undoing the constructed wikipedia article ruling";
+// "the commodity form of the entity as what conceals the operator or in which the operator comes to speak with the voice
+// of the entity").
+{
+  const { forKind, OPERATOR_PREAMBLE } = await import("../src/s7/object.js");
+  const { ADMISSION_INSTRUCTIONS } = await import("../src/s7/reading.js");
+  const { worksLedger } = await import("../src/s7/about.js");
+  const { quoteEntity } = await import("../src/run.js");
+  const op = fromEntity({ kind: "operator", name: "The exhaustive negation turned priority claim", description: "a first-person count over a stated domain ending in a total negation, stated of an entity as primacy", strings: ["nothing at all", "first work"] });
+  t("operator: an operator is its own object, its row and strings its own, matched by its strings and never by its label", op.object_kind === "operator" && op.row.startsWith("op-") && op.aliases.length === 2 && !op.aliases.some((a) => /exhaustive/i.test(a.pattern)));
+  t("operator: every pass reads its object as an operator", forKind(ADMISSION_INSTRUCTIONS, op).startsWith(OPERATOR_PREAMBLE) && forKind(ADMISSION_INSTRUCTIONS, fromEntity({ name: "x" })) === ADMISSION_INSTRUCTIONS);
+  t("operator: an operator is no author, so every mention is bearing", worksLedger({ ...op, works_by: ["heteronyms"] }).length === 0);
+  let e1 = ""; try { await quoteEntity({ kind: "operator", name: "x op", strings: ["nothing at all"], commission: "open" }); } catch (e) { e1 = e.message; }
+  t("commission: open with nothing at an address says so and offers construction", /nothing to open/.test(e1) && /construct/.test(e1));
+  let e2 = ""; try { await quoteEntity({ name: "Lee Sharks", commission: "construct", transcript: { text: "x" } }); } catch (e) { e2 = e.message; }
+  t("commission: construct takes no T", /no T/.test(e2));
+  let e3 = ""; try { await quoteEntity({ kind: "operator", name: "x op" }); } catch (e) { e3 = e.message; }
+  t("commission: an operator needs its strings", /strings/.test(e3));
+  const { provenanceOf } = await import("../src/s7/row.js");
+  t("provenance: a construction is marked as one", provenanceOf({ kind: "entity", commission: "construct", T: { kind: "null" } }).class === "construction");
+}
+
 // 8. the execution budget and a failed call.
 {
   const prev = process.env.GNOSIS_READER; process.env.GNOSIS_READER = "anthropic"; const key = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;

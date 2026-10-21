@@ -8,6 +8,7 @@ import { depText, depMeta, paragraphs, locate } from "./archive.js";
 import { blogId } from "./blog.js";
 import { windows } from "../window.js";
 import { MODELS } from "./model.js";
+import { forKind } from "./object.js";
 
 export const EXTRACTION_INSTRUCTIONS = `The extraction pass breaks one source into claims for a claim ledger. It returns JSON only.
 
@@ -42,7 +43,7 @@ function archiveExcerpt(dep, cands, { predication = false } = {}) {
 
 async function extractOne(log, input, stage, id, label, text) {
   const out = await log.run({ row: input.row, stage, id, model: MODELS.reading, maxTokens: 12000,
-    system: EXTRACTION_INSTRUCTIONS, shared: `ENTITY\n${input.entity.name}\n\nSOURCE ${label}\n${text}`, task: "Extract the source's claims under the rule." });
+    system: forKind(EXTRACTION_INSTRUCTIONS, input), shared: `${input.object_kind === "operator" ? "OPERATOR" : "ENTITY"}\n${input.entity.name}${input.object_description ? `\n${input.object_description}` : ""}\n\nSOURCE ${label}\n${text}`, task: "Extract the source's claims under the rule." });
   return out?.claims || null;
 }
 

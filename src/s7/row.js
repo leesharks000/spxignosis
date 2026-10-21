@@ -17,6 +17,7 @@ export function provenanceOf(input) {
   if (T.capture) return { class: "seated", statement: "a capture seated in the Capture Registry by its intake", registry: T.capture.slug };
   if (T.supplied && T.discernment?.mode === "attested composition") return { class: "attested", statement: T.discernment.provenance, held: T.discernment.landing };
   if (T.supplied) return { class: T.discernment?.mode === "novel entity" ? "novel" : "composed by the caller", statement: T.discernment?.provenance };
+  if (input.commission === "construct" && T.kind !== "constructed") return { class: "construction", statement: `no composition at an address is read: the ${input.object_kind === "operator" ? "operator" : "entity"} is composed from the archive and the sources the caller named` };
   if (T.kind === "constructed") return { class: "constructed", statement: "the article constructed by the service under Wikipedia's content policies, notability not applied" };
   return { class: "null", statement: "no composition at the address" };
 }
@@ -48,6 +49,7 @@ export function buildRow(run) {
     readings: live ? `live (${run.models.reading}; triage ${run.models.triage})` : "replay: no model was called in this run; every pass is a recording, named in composition_gnosis.passes",
   };
   const row = {
+    ...(input.kind === "entity" ? { commission: input.commission || null, object_kind: input.object_kind || "entity", ...(input.object_description ? { object_description: input.object_description } : {}) } : {}),
     row: r, entity: input.entity.slug, address: input.address.string, addresses: [{ address: input.address.string, surface: input.address.surface, date: input.address.date }],
     epoch: date, type: input.entity.type, surface: input.address.surface, auth: input.address.auth, status, spec: "EA-NEGONT-02 v0.9, #1690",
     objects: { T: { ...T, provenance: T.provenance || provenanceOf(input) } },

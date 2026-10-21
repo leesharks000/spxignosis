@@ -64,6 +64,7 @@ export function authorNames(input) {
 }
 
 export function worksLedger(input) {
+  if (input.object_kind === "operator") return []; // an operator is no author: its every mention is bearing
   const names = authorNames(input);
   return [...registry().values()].filter((d) => names.some((r) => r.test(String(d.creator || ""))))
     .map((d) => ({ dep: d.deposit_number, title: String(d.title || "").slice(0, 200), date: d.date, creator: String(d.creator || "").slice(0, 120), axn: d.axn }))

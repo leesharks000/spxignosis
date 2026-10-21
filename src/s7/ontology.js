@@ -6,6 +6,7 @@
 import { depText, locate } from "./archive.js";
 import { MODELS } from "./model.js";
 import { compactLedger } from "./lineage.js";
+import { forKind } from "./object.js";
 
 export const RHO = ["extends", "constructs", "revises"];
 const CASE_OF = { extends: "equal", constructs: "witness", revises: "witness" };
@@ -49,7 +50,7 @@ export async function readOntology(log, input, fieldClaims, archiveLedger, depTi
     + "\n\nFIELD LEDGER\n" + JSON.stringify(F) + "\n\nARCHIVE DEPOSITS\n" + JSON.stringify(depTitles) + "\n\nARCHIVE LEDGER\n" + JSON.stringify(A);
   const passes = [];
   for (const n of [1, 2]) passes.push(await log.run({ row: input.row, stage: "ontology", id: `pass${n}`, model: MODELS.reading, maxTokens: 16000,
-    system: ONTOLOGY_INSTRUCTIONS, shared,
+    system: forKind(ONTOLOGY_INSTRUCTIONS, input), shared,
     task: n === 2 ? "This is an independent second reading: it reaches its own case and relation from the ledgers." : "Read the entities, the relation, the case, the translation table and the alignment." }));
   return { passes, F: F.map((c) => c.id), A: archiveLedger.filter((c) => c.quote_ok).map((c) => c.id), compacted: cA.compacted ? { lineages: cA.lineages, size: cA.size, sent: cA.compacted_size } : null };
 }

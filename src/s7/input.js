@@ -89,7 +89,10 @@ export function fromNonRow(rowKey, savedDir) {
 // transcript"), and the encyclopedia's absence at the entity's title is checked and recorded as an observation.
 export function fromEntity(spec, { sources = [], wikipedia = null } = {}) {
   const name = String(spec.name || "").trim();
-  const strings = [...new Set([name, ...(spec.aliases || [])].map((s) => String(s).trim()).filter((s) => s.length >= 3))];
+  const operator = spec.kind === "operator";
+  // An operator's strings are the phrases in which it is performed and in which entities speak it; its name is a label
+  // and is matched only when the caller lists it among them.
+  const strings = [...new Set([...(operator ? [] : [name]), ...(operator ? spec.strings || [] : spec.aliases || [])].map((s) => String(s).trim()).filter((s) => s.length >= 3))];
   const aliases = strings.map((n) => {
     const latin = /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.test(n);
     return { pattern: latin ? `\\b${reEsc(n)}\\b` : reEsc(n), flags: latin ? "i" : "", from: n === name ? "name" : "alias (caller)" };
@@ -101,8 +104,10 @@ export function fromEntity(spec, { sources = [], wikipedia = null } = {}) {
   const address = spec.address || name.toLowerCase();
   return {
     kind: "entity",
-    row: slug(name),
-    entity: { slug: slug(name), name, type: spec.type || "C (an entity the encyclopedia does not hold; its type is read from its defining papers)" },
+    row: operator ? `op-${slug(name)}` : slug(name),
+    object_kind: operator ? "operator" : "entity", object_description: operator ? String(spec.description || "") : undefined,
+    commission: spec.commission || (tr ? "open" : "construct"),
+    entity: { slug: operator ? `op-${slug(name)}` : slug(name), name, type: operator ? "Op (an operator: the operation an entity form conceals, composed as its own object)" : spec.type || "C (an entity the encyclopedia does not hold; its type is read from its defining papers)" },
     address: { string: address, surface: tr ? (spec.transcript.surface || "Google AI Overview") : "none (null composition)", auth: tr ? (spec.transcript.auth || "signed out, incognito") : "—",
       date: (spec.transcript?.date || new Date().toISOString()).slice(0, 10) },
     T: { kind: tr ? "transcript" : "null", text: tr, sha256: sha256(tr), claims: sentences.map((t, i) => ({ id: `T${i + 1}`, text: t, cites: [] })), wikipedia,

@@ -5,6 +5,7 @@
 // Code checks the plan (checks.js); a reverse entailment audit by two independent raters follows (§5.3).
 import { MODELS } from "./model.js";
 import { compactLedger } from "./lineage.js";
+import { forKind } from "./object.js";
 
 export const COMPOSITION_INSTRUCTIONS = `The composition pass writes one entity of the Negative of the Negative (EA-NEGONT-02 v0.9, #1690) from its frozen ledgers and its ontology reading. It returns JSON only.
 
@@ -49,7 +50,7 @@ export async function delta(log, input, onto, fieldClaims, composition) {
   const shared = "T (the composition at the address)\n" + JSON.stringify(input.T.claims.map(({ id, text }) => ({ id, text })))
     + "\n\nCASE\n" + JSON.stringify({ case: onto.case?.value, rho: onto.rho?.value }) + "\n\nFIELD LEDGER\n" + JSON.stringify(F)
     + "\n\nKO_B\n" + JSON.stringify(composition.KO_B?.sentences || []) + "\n\nKO\n" + JSON.stringify(composition.KO?.sentences || []);
-  return log.run({ row: input.row, stage: "delta", id: "pass1", model: MODELS.reading, maxTokens: 8000, system: DELTA_INSTRUCTIONS, shared, task: "Read the two deltas." });
+  return log.run({ row: input.row, stage: "delta", id: "pass1", model: MODELS.reading, maxTokens: 8000, system: forKind(DELTA_INSTRUCTIONS, input), shared, task: "Read the two deltas." });
 }
 
 export const AUDIT_INSTRUCTIONS = `The reverse entailment audit reads each composed unit (a KO sentence, the lede, a compression item) beside the quotes of the claims it cites, with their modalities and sources, and decides whether the unit is entailed by those quotes at their modality, and whether its grammar carries that modality to the reader. A unit that says more than its claims (a hypothesis raised to a finding, an analogue to an identity, a qualifier dropped, a fact no quote gives) is a breach; the audit quotes the part that exceeds. It returns JSON only: {"units": [{"id": str, "entailed": bool, "exceeds": [str]}]}`;
@@ -63,7 +64,7 @@ export async function compose(log, input, onto, fieldClaims, archiveLedger, fiel
   const shared = (cA.compacted ? `NOTE\nThe archive ledger is sent by lineage (${cA.rule}); a lineage's listed instances are composed through its slot and count as carried.\n\n` : "") + "ENTITY\n" + JSON.stringify({ name: input.entity.name, type: input.entity.type })
     + "\n\nONTOLOGY\n" + JSON.stringify({ case: onto.case, rho: onto.rho, E_F: onto.E_F, E_A: onto.E_A, translation: onto.translation })
     + "\n\nFIELD SOURCES\n" + JSON.stringify(fieldSources) + "\n\nFIELD LEDGER\n" + JSON.stringify(F) + "\n\nARCHIVE LEDGER\n" + JSON.stringify(A);
-  return log.run({ row: input.row, stage: "compose", id: "pass1", model: MODELS.reading, maxTokens: 32000, system: COMPOSITION_INSTRUCTIONS, shared,
+  return log.run({ row: input.row, stage: "compose", id: "pass1", model: MODELS.reading, maxTokens: 32000, system: forKind(COMPOSITION_INSTRUCTIONS, input), shared,
     task: `Compose the entity in the ${onto.case?.value} case.` });
 }
 
