@@ -1,0 +1,28 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "The Sophistical Refutations is viewed by some[11] as an appendix to the Topics, inasmuch as its final section[12] appears to form an epilogue to both treatises.",
+    "locus": "The Topics as related to Sophistical Refutations",
+    "claim": "SE's final section (183a38–184b9, n. 12; Forster, Loeb, n. 11) appears to form an epilogue to both the Topics and SE.",
+    "kind": "interpretation",
+    "modality": "attributed",
+    "kernel": true,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "The treatise presents the art of dialectic - the invention and discovery of arguments in which the propositions rest upon commonly held opinions or endoxa",
+    "locus": "lead",
+    "claim": "The Topics presents the art of dialectic from endoxa.",
+    "kind": "definition",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the inquiry: its programme (183a37–b8)"
+   }
+  ]
+ }
+}

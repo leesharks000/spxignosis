@@ -1,0 +1,38 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "According to Aristotle, this is the first work to treat the subject of deductive reasoning in ancient Greece (Soph. Ref., 34, 183b34 ff.).",
+    "locus": "lead",
+    "claim": "According to Aristotle at 183b34 ff., SE is the first work to treat deductive reasoning in ancient Greece.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": true,
+    "const": false,
+    "lineage": "the sentence's claim, as reported"
+   },
+   {
+    "quote": "In it, he attempts to develop a pattern of sound and genuine reasoning in opposition to the deceptive or misleading \"art of sophistry\".",
+    "locus": "lead",
+    "claim": "SE develops sound reasoning against the art of sophistry.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the inquiry: its programme (183a37–b8)"
+   },
+   {
+    "quote": "Besides, there is an introduction (1–2), an interlude (9–11), and a conclusion (33–34).",
+    "locus": "Overview",
+    "claim": "Chapters 33–34 are the conclusion of SE.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   }
+  ]
+ }
+}

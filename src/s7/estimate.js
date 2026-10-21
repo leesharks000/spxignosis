@@ -12,26 +12,35 @@ import { callCost, estimateTokens } from "../cost.js";
 
 const two = (model, inTok, outTok) => callCost(model, { cache_creation_input_tokens: inTok, output_tokens: outTok }) + callCost(model, { cache_read_input_tokens: inTok, input_tokens: 100, output_tokens: outTok });
 
-export function estimateS7(input) {
+export async function estimateS7(input) {
   const trav = traverse(input);
   const blog = blogPass(input);
-  const dro = [...trav.D, ...trav.R, ...trav.O, ...blog.D];
+  const { divide } = await import("./about.js");
+  const { isByline } = await import("./reading.js");
+  const dv = divide(input, [...trav.D, ...trav.R, ...trav.O, ...blog.D], isByline);
+  const dro = dv.read;
   const deps = [...new Set(dro.map((c) => c.dep))];
   const droChars = dro.reduce((n, c) => n + c.sentence.length + 600, 0);
-  const numeric = deps.filter((d) => typeof d === "number");
+  const { readsWhole } = await import("./about.js");
+  const { paragraphs } = await import("./archive.js");
+  const whole = deps.filter((d) => readsWhole(dv, d)), pred = deps.filter((d) => !readsWhole(dv, d));
+  const numeric = whole.filter((d) => typeof d === "number");
   const travH = numeric.length ? traverse(input, { hopFrom: numeric }) : { ...trav, H: [] };
   const hs = hopScreen(input, travH, dro.map((c) => c.sentence));
   const hopChars = JSON.stringify(hs.screened).length;
   const hopAdmit = hs.screened.slice().sort((a, b) => b.cands.length - a.cands.length).slice(0, Math.ceil(hs.screened.length * HOP_ADMIT_SHARE)).map((x) => x.h.dep);
-  const exTok = [...deps, ...hopAdmit].reduce((n, d) => n + Math.min(estimateTokens(depText(d).text), 15000) + 1500, 0);
+  // A predication deposit is costed at the paragraphs it would be sent: its opening three and each predicating one with its neighbours.
+  const predTok = (d) => { const ps = paragraphs(depText(d).text), want = new Set([0, 1, 2]); for (const c of dro.filter((x) => x.dep === d)) for (const k of [-1, 0, 1]) want.add(c.para + k);
+    return Math.min(estimateTokens([...want].map((i) => ps[i] || "").join("\n\n")), 10000) + 1500; };
+  const exTok = [...whole, ...hopAdmit].reduce((n, d) => n + Math.min(estimateTokens(depText(d).text), 15000) + 1500, 0) + pred.reduce((n, d) => n + predTok(d), 0);
   const fieldTok = input.field.reduce((n, b) => n + Math.min(estimateTokens(b.text), 9000) + 1500, 0);
-  const claimsEst = deps.length * 10 + input.field.length * 8;
+  const claimsEst = (whole.length + hopAdmit.length) * 10 + pred.length * 3 + input.field.length * 8;
   // Composition by lineage caps what one call receives (lineage.js); the estimate costs the larger ledger at that cap.
   const ledgerTok = Math.min(claimsEst * 140, 90000) + input.T.claims.length * 60;
   const stages = {
     admission: two(MODELS.reading, Math.ceil(droChars / 4) + 1200, deps.length * 120),
     hop: two(MODELS.triage, Math.ceil(hopChars / 4) + 1200, hs.screened.length * 120),
-    extraction: callCost(MODELS.reading, { input_tokens: exTok + fieldTok, output_tokens: (deps.length + hopAdmit.length + input.field.length) * 2500 }),
+    extraction: callCost(MODELS.reading, { input_tokens: exTok + fieldTok, output_tokens: (whole.length + hopAdmit.length + input.field.length) * 2500 + pred.length * 900 }),
     ontology: two(MODELS.reading, ledgerTok + 1500, 9000),
     composition: callCost(MODELS.reading, { input_tokens: ledgerTok + 3000, output_tokens: 16000 }),
     delta: callCost(MODELS.reading, { input_tokens: Math.ceil(ledgerTok / 2) + estimateTokens(input.T.text) + 8000, output_tokens: 3000 }),
@@ -39,6 +48,7 @@ export function estimateS7(input) {
   };
   const est = Object.values(stages).reduce((a, b) => a + b, 0);
   return { est_cost_usd: Math.round(est * 1e4) / 1e4, stages: Object.fromEntries(Object.entries(stages).map(([k, v]) => [k, Math.round(v * 1e4) / 1e4])),
+    division: dv.mode === "bearing" ? null : { mode: dv.mode, read_deposits: deps.length, read_whole: whole.length, read_at_predication: pred.length, scanned_deposits: dv.scanned.deposits, works: dv.works.length, basis: dv.scanned.basis },
     counts: { candidate_deposits: deps.length, blog_candidate_posts: new Set(blog.D.map((c) => c.dep)).size, hop_candidates: travH.H.length, hop_screened_upper_bound: hs.screened.length, hop_admissions_costed: hopAdmit.length, hop_admit_share: HOP_ADMIT_SHARE, field_sources: input.field.length, est_claims: claimsEst },
     release: trav.release };
 }

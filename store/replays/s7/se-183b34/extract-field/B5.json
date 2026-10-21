@@ -1,0 +1,38 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Immanuel Kant thought that there was nothing else to invent after the work of Aristotle,",
+    "locus": "Influence",
+    "claim": "Kant thought nothing else was to be invented after Aristotle.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": true,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   },
+   {
+    "quote": "On Sophistical Refutations (Latin: De Sophisticis Elenchis) gives a treatment of logical fallacies, and provides a key link to Aristotle's tractate on rhetoric.",
+    "locus": "Constitution of the texts",
+    "claim": "SE treats fallacies and links to the Rhetoric.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "Ockham and Scotus wrote commentaries on the Categories and Sophistical Refutations.",
+    "locus": "Influence",
+    "claim": "Ockham and Scotus commented on SE.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   }
+  ]
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "At SE 34, R_0 supplies an adjective the sentence does not contain and contradicts the sentence; R_H holds the sentence.",
+    "locus": "§ (foregone value, δ_W)",
+    "claim": "The standing representation supplies an adjective and contradicts the sentence; the archive's holds it.",
+    "kind": "measure",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "at SE 34 the excluded representation is the one on which the reception's own reading is a measurable erasure",
+    "locus": "§ (the three cases)",
+    "claim": "At SE 34 the excluded representation makes the reception's reading a measurable erasure.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "provenance erasure at the sentence"
+   }
+  ]
+ }
+}

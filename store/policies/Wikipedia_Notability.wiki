@@ -1,0 +1,187 @@
+{{Short description|Article inclusion criteria for Wikipedia}}
+{{for|encylopedic coverage of this topic|Notability on the English Wikipedia}}
+{{redirect-multi|2|WP:N|WP:NOTE}}
+{{pp-protected|reason=Persistent [[WP:Disruptive editing|disruptive editing]]; restoring prior protection settings now that consensus is accumulating on talk; we will trust these editors to do the right thing|small=yes}}
+{{guideline|notability guideline|Notability|shortcut1=WP:N|shortcut2=WP:NOTE}}
+<section begin=nutshell />{{nutshell|
+Wikipedia articles cover ''notable topics''—those that have gained sufficiently significant attention by the world at large and over a period of time, and are [[WP:What Wikipedia is not|not outside the scope of Wikipedia]]. We consider evidence from [[WP:RS|reliable]] and [[WP:Independent sources|independent sources]] to gauge this attention. The notability guideline does not determine the content of articles, but only whether the topic may have its own article.}}<section end=nutshell />
+
+{{Notabilityguide}}
+On Wikipedia, '''notability''' is a test used by editors to decide whether a given topic warrants its own article.
+
+Information on Wikipedia must be [[WP:V|verifiable]]; if no [[WP:Reliable sources|reliable]], [[WP:Independent sources|independent]] sources can be found on a topic, then it should not have a separate article. Wikipedia's concept of notability applies this basic standard to avoid [[WP:IINFO|indiscriminate inclusion]] of topics. Article and list topics must be notable, or "worthy of notice". Determining notability does not {{em|necessarily}} depend on things such as fame, importance, or popularity—although those may enhance the acceptability of a topic that meets the guidelines explained below.
+
+A topic is [[presumption|presumed]] to merit an article if:
+# It meets either the general notability guideline (GNG) below, or the criteria outlined in a subject-specific notability guideline (SNG); and
+# It is not excluded under the [[Wikipedia:What Wikipedia is not|What Wikipedia is not]] policy.
+This is not a guarantee that a topic will necessarily be handled as a separate, stand-alone page. Editors may use their discretion to [[Wikipedia:Merging|merge]] or group two or more related topics into a single article. 
+
+These guidelines only outline how suitable a {{em|topic}} is for {{em|its own article or list}}. They {{em|do not}} limit the {{em|content}} of an article or list, though notability is [[WP:CSC|commonly used as an inclusion criterion for lists]] (for example [[WP:ALUMNI|for listing out a school's alumni]]). For Wikipedia's [[Wikipedia:List_of_policies#Content|policies regarding content]], ''see'' [[Wikipedia:Neutral point of view|Neutral point of view]], [[Wikipedia:Verifiability|Verifiability]], [[Wikipedia:No original research|No original research]], [[Wikipedia:What Wikipedia is not|What Wikipedia is not]], and [[Wikipedia:Biographies of living persons|Biographies of living persons]].
+
+== General notability guideline ==
+<!-- "Wikipedia:Notability (people)#Basic criteria" links here -->
+{{shortcut|WP:GNG}}
+A topic is {{em|presumed}} to be suitable for a stand-alone article or list when it has received {{em|significant coverage}} in {{em|[[WP:reliable sources|reliable sources]]}} that are {{em|[[WP:Independent sources|independent]] of the subject}}.
+* "'''Presumed'''" means that significant coverage creates an assumption, not a guarantee, that a subject merits its own article. A more in-depth discussion might conclude that the topic actually should not have a stand-alone article—perhaps because it violates [[Wikipedia:What Wikipedia is not|what Wikipedia is not]], particularly the rule that [[Wikipedia:INDISCRIMINATE|Wikipedia is not an indiscriminate collection of information]].<ref>Moreover, not all coverage in [[Wikipedia:Reliable sources|reliable sources]] constitutes evidence of notability for the purposes of article creation; for example, directories and databases, advertisements, announcements columns, and minor news stories are all examples of coverage that may not actually support notability when examined, despite their existence as [[WP:RS|reliable sources]].</ref>
+{{shortcut|WP:SIGCOV|WP:SGNF}}
+*{{va|significant coverage|text="'''Significant coverage'''" addresses the topic directly and in detail, so that [[Wikipedia:No original research|no original research]] is needed to extract the content. Significant coverage is more than a trivial mention, but it does not need to be the main topic of the source material.}}
+** The book-length history of [[IBM]] by [[Robert Sobel]] is plainly non-trivial coverage of IBM.
+** [[Martin Walker (reporter)|Martin Walker]]'s statement, in a newspaper article about [[Bill Clinton]],{{refn|{{cite news|title=Tough love child of Kennedy|first=Martin |last=Walker|date=1992-01-06|work=[[Guardian US|The Guardian]]|access-date=2006-11-20|url=http://www.guardian.co.uk/usa/story/0,,1240962,00.html|url-status=live|archive-url=https://web.archive.org/web/20250513053952/https://www.theguardian.com/world/1992/jan/06/usa.martinwalker|archive-date=2025-05-13}} }} that "In high school, he was part of a jazz band called Three Blind Mice" is plainly a trivial mention of that band.
+* "'''Reliable'''" means that sources need editorial integrity to allow [[Wikipedia:Verifiability|verifiable]] evaluation of notability, per [[Wikipedia:Reliable sources|the reliable source guideline]]. Sources may encompass [[Wikipedia:Published|published]] works in all forms and media, and [[WP:NONENG|in any language]]. Availability of secondary sources covering the subject is a good test for notability.
+* "'''{{va|Sources}}'''"<ref>Including ''but not limited to'' newspapers, books and e-books, magazines, television and radio documentaries, reports by government agencies, and academic journals. In the absence of multiple sources, it must be possible to verify that the source reflects a neutral point of view, is credible and provides sufficient detail for a comprehensive article.</ref> should be [[Wikipedia:No original research#Primary, secondary and tertiary sources|'''secondary sources''']]. There is no fixed number of sources required since sources vary in quality and depth of coverage, but multiple sources are generally expected.<ref>Lack of multiple sources suggests that the topic may be more suitable for inclusion in an article on a broader topic. It is common for multiple newspapers or journals to publish the same story, sometimes with minor alterations or different headlines, but one story does not constitute multiple works. Several journals simultaneously publishing different articles does not always constitute multiple works, especially when the authors are relying on the same sources, and merely restating the same information. Similarly, a series of publications by the same author or in the same periodical is normally counted as one source.</ref> Sources do {{em|not}} have to be [[WP:SOURCEACCESS|available online]] or [[WP:NONENG|written in English]]. Multiple publications from the same author or organization are usually regarded as a single source for the purposes of establishing notability.
+* "'''Independent of the subject'''" excludes works produced by the article's subject or someone affiliated with it. For example, advertising, press releases, autobiographies, and the subject's website are not considered independent.<ref>Works produced by the subject, or those with a strong connection to them, are not evidence of notability. See also: {{Section link|Wikipedia:Verifiability#Questionable sources}} for handling of such situations.</ref>
+
+If a topic does not meet these criteria but still has some verifiable facts, it might nonetheless be useful to present it within another article.
+
+==Subject-specific notability guidelines==
+{{Shortcut|WP:SNG}}
+{{For|a full list of subject-specific notability guidelines|Category:Wikipedia notability guidelines}}
+
+In some topic areas, subject-specific notability guidelines (SNGs) have been written to help clarify when a standalone article can or should be written. The currently accepted subject guidelines are listed in the box at the top of this page and at [[:Category:Wikipedia notability guidelines]]. Wikipedia articles are generally written based on in-depth, independent, reliable sourcing with some subject-specific exceptions. The subject-specific notability guidelines generally include verifiable criteria about a topic which show that appropriate sourcing likely exists for that topic. Therefore, topics which pass an SNG are presumed to merit an article, though articles which pass an SNG or the GNG may still be deleted or merged into another article, especially if adequate sourcing or significant coverage cannot be found, or if the topic is not suitable for an encyclopedia.
+
+SNGs also serve additional and varying purposes depending on the topic. Some SNGs, for example the ones in the topic areas of [[Wikipedia:Notability (films)|films]], [[Wikipedia:Notability (people)|biographies]], and [[WP:POLITICIAN|politicians]], provide topic-related guidance when articles should not be created. SNGs can also provide examples of sources and types of coverage considered significant for the purposes of determining notability, such as the treatment of book reviews for our [[Wikipedia:Notability (books)|literature guidelines]] and the strict significant coverage requirements spelled out in the SNG for [[Wikipedia:Notability (organizations and companies)|organizations and companies]]. Some SNGs have specialized functions: for example, the SNG for [[Wikipedia:Notability (academics)|academics and professors]] and the SNG for [[Wikipedia:Notability (geographic features)|geographic features]] operate according to principles that differ from the GNG.
+
+Some [[Wikipedia:WikiProject|WikiProjects]] have provided additional guidance on notability of topics within their field – see [[:Category:WikiProject notability advice]] and [[:Category:Wikipedia essays about notability]]. Editors are cautioned that these WikiProject notability guidance pages should be treated as [[Wikipedia:Essays|essays]] and do not establish new notability standards, lacking the weight of broad consensus of the general and subject-specific notability guidelines in various discussions (such as at [[Wikipedia:Articles for deletion]]).
+
+==<span id="NCONTENT" ></span>Notability guidelines do not apply to content within articles or lists==
+{{Shortcut|WP:NNC|WP:NLISTITEM|WP:NOTEWORTHY}}
+The criteria applied to the creation or retention of an article are not the same as those applied to the content inside it. The notability guideline does not apply to the ''contents'' of articles.  It also does not apply to the ''contents'' of [[WP:Stand-alone lists|stand-alone lists]], unless editors agree to use notability as part of the [[Wikipedia:LISTCRITERIA|list selection criteria]]. Content coverage within a given article or list (i.e. whether something is {{em|noteworthy}} enough to be mentioned within the article or list) is governed by the principle of [[WP:DUE|due weight]], [[WP:BALASP|balance]], and other [[Wikipedia:List of policies#Content|content policies]]. For additional information about list articles, see [[#Stand-alone lists|Notability of lists]] and [[WP:LSC|List selection criteria]].
+
+==Article content does not determine notability==
+{{shortcut|WP:ARTN|WP:CONTN}}
+Notability is a property of a {{em|subject}} and not of a Wikipedia article. If the topic has not been covered outside of Wikipedia, [[WP:OVERCOME|no amount of improvement]] to the Wikipedia content will suddenly make the topic notable. Conversely, if the [[WP:NEXIST|source material exists]], even very poor writing and referencing within a Wikipedia article will not decrease the topic's notability.
+
+== <span id="NRVE" ></span><span id="OBJ" ></span>Notability requires verifiable evidence ==
+{{Shortcut|WP:NRV|WP:NRVE}}
+The common theme in the notability guidelines is that there must be [[Wikipedia:Verifiability|verifiable]], objective evidence that the subject has received significant attention from independent sources to support a claim of notability.
+
+No subject is automatically or inherently notable merely because it exists: the evidence must show the topic has gained significant independent coverage or recognition, and that this was not a mere [[WP:NOT#NEWS|short-term interest]], nor a result of [[#SPIP|promotional activity or indiscriminate publicity]], nor is the topic unsuitable for [[WP:NOT|any other reason]]. Sources of evidence include recognized peer-reviewed publications, credible and authoritative books, reputable media sources, and other reliable sources generally.
+
+=== Notability is based on the existence of suitable sources, not on the state of sourcing in an article ===
+{{Shortcut|WP:NEXIST|WP:NPOSSIBLE}}
+The absence of sources or citations in a Wikipedia article (as distinct from the ''non-existence'' of independent, published reliable sources online or offline) does not indicate that a subject is not notable. Notability requires only that suitable independent, reliable sources [[Wikipedia:Published|exist in the real world]]; it does not require their immediate presence or [[Wikipedia:Citing sources|citation]] in an article. Editors evaluating notability should consider not only any sources currently named in an article, but also the possibility or existence of notability-indicating sources that are not currently named in the article. Thus, before [[Wikipedia:Proposed deletion|proposing]] or [[Wikipedia:Articles for deletion|nominating]] an article for deletion, or offering an opinion based on notability in a [[Wikipedia:Articles for deletion|deletion discussion]], editors are strongly encouraged to attempt to [[WP:BEFORE|find sources]] for the subject in question and consider the possibility that sources may still exist even if their search failed to uncover any.
+
+Wikipedia articles are [[WP:IMPERFECT|not a final draft]], and an article's subject can be notable if such sources exist, even if they have not been named yet. If it is likely that significant coverage in independent sources can be found for a topic, deletion due to lack of notability is inappropriate. However, once an article's notability has been challenged, merely asserting that unspecified sources exist is seldom persuasive, especially if time passes and actual proof does not surface.
+
+{| class="wikitable"
+|+ The current state of the article does not determine notability
+!scope="col"| Current state of the article
+!scope="col"| Sources [[WP:BEFORE|available in the real world]]
+!scope="col"| Result
+|-
+| {{cross}} No or few suitable sources cited
+| {{cross}} No or few suitable sources that could be cited
+| {{no|{{cross}} '''Likely not notable'''}}
+|-
+| {{cross}} No or few suitable sources cited
+| {{tick}} Multiple suitable sources that could be cited
+| {{yes|{{tick}} '''Likely notable'''}}
+|-
+| {{tick}} Multiple suitable sources cited
+| {{tick}} Multiple suitable sources that could be cited
+| {{yes|{{tick}} '''Likely notable'''}}
+|}
+
+== <span id="TEMP" ></span><span class="anchor" id="TEMP"></span><span class="anchor" id="is not temporary"></span>Notability is not temporary ==
+{{Shortcut|WP:NTEMP|WP:NOTTEMPORARY<!-- other variations that come here, but they don't all need to be shown in the list: [[WP:15MOF]] [[WP:15MIN]] [[WP:NOTABILITYISNOTTEMPORARY]] -->}}
+Notability is not temporary; once a topic has been the subject of "significant coverage" in accordance with the general notability guideline, it does not need to have ongoing coverage.
+
+While notability itself is not temporary, from time to time a reassessment of the evidence of notability or suitability of existing articles may be requested by any user via a [[Wikipedia:Articles for deletion|deletion discussion]], or new evidence may arise for articles previously deemed unsuitable. Thus, an article may be proposed for deletion months or even years after its creation, or recreated whenever new evidence supports its existence as a standalone article.
+
+== <span class="anchor" id="SUSTAINED"></span>Notable topics have attracted attention over a sufficiently significant period of time ==
+{{shortcut|WP:NSUSTAINED|WP:SUSTAINED}}
+{{See also|Wikipedia:Notability#Events|Wikipedia:Biographies of living persons#Subjects notable only for one event}}
+
+Wikipedia is a {{em|lagging indicator of notability}}. Just as a [[lagging economic indicator]] indicates what the economy was doing in the past, a topic is "notable" in Wikipedia terms only if the outside world has already "taken notice of it". Once established, notability is not [[#Notability is not temporary|temporary]]. Brief bursts of news coverage may not sufficiently demonstrate notability. However, sustained coverage is an indicator of notability, as described by [[WP:NEVENTS|notability of events]]. New organizations and future events might pass the {{Section link|#General notability guideline|}}, but lack sufficient coverage to satisfy {{Section link|nopage=y|Wikipedia:What Wikipedia is not|Wikipedia is not a newspaper|Wikipedia is not a soapbox or means of promotion}}.
+
+If reliable sources cover a person only in the context of a single event, and if that person otherwise remains, and is likely to remain, a low-profile individual, [[WP:BLP1E|we should generally avoid having a biographical article on that individual]].
+
+Similarly, reproductions or close paraphrasing of press releases (aka [[churnalism]]) does not count as sustained coverage.
+
+== Whether to create standalone pages ==
+{{Shortcut|WP:PAGEDECIDE|WP:NOPAGE}}
+{{redirect|WP:NOPAGE|the guideline on red-linked articles in hatnotes|Wikipedia:Hatnote#Non-existent articles}}{{Further|Wikipedia:Summary style|Wikipedia:Content forking|Wikipedia:Article size|Wikipedia:Merging}}
+
+When creating new content about a notable topic, editors should consider how best to help readers understand it. Often, understanding is best achieved by presenting the topic on a dedicated standalone page, but it is not required that we do so; at times it is better to cover a notable topic as part of a larger page about a broader topic, with more context (and doing so in no way disparages the importance of the topic). Editorial judgment goes into each decision about whether or not to create a separate page, but the decision should always be based upon specific considerations about how to make the topic understandable, and not merely upon personal [[WP:ILIKEIT|likes]] or [[WP:IDONTLIKEIT|dislikes]].
+*'''Does other information provide needed context?''' Sometimes, a notable topic can be covered better as part of a larger article, where there can be more complete context that would be lost on a separate page ({{Section link|Mitt Romney 2012 presidential campaign#International trip}}, for example). Other times, standalone pages are well justified (as with [[President of the United States]] as well as standalone biographies of every individual President). One should particularly consider [[WP:DUE|due and undue weight]]. [[Wikipedia:fringe theories|Fringe theories]], for example, may merit standalone pages but have undue weight on a page about the mainstream concept.
+*'''Do related topics provide needed context?''' Sometimes, several related topics, each of them similarly notable, can be collected into a single page, where the relationships between them can be better appreciated than if they were each a separate page (as at [[Music of the Final Fantasy VII series|Music of the ''Final Fantasy VII'' series]]). Other times, when many similar notable topics exist, it is impractical to collect them into a single page, because the resulting article would be too unwieldy. In that case, a viable option is creating a new list or category for the broader topic and linking to the individual articles from it (as with [[:Category:Restaurants in New York City]]).
+*'''What sourcing is available now?''' Sometimes, when a subject is notable, but it is unlikely that there ever will be a lot to write about it, editors should weigh the advantages and disadvantages of creating a [[WP:PERMASTUB|permanent stub]]. On the other hand, an article may be a stub even though many sources exist, but simply have not been included yet. Such a short page is better expanded than merged into a larger page (see also the essays [[Wikipedia:Every snowflake is unique]] and [[Wikipedia:Run-of-the-mill]]). Sometimes, when information about a future event is scarce, coverage may instead be better suited to a larger encompassing article (see also {{Section link|Wikipedia:What Wikipedia is not#Wikipedia is not a crystal ball|}}). Other times, a future event may clearly be suitable for a standalone page before it happens (such as the next upcoming [[Summer Olympics]]). However, before creating such an article, make sure that the likelihood of the future event occurring is reasonably assured. For example, the [[WP:FILM|WikiProject Film]] strongly recommends that [[WP:NFF|a standalone article for a new film be created]] only if reliable sources confirm that principal photography for the film has commenced (which makes it very likely the film will be completed).
+
+[[:Category:Wikipedia notability guidelines|Subject-specific notability guidelines]] and [[Wikipedia:Advice pages|WikiProject advice pages]] may provide information on how to make these editorial decisions in particular subject areas. When a standalone page is created, it can be [[WP:SPINOFF|spun off]] from a broader page. Conversely, when notable topics are not given standalone pages, [[WP:REDIRECT|redirection pages]] and [[WP:DISAMBIGUATION|disambiguation]] can be used to direct readers searching for such topics to the appropriate articles and sections within them (see also [[Wikipedia:Redirects are cheap]]).
+
+== Why we have these requirements ==
+{{shortcut|WP:WHYN}}
+Editors apply notability standards to all subjects to determine whether the English language Wikipedia should have a separate, stand-alone article on that subject. The primary purpose of these standards is to ensure that editors create articles that comply with major content policies.
+* We require "significant coverage" in reliable sources so that we can actually write a whole article, rather than half a paragraph or a [[Wikipedia:Wikipedia is not a dictionary|definition]] of that topic. If only a few sentences could be written and supported by sources about the subject, that subject does not qualify for a separate page, but should instead be [[Wikipedia:Merging|merged]] into an article about a larger topic or relevant list. (See [[WP:FAILN|the advice below]].)
+* We require the existence of [[Wikipedia:Reliable sources|"reliable sources"]] so that we can be confident that we're not passing along random gossip, perpetuating hoaxes, or posting [[WP:IINFO|indiscriminate collections of information]].
+* We require that all articles rely primarily on [[Wikipedia:Independent sources|"third-party" or "independent sources"]] so that we can write a fair and balanced article that complies with [[Wikipedia:Neutral point of view|Wikipedia's neutral point of view policy]] and to ensure that articles are [[WP:NOTADVERTISING|not advertising]] a product, service, or organization. See [[Wikipedia:Autobiography]] for discussion of neutrality concerns of self-published sources. 
+* We require the existence of at least one [[Wikipedia:Identifying and using primary and secondary sources|secondary source]] so that the article can comply with [[Wikipedia:No original research]]'s requirement that all articles be based on secondary sources.
+* We require multiple sources so that we can write a reasonably balanced article that complies with [[Wikipedia:Neutral point of view]], rather than representing only one author's point of view. This is also why multiple publications by the same person or organization are considered to be a single source for the purpose of complying with the "multiple" requirement.
+* We require editors to use their judgment about how to organize subjects so that we have neither long, bloated articles nor [[Wikipedia:Permastub|articles so narrow that they cannot be properly developed]]. Editors may decide that it is better for readers to present a narrow subject as part of a broader one. For example, editors normally prefer to merge information about translations of books into the larger subject of the original book, because in their editorial judgment, the merged article is more informative and more balanced for readers and reduces redundant information in the encyclopedia. (For ideas on how to deal with material that may be best handled by placing it in another article, see {{Section link|Wikipedia:Notability#Articles not satisfying the notability guidelines|}}.)
+
+Because these requirements are based on major content policies, they apply to all articles, not solely articles justified under the [[WP:GNG|general notability criteria]]. They do not, however, apply to pages whose primary purpose is navigation (e.g. all [[Wikipedia:Disambiguation|disambiguation]] pages and [[WP:LSC|some lists]]).
+
+== Common circumstances ==
+=== <span id="SPIP" ></span>Self-promotion and publicity ===
+{{Shortcut|WP:SPIP}}
+Publication in a reliable source is not always good evidence of notability. [[WP:Promotion|Wikipedia is not a promotional medium]]. [[Self-promotion]], [[autobiography]], [[product placement]], [[Press release|press releases]], [[Brand|branding campaigns]], [[advertising|advertisements]], and [[WP:Paid editing|paid material]] are not valid routes to an encyclopedia article. The barometer of notability is whether people independent of the topic itself (or of its manufacturer, creator, author, inventor, company, or vendor) have actually considered the topic worth writing and publishing non-trivial works of their own that focus upon it—without [[incentive]], promotion, or other influence by people connected to the topic matter.
+
+Independent sources are also needed to guarantee a [[WP:NPOV|neutral article]] can be written. Even non-promotional self-published sources, like technical manuals that accompany a product, are still not evidence of notability as they are not a measure of the attention a subject has received.
+
+=== <span class="anchor" id="SBST"></span>Events ===
+{{shortcut|WP:SBST}}
+{{main|Wikipedia:Notability (events)}}
+
+[[WP:NOTNEWS|Wikipedia is not a news source]]: it takes more than just routine news reports about a single event or topic to constitute significant coverage. For example, routine news coverage such as press releases, public announcements, sports coverage, and [[Tabloid journalism#To refer to sensationalist journalistic practices|tabloid journalism]] is not significant coverage. Even a large number of news reports that provide no critical analysis of the event is not considered significant coverage. In some cases, notability of a controversial entity (such as a book) could arise {{em|either}} because the entity itself was notable, {{em|or}} because the controversy was notable as an event—both need considering.
+
+=== Stand-alone lists ===
+{{Shortcut|WP:NLIST|WP:LISTN}}
+{{Further|Wikipedia:Stand-alone lists#Selection criteria|Wikipedia:Categories, lists, and navigation templates#Overlapping categories, lists and navigation templates are not considered duplicative}}
+{{See also|Wikipedia:Manual of Style/Lists#Adding individual items to a list}}
+
+Notability guidelines also apply to the creation of stand-alone lists and tables. Notability of lists (whether titled as "List of Xs" or "Xs") is based on the group. One accepted reason why a list topic is considered notable is if it has been discussed {{em|as a group or set}} by independent reliable sources, per the above guidelines, and other guidelines on {{No self link|Wikipedia:SALAT|appropriate stand-alone lists}}. The entirety of the list does not need to be documented in sources for notability, only that the grouping or set in general has been. Because the {{em|group or set}} is notable, the individual entries in the list do not need to be independently notable, although editors may, at their discretion, choose to limit large lists through methods such as {{No self link|WP:CSC|only including entries for independently notable items}}.
+
+There is no present consensus for how to assess the notability of more complex and cross-categorization lists (such as "Lists of X of Y") or what other criteria may justify the notability of stand-alone lists, although [[Wikipedia:What Wikipedia is not#Non-encyclopedic cross-categorizations|non-encyclopedic cross-categorizations]] are touched upon in {{Section link|Wikipedia:What Wikipedia is not#Wikipedia is not a directory}}. Lists that fulfill [[WP:LISTPURP|recognized informational, navigational, or developmental purposes]] are often kept regardless of any demonstrated notability. Editors are still urged to demonstrate list notability via the grouping itself before creating stand-alone lists.
+
+===Fringe topics===
+{{excerpt|Wikipedia:Fringe theories|templates=-nutshell,notice,guideline list,subcat guideline}}
+
+== Articles not satisfying the notability guidelines ==
+{{Shortcut|WP:FAILN}}
+
+Topics that do not meet this criterion are not retained as separate articles. Non-notable topics with closely related notable articles or lists are often ''merged'' into those pages, while non-notable topics without such merge targets are generally deleted.
+
+If an article fails to cite sufficient sources to demonstrate the notability of its subject, look for sources yourself, or:
+* Ask the article's creator or an expert on the subject<ref>Sometimes contacting the subject of a biography or the representative of a subject organization will yield independent source material. Of course we have to be careful to observe and evaluate independence. You might also see if there is an active  [[Wikipedia:WikiProject|WikiProject]] related to the topic, and ask for help there.</ref> for advice on where to look for sources.
+* Place a {{tl|notability}} tag on the article to alert other editors.
+* If the article is about a specialized field, use the {{tl|expert-subject|PROJECT-NAME}} tag with a specific [[Wikipedia:WikiProject|WikiProject]] to attract editors knowledgeable about that field, who may have access to [[Wikipedia:Reliable sources|reliable sources]] not available online.
+
+If appropriate sources ''cannot be found'' after a good-faith search for them, consider [[Wikipedia:Merging|merging]] the article's verifiable content into a broader article providing context.<ref>For instance, articles on minor [[Fictional character|characters in a work of fiction]] may be merged into a "list of minor characters in{{nbsp}}..."; articles on schools may be merged into articles on the towns or regions where schools are located; relatives of a famous person may be merged into the article on the person; articles on persons only notable for being associated with a certain group or event may be merged into the main article on that group or event.</ref> Otherwise, if deleting:<ref>Wikipedia editors have been known to reject nominations for deletion that have been inadequately researched. Research should include attempts to find sources which might demonstrate notability, and/or information which would demonstrate notability in another manner.</ref>
+* If the article meets our [[Wikipedia:Criteria for speedy deletion|criteria for speedy deletion]], one can use a criterion-specific deletion tag listed on that page.
+* Use the {{tl|prod}} tag for articles which do not meet the criteria for speedy deletion, but are uncontroversial deletion candidates. This allows the article to be deleted after seven days if nobody objects. For more information, see [[Wikipedia:Proposed deletion]].
+* For cases where you are unsure about deletion, believe others might object, or another editor has already objected to a previous proposed deletion, nominate the article for the [[Wikipedia:Articles for deletion|articles for deletion]] process, where the merits will be debated and deliberated for seven days.
+
+For articles on subjects that are ''clearly'' not notable, then deletion is usually the most appropriate response, although other options may help the community to [[WP:PRESERVE|preserve any useful material]]. Since deletion of an article is often heavily contested, editors are advised to thoroughly [[WP:BEFORE|follow several recommended steps prior to nomination]].
+
+== See also ==
+* An extensive set of ''subject-specific guideline pages'' for different aspects of notability can be found at [[:Category:Wikipedia notability guidelines]], with subject specific essays and proposed guidelines at [[:Category:Wikipedia notability]]
+* Wikipedia's article on [[Notability in the English Wikipedia]]
+* For commentary and discussion of this guideline, see [[Wikipedia:Essays in a nutshell/Notability]] and [[:Category:Wikipedia essays about notability]].
+*  [[Wikipedia:Secondary does not mean independent]], an essay on the difference between first-person, first-party, and primary sources.
+*  [[Wikipedia:Identifying and using primary and secondary sources]]
+*  [[Wikipedia:Viability of lists]]
+* [[Wikipedia:Search engine test]]
+* [[Wikipedia:Recentism]]
+* [[Wikipedia:Relevance of content]]
+* {{slink|Wikipedia:Categorization|Defining}}
+* [[Wikipedia:No amount of editing can overcome a lack of notability|No amount of editing can overcome a lack of notability]]
+* {{tl|assess table}} and {{tl|source assess}}, two templates used to present an assessment of the sources present in an article
+* [[MOS:NOTE]]: Manual of Style on "Instructional and presumptuous language"
+
+== Notes ==
+{{Reflist|2}}
+<!-- essays and the like should go in the category below, which serves as a general list of 'related issues' -->
+
+{{Wikipedia policies and guidelines}}
+
+[[Category:Wikipedia notability guidelines|*]]

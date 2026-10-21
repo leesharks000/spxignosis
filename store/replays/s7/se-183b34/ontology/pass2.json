@@ -1,0 +1,380 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "E_F": {
+   "type": "C (public entity: a passage of a canonical text)",
+   "definition": "the closing chapter of Aristotle's Sophistical Refutations (ch. 34, the conclusion of the work and, to some, the epilogue to the Topics and the SE), in which Aristotle says that of this inquiry 'Nothing existed at all' and that on reasoning 'we had nothing else of an earlier date to speak of at all'; read in the field as his claim that the work is 'the first work to treat the subject of deductive reasoning', the earliest formal study of logic, with predecessors in practice and the systematic discipline beginning with him (B1–B7)",
+   "claims": [
+    "F29",
+    "F33",
+    "F39",
+    "F43",
+    "F27",
+    "F1",
+    "F13"
+   ]
+  },
+  "E_A": {
+   "definition": "the sentence 183b34–36 with its pair 184b1–2, read in their paragraph (183a37–184b8): a denial, exhaustive over the domain ταύτης τῆς πραγματείας fixes, that any part of the undertaking was worked out beforehand, on the paragraph's one axis of provenance (received from others, παρ᾽ ἑτέρων, against found from the beginning); the received qualifier ('systematic', 'formal', 'developed') not transmitted, its insertion in reception measured to the deletion of οὐ; Socrates named inside the inquiry's account, not a predecessor from whom anything was received, his inclusion in the beginning argued, controversially, and not demonstrated (#1574, #1603; with #1576, #1575, #1570, #1569)",
+   "claims": [
+    "SE1574-13",
+    "SE1574-17",
+    "SE1603-10",
+    "SE1574-14",
+    "SE1574-24",
+    "SE1574-33",
+    "SE1603-03",
+    "SE1603-22",
+    "SE1603-25",
+    "SE1574-48"
+   ],
+   "defining_papers": [
+    1574,
+    1603,
+    1576,
+    1575,
+    1570
+   ]
+  },
+  "rho": {
+   "value": "extends",
+   "statement": "The archive reads E_F as the entity (the sentence of SE 34 and its chapter) and adds on it: the domain over which the quantifier is exhaustive; the provenance axis of the paragraph and the verb ὑπάρχειν; the qualifier as not transmitted and as a measured erasure in reception, with the frames #1574 marks as interpretations (provenance erasure, disciplinary model collapse, the world soul as degraded commodity); the witnesses that keep the sentence and the modern position of the degree-reading; Socrates' fork, the case for inclusion and the enactment; the bounds and the invitation it states.",
+   "claims": [
+    "SE1574-13",
+    "SE1603-10",
+    "SE1603-12",
+    "SE1574-24",
+    "SE1574-33",
+    "SE1574-39",
+    "SE1574-43",
+    "SE1574-45",
+    "SE1603-28",
+    "SE1603-19",
+    "SE1603-22",
+    "SE1603-33",
+    "SE1603-37"
+   ],
+   "guard": "#1603 §1: 'Nothing here impugns the fourth century. Socrates asked; the practice of examining existed; the paper asserts nothing about history beyond what the paragraph asserts' (SE1603-07). ρ = extends claims additions on the field's object and no more: it does not make the field's translations wrong (they keep the sentence, F5, F9), and it does not establish Socrates inside the 'we' (#1574 §9, SE1574-48; #1603 §5, SE1603-25). Where an archive sense contradicts a field claim (F23/SE1574-24, SE1576-06; F18/SE1603-19; F11, F37/SE1603-34, SE1603-48), both are composed under P_coh within the one ontology. The archive's own two readings of practice-versus-art (#1570 against #1603) are carried as contested in the pool, with dates."
+  },
+  "case": {
+   "value": "equal",
+   "statement": "Equal terms (§0.9, §1.2a), ρ = extends. The field has a real account of the passage, and the archive reads the field's object, the sentence of SE 34 in its chapter: the translators the field carries keep it total (Pickard-Cambridge's 'Nothing existed at all', F5), and #1603 records that 'In every version examined here the sentence is translated as it stands', so the literal reading is not an ontology otherwise unavailable; the premodern paraphrast already holds the denial total with Socrates inside dialectic (#1603 E.8). The archive adds senses, mechanisms and limits on that object: the domain the quantifier is exhaustive over (#1574 CLAUSE; #1603 §4), the provenance axis of the paragraph (#1603 §3; #1576 §2.1), the received qualifier as not transmitted and its insertion measured (#1574 §3, B5; #1603 §7, Appendix A), Socrates' place in the fork and the case for inclusion (#1603 §§4–5, 9), and the bounds and falsifiers it states. It states the received reading first and grants its strength (#1570 §0A.2; #1576 §1). Where an archive claim contradicts a field claim (F23 against SE1574-24 and SE1576-06; F18 against SE1603-19; F11 and F37 against SE1603-34 and SE1603-48), both are composed in the one claim space under P_coh, each with its source. The margin of §10.16 was read and not met: Many and One's single-maker hypothesis (#1576 §9.4) supplies an ontology the field does not hold, but #1576 holds it as a hypothesis whose result is only that 'two is not established by these passages', and #1603 withholds the maker question at this sentence ('which this sentence cannot decide'); the hypothesis is composed at its own grade in its own sense, and nothing in the row composes the passage in the archive's ontology. The archive's wider concerns (the Capture Registry, model collapse, the World Soul) enter only where #1574 ties them to the sentence (§§5–8, marked as interpretations its measurement does not depend on; §8 marked theoretical extension).",
+   "loci": [
+    {
+     "dep": 1603,
+     "locus": "Abstract",
+     "quote": "In every version examined here the sentence is translated as it stands",
+     "quote_ok": true
+    },
+    {
+     "dep": 1603,
+     "locus": "§1",
+     "quote": "Nothing here impugns the fourth century.",
+     "quote_ok": true
+    },
+    {
+     "dep": 1603,
+     "locus": "Appendix A, E.8",
+     "quote": "The fork's second horn has a premodern occupant, and the denial survives him intact.",
+     "quote_ok": true
+    },
+    {
+     "dep": 1603,
+     "locus": "§4",
+     "quote": "A significant precursor from whom nothing was received contradicts no clause of the sentence",
+     "quote_ok": true
+    },
+    {
+     "dep": 1603,
+     "locus": "Appendix P, the two joints",
+     "quote": "withholds the second, which this sentence cannot decide and which is argued elsewhere on other evidence",
+     "quote_ok": true
+    },
+    {
+     "dep": 1576,
+     "locus": "§1",
+     "quote": "That reading is strong, and this paper does not refute it.",
+     "quote_ok": true
+    },
+    {
+     "dep": 1576,
+     "locus": "§9.6",
+     "quote": "not that one wrote it, but that two is not established by these passages",
+     "quote_ok": true
+    },
+    {
+     "dep": 1570,
+     "locus": "§0A.2",
+     "quote": "THE CONVENTIONAL READING IS MUCH STRONGER THAN THIS ENTRY PREVIOUSLY ALLOWED",
+     "quote_ok": true
+    },
+    {
+     "dep": 1574,
+     "locus": "§9",
+     "quote": "The run does not establish that Socrates belongs inside the chapter's \"we.\"",
+     "quote_ok": true
+    },
+    {
+     "dep": 1574,
+     "locus": "§5",
+     "quote": "Sections 5–8 are interpretations of §3; §3 does not depend on them.",
+     "quote_ok": true
+    },
+    {
+     "dep": 1574,
+     "locus": "§1",
+     "quote": "The study asked one question: is that qualifier in the sentence, and if not, where does it come from.",
+     "quote_ok": true
+    }
+   ]
+  },
+  "translation": [
+   {
+    "field_claims": [
+     "F39"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-03, SE1574-04, SE1603-38. Note at this claim: the asserted clause is rendered total ('Nothing existed at all'); one adverb, 'thoroughly', enters the denied member, a degree the Greek προεξειργασμένον does not carry (#1603 Appendix A, D2).",
+    "archive_claims": [
+     "SE1574-03",
+     "SE1574-04",
+     "SE1603-38"
+    ]
+   },
+   {
+    "field_claims": [
+     "F43"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-01, SE1574-02, SE1603-15. Note: 'on the subject of reasoning' renders περὶ τοῦ συλλογίζεσθαι and 'experimental researches' τριβῇ ζητοῦντες, where #1574 has 'about syllogizing' and 'seeking by practice'; the clause keeps παντελῶς οὐδέν total ('at all').",
+    "archive_claims": [
+     "SE1574-01",
+     "SE1574-02",
+     "SE1603-15"
+    ]
+   },
+   {
+    "field_claims": [
+     "F41"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-10, SE1603-39. Note: 'ready but rough' renders ταχεῖα μὲν ἄτεχνος δ᾽; the qualifying vocabulary of system enters the English chapter at this word (Forster's 'unsystematic'), attached to the teachers' instruction, one line after the sentence (#1603 Appendix A, D3; §7).",
+    "archive_claims": [
+     "SE1574-10",
+     "SE1603-39"
+    ]
+   },
+   {
+    "field_claims": [
+     "F40",
+     "F42"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-14, SE1576-16",
+    "archive_claims": [
+     "SE1603-14",
+     "SE1576-16"
+    ]
+   },
+   {
+    "field_claims": [
+     "F35",
+     "F34",
+     "F21",
+     "F6",
+     "F28",
+     "F26"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-13, SE1603-16, SE1576-05 (the domain the denial is exhaustive over is this undertaking, as 183a37–b8 states it)",
+    "archive_claims": [
+     "SE1574-13",
+     "SE1603-16",
+     "SE1576-05"
+    ]
+   },
+   {
+    "field_claims": [
+     "F36"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-06, SE1576-08, SE1574-21",
+    "archive_claims": [
+     "SE1574-06",
+     "SE1576-08",
+     "SE1574-21"
+    ]
+   },
+   {
+    "field_claims": [
+     "F37",
+     "F38"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-09, SE1603-10, SE1576-04 (the division is of provenance: 'handed down from others' is παρ᾽ ἑτέρων ληφθέντα)",
+    "archive_claims": [
+     "SE1603-09",
+     "SE1603-10",
+     "SE1576-04"
+    ]
+   },
+   {
+    "field_claims": [
+     "F44"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-11, SE1575-02",
+    "archive_claims": [
+     "SE1574-11",
+     "SE1575-02"
+    ]
+   },
+   {
+    "field_claims": [
+     "F29",
+     "F4",
+     "F5",
+     "F33",
+     "F24",
+     "F31"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1576-01, SE1603-45",
+    "archive_claims": [
+     "SE1576-01",
+     "SE1603-45"
+    ]
+   },
+   {
+    "field_claims": [
+     "F1"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-34, SE1574-14, SE1574-24. Note at this claim: the qualifier 'formal' is not in the Greek; #1603 P7 names 'formal' among the adequacy thresholds the text rules out, and #1574 records that no adjective is transmitted with οὐδέν (context, not T: the Overview at #1574's own title, 2026-10-20, states the line as 'the first formal attempt to treat the subject of deductive reasoning').",
+    "archive_claims": [
+     "SE1603-34",
+     "SE1574-14",
+     "SE1574-24"
+    ]
+   },
+   {
+    "field_claims": [
+     "F27"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-48, SE1574-26, SE1576-05. Note: the claim is reported as Aristotle's ('According to Aristotle'), with συλλογίζεσθαι given as 'deductive reasoning' and the denial given as a work's priority ('the first work to treat'); #1603 P1 rules out relocating the denial to 'logic' or 'the formal theory of valid inference', #1576 that the inquiry's nouns mean 'the formal theory of syllogistic validity', and #1574 records the reading of the sentence as Aristotle's stance (no φησί transmitted).",
+    "archive_claims": [
+     "SE1603-48",
+     "SE1574-26",
+     "SE1576-05"
+    ]
+   },
+   {
+    "field_claims": [
+     "F13"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-24, SE1574-25, SE1576-06, SE1603-11. Note at this claim: 'fully systematic' is the qualifier the Greek does not carry (#1574 Appendix A7, entry 2: 'No adjective is transmitted'); 'systematized much of the logical inquiry of his predecessors' states the member the sentence negates, partial prior working-out received from others (#1574 A7 entry 1; #1576 §2.4); the two claims stand in contradiction and are composed together (P_coh).",
+    "archive_claims": [
+     "SE1574-24",
+     "SE1574-25",
+     "SE1576-06",
+     "SE1603-11"
+    ]
+   },
+   {
+    "field_claims": [
+     "F2",
+     "F19",
+     "F22",
+     "F20"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1576-02, SE1570-01",
+    "archive_claims": [
+     "SE1576-02",
+     "SE1570-01"
+    ]
+   },
+   {
+    "field_claims": [
+     "F11",
+     "F12",
+     "F16",
+     "F17",
+     "F18"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-07, SE1574-16 (the archive asserts nothing about the fourth century beyond what the paragraph asserts; what existed, the chapter places outside its domain)",
+    "archive_claims": [
+     "SE1603-07",
+     "SE1574-16"
+    ]
+   },
+   {
+    "field_claims": [
+     "F10"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1576-03, SE1576-07",
+    "archive_claims": [
+     "SE1576-03",
+     "SE1576-07"
+    ]
+   },
+   {
+    "field_claims": [
+     "F7",
+     "F9"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1585-01, SE1603-17 (convergence: peirastic practicable by the non-knower; definition referred to Socrates)",
+    "archive_claims": [
+     "SE1585-01",
+     "SE1603-17"
+    ]
+   },
+   {
+    "field_claims": [
+     "F8"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-19, SE1603-03, SE1574-47. Note: 'descended' states a received relation for the peirastic; for this inquiry the sentence denies that anything was received (#1603 §4: on neither horn a predecessor from whom something was received); the two are composed together (P_coh), the field's at its own grade ('almost certainly').",
+    "archive_claims": [
+     "SE1603-19",
+     "SE1603-03",
+     "SE1574-47"
+    ]
+   },
+   {
+    "field_claims": [
+     "F14",
+     "F15"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1603-20, SE1603-22, SE1574-36 (the practitioner who did not theorize is #1603's middle position or the qualified reading's predecessor, according as something is said to have been received)",
+    "archive_claims": [
+     "SE1603-20",
+     "SE1603-22",
+     "SE1574-36"
+    ]
+   },
+   {
+    "field_claims": [
+     "F3",
+     "F30",
+     "F23",
+     "F25",
+     "F32"
+    ],
+    "receiving_text": "—",
+    "translation": "untranslated: composed as received beside SE1574-42",
+    "archive_claims": [
+     "SE1574-42"
+    ]
+   }
+  ],
+  "t_alignment": []
+ }
+}

@@ -6,7 +6,7 @@ set -e
 cd "$(dirname "$0")/.."
 S="${1:?usage: test-all.sh FRESH_STORE_DIR}"
 [ -e "$S" ] && { echo "store dir exists; give a new one"; exit 1; }
-mkdir -p "$S" && cp -r store/replays store/policies store/seed-*.html "$S"/
+mkdir -p "$S" && for f in store/replays store/policies store/seed-*.html; do [ -e "$f" ] && cp -r "$f" "$S"/; done; true
 for d in snapshots calibration; do [ -d "store/$d" ] && cp -r "store/$d" "$S"/ || true; done
 export GNOSIS_STORE="$S" GNOSIS_READER=replay
 for t in check opening portable; do

@@ -1,0 +1,178 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Aristotle closes the *Topics*–*Sophistical Refutations* inquiry with a claim about its originality.",
+    "locus": "§1",
+    "claim": "The sentence closes the Topics–SE inquiry with a claim of originality.",
+    "kind": "fact",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "The claim is usually read as true of the syllogistic and modest about everything else: the theory of inference had no predecessor, whatever dialectical practice the Academy possessed.[^1] That reading is strong, and this paper does not refute it.",
+    "locus": "§1",
+    "claim": "The usual reading (the theory of inference had no predecessor) is strong and not refuted.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "So we have four propositions. Division is a part of the method (*APr* I.31). No part of the method existed beforehand (*SE* 34). Division did exist beforehand, as a named art with rules and practitioners (*Phaedrus*, *Sophist*, *Philebus*). And the relevant dialogues are conventionally dated before the relevant treatises.",
+    "locus": "§1",
+    "claim": "Four propositions in tension: division a part; no part beforehand; division beforehand; the conventional dating.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "In its paragraph, προεξειργασμένον is the class just defined — παρ᾽ ἑτέρων ληφθέντα — and its opposite is ἐξ ὑπαρχῆς.",
+    "locus": "§2.1",
+    "claim": "προεξειργασμένον is the received class; its opposite is ἐξ ὑπαρχῆς.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "Neither word means \"the formal theory of syllogistic validity\"; both mean the treatment, the business, the method",
+    "locus": "§2.1",
+    "claim": "μέθοδος and πραγματεία do not mean the formal theory of validity.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the domain: this undertaking"
+   },
+   {
+    "quote": "But the paragraph puts organisation-of-received-material *in* the received class — παραλαβόντες παρὰ πολλῶν οἷον ἐκ διαδοχῆς κατὰ μέρος προαγαγόντων — and puts the syllogistic outside it, ἐξ ὑπαρχῆς.",
+    "locus": "§2.4",
+    "claim": "Systematizing received material is the received class, from which the syllogistic is excluded.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "Philoponus read I.31 as itself containing the priority claim — \"no one of those before us knew this\" — so the joining of I.31 and *SE* 34 is not this paper's innovation but an ancient reading of the chapter",
+    "locus": "§2.4",
+    "claim": "Philoponus joins I.31 and SE 34: an ancient reading.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "Filled once, on the closing page, and filled with a function: the questioner who did not know.",
+    "locus": "§7.3",
+    "claim": "Socrates' name is filled once in the Organon, on the closing page, with a function.",
+    "kind": "measure",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "And the corpus states this order of itself on the last page of the *SE*: from the one who asked and did not know, to the one who answered. That is an order, and it is not a chronology.",
+    "locus": "§9.2",
+    "claim": "The last page states an order of grasp, not a chronology.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "So the priority claim is stated in the vocabulary of the method it is a claim about: nothing at all belonged.",
+    "locus": "§9.3",
+    "claim": "ὑπάρχω is the syllogistic's verb: nothing at all belonged.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the verb ὑπάρχειν"
+   },
+   {
+    "quote": "That is a partial-development claim, and the sentence refuses partial development in terms: οὐ τὸ μὲν ἦν τὸ δ᾽ οὐκ ἦν προεξειργασμένον.",
+    "locus": "§9.4",
+    "claim": "Practice-before-art is a partial-development claim the sentence refuses.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "nothing of it had been worked out beforehand *by anyone from whom it could be received*, because the one who worked out the part is the one making the claim.",
+    "locus": "§9.4",
+    "claim": "Hypothesis: on one maker's sequence the sentence is true without restriction.",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": true,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "Two priorities must be told apart, and the paragraph tells them apart before the sentence: prior in time, which the sentence does not deny",
+    "locus": "§9.4",
+    "claim": "Prior in time is not denied; prior in succession is.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "That is the paper's result: not that one wrote it, but that two is not established by these passages, which are read as though it were",
+    "locus": "§9.6",
+    "claim": "Limit: not that one wrote it; that two is not established by these passages.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "the paper's claim ranks below whatever they establish, and it names them as the standing external check.",
+    "locus": "§9.5",
+    "claim": "Limit: the external record ranks above the claim.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "The shoemaker analogy at 183b36–184a8 — the sophists gave their pupils products, not the art — is the passage's own account of why prior practice did not count as prior work.",
+    "locus": "n. 1",
+    "claim": "The shoemaker is the passage's account of why prior practice is not prior work.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers: the things from the art, not the art"
+   },
+   {
+    "quote": "The narrow reading of the priority claim is Ross's and Striker's as applied to I.31 (n. 1), extended to the epilogue; for the epilogue itself see Dorion 1995 ad loc.",
+    "locus": "n. 22",
+    "claim": "The narrow reading is Ross's and Striker's, with Dorion on the epilogue.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   }
+  ]
+ }
+}

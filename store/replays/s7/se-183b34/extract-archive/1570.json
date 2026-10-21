@@ -1,0 +1,48 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "THE CONVENTIONAL READING IS MUCH STRONGER THAN THIS ENTRY PREVIOUSLY ALLOWED",
+    "locus": "§0A.2 heading",
+    "claim": "Revision: the conventional reading is stronger than earlier entries allowed.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "\"Practice versus art\" is not a modern rescue. It is Aristotle's own frame, in this passage.",
+    "locus": "§0A.2(a)",
+    "claim": "Practice versus art is Aristotle's own frame in the passage.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers: the things from the art, not the art"
+   },
+   {
+    "quote": "*equivocation on his own technical term*; *self-refuting*; *unmarked restriction of scope*. **The restriction is marked** — by the shoemaker, by Gorgias and the paid eristics, and by the rhetoric/syllogizing contrast.",
+    "locus": "§0A.7",
+    "claim": "Three overstatements withdrawn; the restriction of scope is marked in the passage.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the domain: this undertaking"
+   },
+   {
+    "quote": "That is a genuine philological question and it must not be settled by assertion.",
+    "locus": "§0A.5",
+    "claim": "Whether περὶ τοῦ συλλογίζεσθαι widens the claim beyond the dialectical programme is a philological question.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the sentence 184b1–2, read"
+   }
+  ]
+ }
+}

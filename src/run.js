@@ -7,7 +7,7 @@ import { pinRevision } from "./pin.js";
 import { segment } from "./segment.js";
 import { resolveSources } from "./resolve.js";
 import { makeReader, inputFor, READER_PROTOCOL, CALIBRATION } from "./reader.js";
-import { fromWikipedia, fromEntity } from "./s7/input.js";
+import { fromWikipedia, fromEntity, capturesFor } from "./s7/input.js";
 import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construct.js";
 import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
 import { snapshot } from "./resolve.js";
@@ -22,7 +22,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.5.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.6.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -78,7 +78,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
     const input = fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
     const ledgered = !!load(`s7/${input.row}/by-key/${key}.json`)?.composed;
-    const e = ledgered ? null : estimateS7(input);
+    const e = ledgered ? null : await estimateS7(input);
     s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e,
       est_cost_usd: ledgered ? 0 : e.est_cost_usd, price_usd: ledgered ? POLICY.ledgered_s7 : Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
     // The execution budget: model spending stops at the quoted price divided by the budget ratio, so a run that costs
@@ -124,19 +124,36 @@ async function wikipediaAt(title) {
     url: pg.missing ? null : `https://en.wikipedia.org/wiki/${encodeURIComponent((pg.title || title).replace(/ /g, "_"))}` };
 }
 
+// T for an entity: a composition the caller supplies; else the composition layer's own article of it, from the captures
+// seated at its bare addresses; else the article constructed under Wikipedia's content policies from supplied sources.
 async function prepareEntity(spec) {
   const snaps = [];
-  for (const u of (spec.sources || []).slice(0, 40)) snaps.push(await snapshot(u));
-  return { snaps };
+  let capture = null, captures = null;
+  if (!spec.transcript?.text) {
+    captures = capturesFor([spec.name, ...(spec.aliases || [])]);
+    capture = captures.primary;
+  }
+  const cards = capture?.cite_list || spec.transcript?.capture?.cite_list;
+  if (cards) {
+    // B is the capture's disclosed field: each card fetched where it carries a URL; a card without one is its snippet.
+    for (const [i, c] of cards.slice(0, 40).entries()) {
+      if (c.url) { const s = await snapshot(c.url); snaps.push({ ...s, title: `${c.site || ""} — ${c.title || ""}`.trim() }); }
+      else snaps.push({ url: null, title: `${c.site || ""} — ${c.title || ""}`.trim(), text: c.snip || "", text_sha256: c.snip ? sha256(c.snip) : null, availability: c.snip ? "card snippet only (no URL on the card)" : "card without URL or snippet", retrieved: null });
+    }
+  } else for (const u of (spec.sources || []).slice(0, 40)) snaps.push(await snapshot(u));
+  return { snaps, capture, captures };
 }
+const specWithCapture = (spec, capture) => (capture ? { ...spec, address: capture.q, transcript: { text: capture.transcript, surface: capture.surface, date: capture.date, auth: capture.auth,
+  capture: { slug: capture.slug, entry: capture.entry, obs_id: capture.obs_id, addr_id: capture.addr_id, q: capture.q, cite_list: capture.cite_list } } } : spec);
 
 export async function quoteEntity(spec, { tier = "opening" } = {}) {
   if (!spec?.name) throw new Error("entity.name is required");
   if (!ADMITS.has(tier)) throw new Error("an entity without an article is opened at the opening or portable tier");
-  const { snaps } = await prepareEntity(spec);
+  const { snaps, capture, captures } = await prepareEntity(spec);
   const wikipedia = await wikipediaAt(spec.name);
+  spec = specWithCapture(spec, capture);
   const input = fromEntity(spec, { sources: snaps, wikipedia });
-  const e = estimateS7(input);
+  const e = await estimateS7(input);
   const srcTok = input.field.reduce((n, b) => n + Math.min(estimateTokens(b.text), 9000), 0);
   const construct = spec.transcript?.text ? 0 : callCost(S7_MODELS.reading, { input_tokens: srcTok + 2500, output_tokens: 6000 });
   const nSent = spec.transcript?.text ? 0 : Math.min(30, input.field.filter((b) => b.text).length * 3);
@@ -150,7 +167,9 @@ export async function quoteEntity(spec, { tier = "opening" } = {}) {
   const max = Math.round((construct_price + nSent * sentence_price + s7.price_usd + package_price) * 100) / 100;
   const q = {
     quote_id: `Q-${sha256(`entity|${spec.name}|${tier}|${Date.now()}`).slice(0, 16)}`, kind: "entity",
-    article: { title: spec.name, oldid: null, url: null, entity: true }, entity: spec, wikipedia, sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
+    article: { title: spec.name, oldid: null, url: null, entity: true }, entity: spec, wikipedia,
+    T_source: capture ? { kind: "capture (the closed-ontology article)", primary: { slug: capture.slug, q: capture.q, surface: capture.surface, date: capture.date, obs_id: capture.obs_id }, bare_address_observations: captures.bare, related_captures: captures.related.length }
+      : spec.transcript?.text ? { kind: "composition supplied by the caller" } : (spec.sources || []).length ? { kind: "constructed article (Wikipedia's content policies, notability not applied)" } : { kind: "null composition" }, sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
     tier, tier_steps: spec.transcript?.text ? "S7–S9 on the supplied composition" : "S0′ (the article constructed under Wikipedia's content policies, notability not applied), S3 on each constructed sentence, S7–S9",
     reader_model: TIERS[tier].reader_model, lines: [], s7, construction: spec.transcript?.text ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
     sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
@@ -243,6 +262,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     // The entity path: the caller's composition as T, or the article constructed under Wikipedia's policies.
     const { snaps } = await prepareEntity(q.entity);
     entityInput = fromEntity(q.entity, { sources: snaps, wikipedia: q.wikipedia });
+    if (q.T_source) entityInput.T.source = q.T_source;
     pinned = { title: q.entity.name, oldid: `entity-${entityInput.row}`, url: null };
     if (q.entity.transcript?.text) { claims = []; sources = {}; }
     else {

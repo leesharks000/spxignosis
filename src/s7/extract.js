@@ -29,9 +29,9 @@ Output: {"claims": [{"quote": str, "locus": str, "claim": str, "kind": str, "mod
 
 const WHOLE = 60000, CAP = 40000;
 
-function archiveExcerpt(dep, cands) {
+function archiveExcerpt(dep, cands, { predication = false } = {}) {
   const { text, file } = depText(dep);
-  if (text.length <= WHOLE) return { text, file, whole: true };
+  if (!predication && text.length <= WHOLE) return { text, file, whole: true };
   const paras = paragraphs(text);
   const want = new Set([0, 1, 2]);
   for (const c of cands) for (const d of [-1, 0, 1]) if (c.para + d >= 0) want.add(c.para + d);
@@ -59,10 +59,10 @@ export async function extractArchive(log, input, verdicts, allCands) {
   let blogN = 0;
   for (const v of verdicts) {
     const cands = allCands.filter((c) => c.dep === v.dep && v.cands.includes(c.cand_id));
-    const ex = archiveExcerpt(v.dep, cands);
+    const ex = archiveExcerpt(v.dep, cands, { predication: v.read_as === "predication" });
     const m = depMeta(v.dep);
     const blog = typeof v.dep === "string";
-    const claims = await extractOne(log, input, "extract-archive", blog ? blogId(v.dep) : String(v.dep), blog ? `blog post "${m.title}" (${m.date}, ${m.record.url})` : `#${v.dep} ${m.title} (${m.date})${ex.whole ? ", read whole" : ", opening and bearing paragraphs"}`, ex.text);
+    const claims = await extractOne(log, input, "extract-archive", blog ? blogId(v.dep) : String(v.dep), blog ? `blog post "${m.title}" (${m.date}, ${m.record.url})` : `#${v.dep} ${m.title} (${m.date})${ex.whole ? ", read whole" : v.read_as === "predication" ? ", the paragraphs that predicate of the entity" : ", opening and bearing paragraphs"}`, ex.text);
     if (!claims) { unread.push(v.dep); continue; }
     verify(claims, depText(v.dep).text).forEach((c, i) => ledger.push({ id: blog ? `${pfx}blog-${String(++blogN).padStart(2, "0")}` : `${pfx}${v.dep}-${String(i + 1).padStart(2, "0")}`,
       dep: blog ? null : v.dep, ...(blog ? { record: m.record } : {}), ...c, strata: v.strata, date: m.date, file: ex.file, read: ex.whole ? "whole" : `paragraphs ${ex.paragraphs.join(",")}` }));

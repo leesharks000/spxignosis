@@ -5,6 +5,7 @@
 // deposit, or name the entity) and the screened ones read the same way.
 import { depText, depMeta, paragraphs, registry, depOrder } from "./archive.js";
 import { MODELS, mode } from "./model.js";
+import { divide } from "./about.js";
 
 export const ADMISSION_INSTRUCTIONS = `The admission pass reads candidate passages from the Crimson Hexagonal Archive for one entity and decides, deposit by deposit, which are admitted to the entity's archive subset. It returns JSON only.
 
@@ -104,8 +105,10 @@ export async function admitDRO(log, input, trav, blog = { D: [] }) {
   const byDep = new Map();
   const aliasRe = input.aliases.map((a) => new RegExp(a.pattern, a.flags?.includes("i") ? "i" : ""));
   const screened = [];
-  for (const c of [...trav.D, ...trav.R, ...trav.O, ...blog.D]) {
-    if (isByline(c.sentence, aliasRe)) { screened.push(c); continue; }
+  // Where the entity is also an author in the archive, only material about it is read; the rest is scanned (about.js).
+  const dv = divide(input, [...trav.D, ...trav.R, ...trav.O, ...blog.D], isByline);
+  for (const c of dv.read) {
+    if (dv.mode === "bearing" && isByline(c.sentence, aliasRe)) { screened.push(c); continue; }
     if (!byDep.has(c.dep)) byDep.set(c.dep, []);
     byDep.get(c.dep).push(c);
   }
@@ -115,6 +118,9 @@ export async function admitDRO(log, input, trav, blog = { D: [] }) {
   if (onlyBylines.length) r.not_admitted.push({ dep: onlyBylines, cands: screened.filter((c) => onlyBylines.includes(c.dep)).map((c) => c.cand_id),
     reason: "every candidate sentence is a byline or metadata line: the entity is named and nothing is said of it (string screen; gnosis S7)" });
   r.byline_screened = { sentences: screened.length, deposits_with_only_bylines: onlyBylines.length };
+  r.division = { mode: dv.mode, scanned: dv.scanned, basisOf: dv.basisOf };
+  r.works = dv.works;
+  if (dv.scanned?.deposits) r.not_admitted.push({ dep: [], scanned: dv.scanned.deposits, reason: `scanned, not read: ${dv.scanned.deposits} deposits whose mentions are material by the entity or mentions of it, none about it (${dv.scanned.rule})` });
   return r;
 }
 

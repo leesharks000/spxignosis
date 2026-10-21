@@ -29,7 +29,9 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd 
   const dro = await admitDRO(log, input, trav, blog);
   const droCands = [...trav.D, ...trav.R, ...trav.O, ...blog.D];
   const passages = dro.verdicts.flatMap((v) => droCands.filter((c) => c.dep === v.dep && v.cands.includes(c.cand_id)).map((c) => c.sentence));
-  const hopFrom = dro.verdicts.map((v) => v.dep).filter((d) => typeof d === "number");
+  const { readsWhole } = await import("./about.js");
+  for (const v of dro.verdicts) v.read_as = readsWhole(dro.division, v.dep) ? "whole" : "predication";
+  const hopFrom = dro.verdicts.filter((v) => v.read_as === "whole").map((v) => v.dep).filter((d) => typeof d === "number");
   const travH = hopFrom.length ? traverse(input, { hopFrom }) : { ...trav, H: [] };
   const hop = await admitHop(log, input, travH, passages);
   const verdicts = [...dro.verdicts, ...hop.verdicts];

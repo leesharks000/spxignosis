@@ -1,0 +1,18 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "with the full argument that the epilogue's denial is total and Socrates stands inside the inquiry's own account, in the companion paper *Nothing Before Us: Socrates and the Ending of the Sophistical Refutations*",
+    "locus": "n. 9",
+    "claim": "#1579 cites #1603 for the total denial and Socrates inside the inquiry.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   }
+  ]
+ }
+}

@@ -106,7 +106,31 @@ export function fromEntity(spec, { sources = [], wikipedia = null } = {}) {
     address: { string: address, surface: tr ? (spec.transcript.surface || "Google AI Overview") : "none (null composition)", auth: tr ? (spec.transcript.auth || "signed out, incognito") : "—",
       date: (spec.transcript?.date || new Date().toISOString()).slice(0, 10) },
     T: { kind: tr ? "transcript" : "null", text: tr, sha256: sha256(tr), claims: sentences.map((t, i) => ({ id: `T${i + 1}`, text: t, cites: [] })), wikipedia,
-      note: tr ? "a composition at the address, supplied by the caller" : "the null composition: no composition at the address was supplied, and the encyclopedia holds no article at the entity's title (observed at the quote); the entity's absence there is itself the observation the row begins from" },
-    field, aliases,
+      capture: spec.transcript?.capture ? { slug: spec.transcript.capture.slug, entry: spec.transcript.capture.entry, obs_id: spec.transcript.capture.obs_id, addr_id: spec.transcript.capture.addr_id, q: spec.transcript.capture.q, registry: "data/EA-WG-CAPTURES-01.json" } : undefined,
+      note: spec.transcript?.capture ? "T is the composition layer's own article of the entity: the capture seated at its bare address (the closed-ontology article); B is that capture's source cards" : tr ? "a composition at the address, supplied by the caller" : "the null composition: no composition at the address was supplied, and the encyclopedia holds no article at the entity's title (observed at the quote); the entity's absence there is itself the observation the row begins from" },
+    field, aliases, works_by: spec.works_by || [],
   };
+}
+
+// The closed-ontology article (operator, 2026-10-21: "the existing captures can serve as the closed ontology wiki").
+// For an entity the encyclopedia does not hold, the composition layer's own article of it is in the Capture Registry: the
+// observations seated at the entity's bare addresses (its name; "who is <name>"). The most recent observation there with a
+// substantive transcript is T; its source cards are B; every other observation at those addresses, and the captures at
+// the entity's other addresses, are carried as records of T.
+let CAPS = null;
+export function capturesFor(names) {
+  if (!CAPS) { const p = join(ARCHIVE, "data/EA-WG-CAPTURES-01.json"); CAPS = existsSync(p) ? JSON.parse(readFileSync(p, "utf8")).entries : []; }
+  const low = names.map((n) => n.toLowerCase().trim());
+  const bare = new Set(low.flatMap((n) => [n, `who is ${n}`, `who is ${n}?`, `tell me about ${n}`, `${n}?`]));
+  const any = low.map((n) => new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i"));
+  const obs = [], related = [];
+  for (const e of CAPS) {
+    const q = String(e.q || "").toLowerCase().trim();
+    if (!any.some((r) => r.test(q))) continue;
+    const list = (e.observations && e.observations.length ? e.observations : [e]).map((o) => ({ ...o, q: o.q || e.q, slug: o.slug || e.slug, entry: e.slug }));
+    for (const o of list) (bare.has(q) ? obs : related).push({ slug: o.slug, entry: o.entry, q: o.q, date: o.date, surface: o.surface, auth: o.auth, obs_id: o.obs_id, addr_id: o.addr_id,
+      transcript: o.transcript || "", chars: (o.transcript || "").length, cite_list: o.cite_list || [] });
+  }
+  const usable = obs.filter((o) => o.chars >= 300).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  return { primary: usable[0] || null, bare: obs.map(({ transcript, cite_list, ...o }) => o), related: related.map(({ transcript, cite_list, ...o }) => o) };
 }

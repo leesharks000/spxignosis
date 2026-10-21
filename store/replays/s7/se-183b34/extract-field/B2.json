@@ -1,0 +1,128 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Logic as a discipline starts with the transition from the more or less unreflective use of logical methods and argument patterns to the reflection on and inquiry into these methods and patterns and their elements, including the syntax and semantics of sentences.",
+    "locus": "preamble",
+    "claim": "Logic as a discipline starts where use of argument patterns becomes inquiry into them.",
+    "kind": "definition",
+    "modality": "stipulation",
+    "kernel": false,
+    "const": false,
+    "lineage": "logic before Aristotle"
+   },
+   {
+    "quote": "The Sophists, and later Plato (early 4th c.) displayed an interest in sentence analysis, truth, and fallacies, and Eubulides of Miletus (mid-4th c.) is on record as the inventor of both the Liar and the Sorites paradox.",
+    "locus": "preamble",
+    "claim": "Sophists, Plato and Eubulides worked on sentence analysis, truth, fallacies and paradoxes before Aristotle.",
+    "kind": "genealogy",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "logic before Aristotle"
+   },
+   {
+    "quote": "But logic as a fully systematic discipline begins with Aristotle, who systematized much of the logical inquiry of his predecessors.",
+    "locus": "preamble",
+    "claim": "Logic as a fully systematic discipline begins with Aristotle, who systematized much of his predecessors' logical inquiry.",
+    "kind": "genealogy",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the originality of Aristotle's logic"
+   },
+   {
+    "quote": "Both Zeno of Elea (born c. 490 BCE) and Socrates (470–399) were famous for the ways in which they refuted an opponent’s view. Their methods display similarities with reductio ad absurdum, but neither of them seems to have theorized about their logical procedures.",
+    "locus": "§1.2 Argument Patterns and Valid Inference",
+    "claim": "Zeno and Socrates refuted by methods like reductio but seem not to have theorized them.",
+    "kind": "genealogy",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the peirastic and Socrates"
+   },
+   {
+    "quote": "Socratic refutation was an exchange of questions and answers in which the opponents would be led, on the basis of their answers, to a conclusion incompatible with their original claim. Plato institutionalized such disputations into structured, rule-governed verbal contests that became known as dialectical argument.",
+    "locus": "§1.2",
+    "claim": "Socratic refutation, institutionalized by Plato into rule-governed contests, became dialectical argument.",
+    "kind": "genealogy",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the peirastic and Socrates"
+   },
+   {
+    "quote": "The development of a basic logical vocabulary for such contests indicates some reflection upon the patterns of argumentation.",
+    "locus": "§1.2",
+    "claim": "A logical vocabulary for the contests indicates some prior reflection on argument patterns.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "logic before Aristotle"
+   },
+   {
+    "quote": "Plato’s Euthydemus contains a large collection of contemporary fallacies.",
+    "locus": "§1.2",
+    "claim": "The Euthydemus collects contemporary fallacies.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "logic before Aristotle"
+   },
+   {
+    "quote": "it is possible that the shaping of deduction and proof in Greek mathematics that begins in the later 5th century BCE served as an inspiration for Aristotle’s syllogistic.",
+    "locus": "§1.2",
+    "claim": "Greek mathematics may have inspired the syllogistic.",
+    "kind": "genealogy",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "logic before Aristotle"
+   },
+   {
+    "quote": "Aristotle is the first great logician in the history of logic. His logic was taught by and large without rival from the 4th to the 19th centuries CE.",
+    "locus": "§2 Aristotle",
+    "claim": "Aristotle is the first great logician; his logic was taught without rival into the 19th century.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   },
+   {
+    "quote": "However, by using logical advances as a criterion, we can conjecture that most of the Topics, Sophistical Refutations, Categories and Metaphysics Γ predate the De Interpretatione, which in turn predates the Prior Analytics and parts of the Posterior Analytics.",
+    "locus": "§2 Aristotle",
+    "claim": "By logical advance, the Topics and SE are conjectured to predate De Interpretatione and the Prior Analytics.",
+    "kind": "genealogy",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "The Topics provide a manual for participants in the contests of dialectical argument as instituted in the Academy by Plato.",
+    "locus": "§2.1 Dialectics",
+    "claim": "The Topics is a manual for the dialectical contests Plato instituted in the Academy.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the inquiry: its programme (183a37–b8)"
+   },
+   {
+    "quote": "Aristotle’s Topics may thus count as the earliest surviving logical treatise. The Sophistical Refutations are the first systematic classification of fallacies,",
+    "locus": "§2.1 Dialectics",
+    "claim": "The Topics may be the earliest surviving logical treatise; SE the first systematic classification of fallacies.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the originality of Aristotle's logic"
+   }
+  ]
+ }
+}

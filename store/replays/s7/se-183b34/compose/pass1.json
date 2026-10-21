@@ -1,0 +1,1420 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "KO": {
+   "title": "Sophistical Refutations 183b34–184b8",
+   "sentences": [
+    {
+     "n": 1,
+     "para": 0,
+     "text": "At 183b34–36, in the closing chapter of the Sophistical Refutations, the Greek as The Particle (#1574) seats it reads Ταύτης δὲ τῆς πραγματείας οὐ τὸ μὲν ἦν τὸ δ᾽ οὐκ ἦν προεξειργασμένον, ἀλλ᾽ οὐδὲν παντελῶς ὑπῆρχεν, which #1574 translates 'Of this inquiry, it was not that one part had been worked out beforehand and another had not; rather, nothing at all was there', and Pickard-Cambridge's Oxford translation 'Of this inquiry, on the other hand, it was not the case that part of the work had been thoroughly done before, while part had not. Nothing existed at all.'",
+     "claims": [
+      "SE1574-03",
+      "SE1574-04",
+      "F39",
+      "F29"
+     ]
+    },
+    {
+     "n": 2,
+     "para": 0,
+     "text": "At 184b1–2 the chapter says the same of syllogizing in its own first person, the 'we' of προειλόμεθα, ὑπεθέμεθα, εἰρήκαμεν, διεληλύθαμεν and εἴχομεν (#1574): περὶ δὲ τοῦ συλλογίζεσθαι παντελῶς οὐδὲν εἴχομεν πρότερον ἄλλο λέγειν, ἀλλ᾽ ἢ τριβῇ ζητοῦντες πολὺν χρόνον ἐπονοῦμεν, 'About syllogizing we had absolutely nothing else earlier to say, but were long at work seeking by practice' (#1574), 'on the subject of reasoning we had nothing else of an earlier date to speak of at all, but were kept at work for a long time in experimental researches' (Pickard-Cambridge), set against rhetoric, of which 'there exists much that has been said long ago'; the Wikisource Greek omits ἄλλο, which #1574 prints.",
+     "claims": [
+      "SE1574-12",
+      "SE1574-01",
+      "SE1574-02",
+      "F43",
+      "SE1574-50"
+     ]
+    },
+    {
+     "n": 3,
+     "para": 0,
+     "text": "The chapter is the conclusion of the work (Wikipedia, chapters 33–34), and the work a final section or appendix of the Topics (Stanford Encyclopedia, Smith), whose final section appears to some, Forster among them as Wikipedia reports, to form an epilogue to both treatises; the logical writings, the Internet Encyclopedia adds, are largely notes edited and cobbled together by later followers, and Many and One (#1576) reads the chapter as closing the Topics–Sophistical Refutations inquiry with a claim about its originality.",
+     "claims": [
+      "F29",
+      "F4",
+      "F5",
+      "F33",
+      "F24",
+      "SE1576-01"
+     ]
+    },
+    {
+     "n": 4,
+     "para": 0,
+     "text": "What the inquiry was, the chapter states before the denial: 'to discover some faculty of reasoning about any theme put before us from the most generally accepted premisses', the task of dialectic and of peirastic (Pickard-Cambridge); the Topics presents the art of dialectic from endoxa (Wikipedia), a manual for the contests of dialectical argument instituted in the Academy (Bobzien), an art Smith reconstructs in a form he says would not be accepted by all scholars; the Sophistical Refutations develops sound reasoning against the art of sophistry (Wikipedia), and much of it, the Internet Encyclopedia notes, does not presuppose the syllogistic form.",
+     "claims": [
+      "F35",
+      "F34",
+      "F21",
+      "F6",
+      "F28",
+      "F26"
+     ]
+    },
+    {
+     "n": 5,
+     "para": 0,
+     "text": "The archive reads ταύτης τῆς πραγματείας as the domain over which the denial is exhaustive, 'The clause delimits; the quantifier exhausts' (#1574, CLAUSE), so that 'Within the domain, nothing at all was there'; πραγματεία names an undertaking, Gorgias's at 183b37 included (#1574), individuated by its stated ἔργον (#1603), neither πραγματεία nor μέθοδος means 'the formal theory of syllogistic validity' (#1576), the book-reading of πραγματεία as the Topics–SE whole changes nothing (#1603 n. 9), and the Measurement Register (#1570) holds the restriction of scope marked in the passage, by the shoemaker, Gorgias and the rhetoric/syllogizing contrast.",
+     "claims": [
+      "SE1574-13",
+      "SE1574-17",
+      "SE1574-15",
+      "SE1603-16",
+      "SE1576-05",
+      "SE1603-45",
+      "SE1570-03"
+     ]
+    },
+    {
+     "n": 6,
+     "para": 1,
+     "text": "Before the denial the chapter divides all discoveries, those handed down from others and advanced bit by bit, and original discoveries, small at first, and files rhetoric under the first, grown by succession, Tisias after the first founders, then Thrasymachus, then Theodorus (Pickard-Cambridge); Nothing Before Us (#1603) reads the division as 'Two provenances, not two sizes' and the paragraph's one axis from 183b17 to 184b8 as provenance, παρ᾽ ἑτέρων against ἐξ ὑπαρχῆς, ἐκ διαδοχῆς and ἐκ παραδόσεως against ἐξ ἀρχῆς, προεξειργασμένον being the received class (#1576), ἐξ ἀρχῆς the epilogue's provenance phrase (#1582), and the partly-worked-out case the sentence denies rhetoric's (#1574); the whole page, #1603 says, runs from the undertaking named as a capacity and Socrates under its cause to 'the envoi on the same axis the division opened'.",
+     "claims": [
+      "F37",
+      "F38",
+      "SE1603-09",
+      "SE1603-10",
+      "SE1576-04",
+      "SE1582-01",
+      "SE1574-07",
+      "SE1603-08"
+     ]
+    },
+    {
+     "n": 7,
+     "para": 1,
+     "text": "In the sentence οὐ negates the partial case and ἀλλά introduces the total, οὐδέν is the subject of ὑπῆρχεν, παντελῶς follows it, προεξειργασμένον occurs once in the treatise, and no adjective is transmitted with οὐδέν (#1574); ὑπάρχειν is 'to be there', not 'to have been elaborated' (#1603), the syllogistic's verb of belonging, its stem 1,182 times in the Prior Analytics (#1575), so that the priority claim is stated in the vocabulary of the method it is about, a premise of the method stated about the method (#1576; #1569).",
+     "claims": [
+      "SE1574-05",
+      "SE1574-14",
+      "SE1603-12",
+      "SE1575-05",
+      "SE1576-10",
+      "SE1569-02"
+     ]
+    },
+    {
+     "n": 8,
+     "para": 1,
+     "text": "παντελῶς occurs three times in the treatise, all in this chapter (#1574); #1574 locates the third occurrence at 184a1–2 in some versions of its note and at 183b29 in another, which records the correction as a referee's.",
+     "claims": [
+      "SE1574-08",
+      "SE1574-09"
+     ]
+    },
+    {
+     "n": 9,
+     "para": 1,
+     "text": "The next sentence gives the paid professors of contentious arguments, whose training was like Gorgias's and whose teaching Pickard-Cambridge renders 'ready but rough': they imparted 'not the art but its products', like one who 'has helped him to meet his need, but has not imparted an art to him'; the Greek is οὐ γὰρ τέχνην ἀλλὰ τὰ ἀπὸ τῆς τέχνης διδόντες παιδεύειν ὑπελάμβανον (#1574), the chapter's one named set of would-be predecessors denied precisely παραδοῦναι (#1603), the passage's own account of why prior practice did not count as prior work (#1576).",
+     "claims": [
+      "F40",
+      "F41",
+      "F42",
+      "SE1574-10",
+      "SE1603-14",
+      "SE1576-16"
+     ]
+    },
+    {
+     "n": 10,
+     "para": 1,
+     "text": "On the contrast that follows the archive holds two readings at two dates: the Measurement Register (#1570, 2026-08-29), revising itself because 'THE CONVENTIONAL READING IS MUCH STRONGER THAN THIS ENTRY PREVIOUSLY ALLOWED', holds that 'Practice versus art' is 'Aristotle's own frame, in this passage'; Nothing Before Us (#1603, 2026-09-08) holds that the passage opposes the art to its products, and that 'The defender's contrast — discipline versus untheorized practice — is not on the page.'",
+     "claims": [
+      "SE1570-01",
+      "SE1570-02",
+      "SE1603-50"
+     ]
+    },
+    {
+     "n": 11,
+     "para": 1,
+     "text": "#1603 keeps 184b1–2 distinct from 183b35, not 'nothing existed' but 'we had nothing to take up and say', what we had earlier to say and whether anyone earlier performed the activity being different propositions (#1603, Appendix P; first recorded from a second reader's audit, #1594); reading εἴχομεν to include predecessors gives the pronoun a second referent (#1574), the paragraph tells prior in time, which it does not deny, from prior in succession (#1576), and whether περὶ τοῦ συλλογίζεσθαι widens the claim beyond the dialectical programme #1570 leaves 'a genuine philological question'.",
+     "claims": [
+      "SE1603-15",
+      "SE1603-35",
+      "SE1594-02",
+      "SE1574-27",
+      "SE1576-13",
+      "SE1570-04"
+     ]
+    },
+    {
+     "n": 12,
+     "para": 1,
+     "text": "The chapter closes by asking the hearers for 'pardon for the shortcomings of the inquiry, and for the discoveries thereof your warm thanks' (Pickard-Cambridge); #1574 reads the method judged from the conditions it began from, ἐκ τοιούτων ἐξ ἀρχῆς ὑπαρχόντων, against τὰς ἐκ παραδόσεως ηὐξημένας, and the reading copy of Many and One (#1575) the pardon and the gratitude as 'a request that the audience adjudicate a claim of first finding'.",
+     "claims": [
+      "F44",
+      "SE1574-11",
+      "SE1575-02"
+     ]
+    },
+    {
+     "n": 13,
+     "para": 2,
+     "text": "The field states the originality in its own terms: according to Aristotle, Wikipedia reports, the Sophistical Refutations is 'the first work to treat the subject of deductive reasoning in ancient Greece (Soph. Ref., 34, 183b34 ff.)'; Aristotle's logical works contain 'the earliest formal study of logic that we have', a highly developed theory (Smith); the Topics may count as the earliest surviving logical treatise, the Sophistical Refutations as the first systematic classification of fallacies, and Aristotle is 'the first great logician in the history of logic' (Bobzien), the Topics and the Sophistical Refutations conjectured, by logical advance, earlier than the Prior Analytics.",
+     "claims": [
+      "F27",
+      "F1",
+      "F2",
+      "F22",
+      "F19",
+      "F20"
+     ]
+    },
+    {
+     "n": 14,
+     "para": 2,
+     "text": "Before him, on Bobzien's account, logic as a discipline begins where the use of argument patterns becomes inquiry into them: the Sophists, Plato and Eubulides worked on sentence analysis, truth, fallacies and paradoxes, the Euthydemus collects contemporary fallacies, a vocabulary for the dialectical contests indicates some reflection on argument, and Greek mathematics may have inspired the syllogistic; 'But logic as a fully systematic discipline begins with Aristotle, who systematized much of the logical inquiry of his predecessors', and division, Smith adds, is part of Aristotle's Platonic legacy.",
+     "claims": [
+      "F11",
+      "F12",
+      "F17",
+      "F16",
+      "F18",
+      "F13",
+      "F10"
+     ]
+    },
+    {
+     "n": 15,
+     "para": 2,
+     "text": "In the field's account of its reception, Aristotelian logic after an early triumph ruled until the nineteenth century (Internet Encyclopedia), Kant thought nothing else was to be invented after Aristotle and Prantl drew the corollary that a later logician who said anything new was 'confused, stupid, or perverse' (Smith; Wikipedia), and the Sophistical Refutations introduced a remarkably influential theory of fallacies (Internet Encyclopedia), a key link to the Rhetoric, commented by Ockham and Scotus (Wikipedia).",
+     "claims": [
+      "F23",
+      "F30",
+      "F3",
+      "F25",
+      "F31",
+      "F32"
+     ]
+    },
+    {
+     "n": 16,
+     "para": 2,
+     "text": "The archive states the received reading first and at full strength: it holds, as #1574 gives it, that 'nothing' cannot mean nothing, since predecessors existed, and therefore means nothing systematic, developed, no art; the conventional reading, the reading copy of Many and One says, is about a systematic art and not the practice (#1575); it is 'strong', and Many and One 'does not refute it' (#1576, which attributes the narrow reading to Ross and Striker, with Dorion on the epilogue); #1603 opens on the received view in its own voice, the sentence 'the most famous boast in the history of logic' and 'Everyone knows the sentence cannot mean what it says', with Poste's note of 1866: 'What he really performed in his dialectical treatise was to indicate a number of methodic principles or elements of method.'",
+     "claims": [
+      "SE1574-34",
+      "SE1575-01",
+      "SE1576-02",
+      "SE1576-17",
+      "SE1603-04",
+      "SE1603-05",
+      "SE1603-06"
+     ]
+    },
+    {
+     "n": 17,
+     "para": 2,
+     "text": "Against that reading #1603, which holds that at the end of the Sophistical Refutations Aristotle denies that anything of his inquiry existed before it, records where its narrowing lives: in every version examined the sentence is translated as it stands, and where it is narrowed, to no systematic treatment, no completed art, the narrowing comes in the gloss, because everyone knows that Socrates asked questions before Aristotle answered them; #1574 sets out what the sentence does not carry, the received adjectives being supplements, none transmitted, each making 'the negation a negation in some respect', reading partial prior development restoring the member οὐ negates, reading the sentence as Aristotle's self-presentation supplying a φησί the text lacks, so that 'What is not transmitted is the οὐ, the adjective, the composed phrase, the second referent, the φησί'; the received reading, #1603 says, moves οὐδέν and holds the person still.",
+     "claims": [
+      "SE1603-01",
+      "SE1603-02",
+      "SE1574-24",
+      "SE1574-25",
+      "SE1574-26",
+      "SE1574-28",
+      "SE1603-31"
+     ]
+    },
+    {
+     "n": 18,
+     "para": 2,
+     "text": "The archive answers the field's terms at their own loci: the organisation of received material, Bobzien's 'systematized much of the logical inquiry of his predecessors', is the class the paragraph puts the syllogistic outside (#1576), and practice-before-art is a partial-development claim the sentence refuses in terms (#1576); the sentence's first clause denies the picture the qualified reading offers as its meaning, and nothing in the syntax requires the import (#1603); #1603's prohibitions rule out relocating the denial to 'logic' or 'the formal theory of valid inference' (P1) and replacing zero with an adequacy threshold, 'nothing sufficiently developed, comprehensive, systematic, formal, comparable' (P7), whose list carries the word of the field's 'earliest formal study' (Smith).",
+     "claims": [
+      "F13",
+      "SE1576-06",
+      "SE1576-11",
+      "SE1603-11",
+      "SE1603-13",
+      "SE1603-48",
+      "SE1603-34",
+      "F1"
+     ]
+    },
+    {
+     "n": 19,
+     "para": 2,
+     "text": "The translations keep the sentence: both Arabic versions seal the quantifier with البتّة, the Byzantine paraphrast, the strongest premodern occupant of the fork's second horn, adds ὅλης, Albert reads 'sed nihil omnino erat inventum a prioribus ante nos de hoc negotio', Pickard-Cambridge sets 'Nothing existed at all' as its own sentence while one adverb, 'thoroughly done before', enters the denied member, and the word 'systematic' enters the English chapter at ἄτεχνος, the teachers' instruction, Forster's 'unsystematic' where Pickard-Cambridge has 'ready but rough', one line after the sentence (#1603, Appendix A); among the witnesses #1603 examined the degree-reading is not attested before the modern period, and whether the word migrated from the instruction to the gloss is a hypothesis, not a documented step.",
+     "claims": [
+      "SE1603-40",
+      "SE1603-41",
+      "SE1603-42",
+      "SE1603-38",
+      "F39",
+      "F41",
+      "SE1603-39",
+      "SE1603-29",
+      "SE1603-28",
+      "SE1603-30"
+     ]
+    },
+    {
+     "n": 20,
+     "para": 3,
+     "text": "The Particle (#1574) measured the operation at the sentence: twenty machine referee reports from two models over eleven configurations of a note on the sentence, seeded by an editor's question, \"The translation 'nothing existed' seems overly strong?\", supplied 'systematic' six times, 'developed' four and 'transmissible' three, and none accepted the sentence as written; the adjective, closed in the quantifier, moved into the domain and was never absent; the terminal round endorsed as the paper's governing phrase 'Aristotle denies not antecedents, but pre-elaboration', a sentence that is Aristotle's 'with one particle removed: οὐ', and called the sentence as written 'crude' — 'The difference is οὐ.'",
+     "claims": [
+      "SE1574-29",
+      "SE1574-30",
+      "SE1574-35",
+      "SE1574-31",
+      "SE1574-33",
+      "SE1574-37",
+      "SE1574-32",
+      "SE1574-52"
+     ]
+    },
+    {
+     "n": 21,
+     "para": 3,
+     "text": "The Particle's exhibits perform the reception's reading on the sentence: REFLEX argues it 'with a straight face', each step a sophistical refutation warranted by the SE chapter that names it; DIVISION cuts Socratic questioning and division out of syllogizing through the sentences that forbid each cut; and v2.0, every reviewer instruction applied, is 'The paper the discipline would publish', denying only 'a worked-out and transmissible method of syllogizing' (#1574).",
+     "claims": [
+      "SE1574-18",
+      "SE1574-19",
+      "SE1574-23",
+      "SE1574-22"
+     ]
+    },
+    {
+     "n": 22,
+     "para": 3,
+     "text": "#1574 reads the mechanism in the treatise's own terms, those of SE 16 ('The deletion is self-administered and unperceived'), and marks its frames as interpretations its measurement does not depend on: the deleted particle is a provenance claim, since the chapter defines 'worked out beforehand' as παρ᾽ ἑτέρων, from others, and the reception restores provenance from others, Socrates before, Plato before, the inquiry as inheritance; the reviews cite Britannica and Wikipedia against the Greek, the reference works the models are trained on; one model, shown its own sentences, wrote 'I preserved οὐδὲν παντελῶς by silently moving Socrates outside the thing quantified over … That was the repair. Aristotle had not given me that repair.'",
+     "claims": [
+      "SE1574-38",
+      "SE1574-41",
+      "SE1574-39",
+      "SE1574-40",
+      "SE1574-42",
+      "SE1574-51"
+     ]
+    },
+    {
+     "n": 23,
+     "para": 3,
+     "text": "On its author's definition #1574 names the run's pattern disciplinary model collapse, 'a reading community whose outputs are conditioned on prior outputs rather than on the datum, and which therefore converges on the mode of its own readings', in which 'The literal reading — the tail — was the first thing to go'; at the sentence, EA-NEGONT-01 (#1611) records, the standing representation 'supplies an adjective the sentence does not contain and contradicts the sentence', the excluded representation being the one on which the reception's reading is a measurable erasure, and the reader supplies the comfortable qualifier even with the reflex described in view (#1587).",
+     "claims": [
+      "SE1574-43",
+      "SE1574-44",
+      "SE1611-01",
+      "SE1611-02",
+      "SE1587-01"
+     ]
+    },
+    {
+     "n": 24,
+     "para": 3,
+     "text": "As theoretical extension, marked so, #1574 reads the reception's product in the chapter's own vocabulary, τὰ ἀπὸ τῆς τέχνης without τέχνη, 'products without art, stock without soul': 'Souls divide only into whole souls; what divides into parts is not a soul but a stock. The reception trades in the stock and calls the soul crude.' On the day #1574 is dated the sentence was published alone, in Greek, under the title 'poem' (blog, 2026-09-02).",
+     "claims": [
+      "SE1574-45",
+      "SE1574-46",
+      "SEblog-01"
+     ]
+    },
+    {
+     "n": 25,
+     "para": 4,
+     "text": "Socrates is named once in the chapter, inside the statement of the inquiry's second task: 'for this, too, was why Socrates used to ask questions and not to answer them; for he used to confess that he did not know' (Pickard-Cambridge), the reason for the task of sustaining an account (#1574), the inquiry speaking in the first person aorist and Socrates reported in the third person imperfect (#1574), on the closing page where the Organon fills his name, elsewhere the token individual, with a function, 'the questioner who did not know' (#1576).",
+     "claims": [
+      "F36",
+      "SE1574-06",
+      "SE1574-21",
+      "SE1576-08"
+     ]
+    },
+    {
+     "n": 26,
+     "para": 4,
+     "text": "In the field's account peirastic, which examines those who claim knowledge and can be practised by one who lacks it, is 'strongly reminiscent of Socrates' style of interrogation, from which it is almost certainly descended', and Aristotle traces the quest for definitions back to Socrates (Smith); Zeno and Socrates refuted by methods like reductio, 'but neither of them seems to have theorized about their logical procedures', and Plato institutionalized Socratic refutation into the rule-governed contests of dialectic (Bobzien).",
+     "claims": [
+      "F7",
+      "F8",
+      "F9",
+      "F14",
+      "F15"
+     ]
+    },
+    {
+     "n": 27,
+     "para": 4,
+     "text": "#1603 reads a fork the treatise gives, Socrates' asking being 'either the artless examining everyone shares, from which nothing is received, or something more, which the epilogue files under the inquiry's own purposes', artless examining being the condition of ἅπαντες, everyone (SE 11); 'On neither horn is he the figure the qualified reading requires: a predecessor from whom something of the inquiry, however rudimentary, was received'; the middle position, a significant precursor from whom nothing was received, 'contradicts no clause of the sentence'; the teachers, rhetoric and Socrates are related to the undertaking and are not it (#1574, CLAUSE); and the qualification's function, #1603 holds, is custodial, keeping Socrates on the far side of a border the chapter never draws.",
+     "claims": [
+      "SE1603-51",
+      "SE1603-17",
+      "SE1603-19",
+      "SE1603-20",
+      "SE1574-16",
+      "SE1603-21",
+      "SE1603-03"
+     ]
+    },
+    {
+     "n": 28,
+     "para": 4,
+     "text": "#1603 argues further, and calls it controversial, that the ending draws Socrates in: 'Tisias gets a chain; Socrates gets a reason, and it is the inquiry's own'; Metaphysics Μ 4 has him seeking to syllogize while διαλεκτικὴ γὰρ ἰσχὺς οὔπω τότ᾽ ἦν; the last page states an order of grasp, from the one who asked and did not know to the one who answered, and not a chronology (#1576); Aristotle files Socratic operations, peirastic as a part of dialectic practicable by the non-knower among them, inside the ἀρχή of his art and keeps the art itself οὔπω (#1585), as the field also has peirastic practicable by one who lacks the knowledge and the quest for definitions traced to Socrates (Smith).",
+     "claims": [
+      "SE1603-22",
+      "SE1603-23",
+      "SE1603-24",
+      "SE1576-09",
+      "SE1585-01",
+      "F7",
+      "F9"
+     ]
+    },
+    {
+     "n": 29,
+     "para": 4,
+     "text": "The First Draft (#1585) reads the 'we' that speaks the chapter as the consolidating position that classifies and as an undertaking that sets tasks, works them and reports, and The Registry Has One Column (#1584) reads the epilogue's operation on Socrates as keeping the deeds and dropping the person; #1574 occupies four placements of Socrates in turn, the last 'of the inquiry — named in its definition, an instance of what it does — and the passage does not say when', and holds one proposition stable across its run, 'nothing prior of syllogizing includes Socrates' syllogizing', recording that what kept Socrates before the nothing in the reviews was an adverb external to the passage.",
+     "claims": [
+      "SE1585-02",
+      "SE1585-03",
+      "SE1584-01",
+      "SE1574-20",
+      "SE1574-47",
+      "SE1574-36"
+     ]
+    },
+    {
+     "n": 30,
+     "para": 4,
+     "text": "Read whole, #1603 concludes, the ending answers as an enactment the question it leaves open as an attribution: its last question, where Socrates falls, examines the reader in the form of his own questioning, so that his questioning 'as enacted by this ending, is not artless participation: it is the completed art exercising its capacity on the reader', the ask the last page of the Elenchi performs on its reader (#1590), the treatise on unperceived operations ending on a sentence whose easiest domestication is such an operation, 'whoever set it', with no claim of design (#1603); #1579 and the prediction index (#1684) cite the reading as #1603's, the chapter's denial total and Socrates inside the inquiry's own account.",
+     "claims": [
+      "SE1603-32",
+      "SE1603-33",
+      "SE1590-01",
+      "SE1603-27",
+      "SE1603-26",
+      "SE1579-01",
+      "SE1684-01"
+     ]
+    },
+    {
+     "n": 31,
+     "para": 5,
+     "text": "Many and One (#1576) sets the sentence beside Prior Analytics I.31, where division is a part of the method, and the dialogues, where division is a named art with rules, the field's 'Platonic legacy' (Smith), an ancient joining of the two passages being Philoponus's; the reading copy (#1575) finds a socket there, the joining term absent, the Notebook (#1569) having first read the sentence literally, nothing before 'because he had not yet written it', nothing existed before 'because the operation's range had not been seen', and #1576 states as a hypothesis, with its costs, that on one maker's sequence the sentence is true without restriction, nothing having been worked out beforehand 'by anyone from whom it could be received', a filling 'OFFERED AND NOT ESTABLISHED' (#1575), its result 'not that one wrote it, but that two is not established by these passages'.",
+     "claims": [
+      "SE1576-03",
+      "F10",
+      "SE1576-07",
+      "SE1569-01",
+      "SE1569-03",
+      "SE1575-03",
+      "SE1576-12",
+      "SE1575-04",
+      "SE1576-14"
+     ]
+    },
+    {
+     "n": 32,
+     "para": 5,
+     "text": "At this sentence #1603 claims only that Socrates is not filed as one from whom the inquiry was received, and withholds the question of distinct makers, which 'this sentence cannot decide'; P2 forbids excluding Socrates from the activity and does not settle his inclusion in the speaking 'we', and the nine prohibitions are ordered as the escapes were tried on an unprimed composer on 2026-09-07; a second reader's audit recorded in #1594 found on the page that the denial excludes even a partially worked-out antecedent and that no 'systematic' occurs; nothing in #1603 claims that Socrates possessed the art, or that he stands inside the first-person plural by grammar.",
+     "claims": [
+      "SE1603-36",
+      "SE1603-49",
+      "SE1603-47",
+      "SE1594-01",
+      "SE1603-18"
+     ]
+    },
+    {
+     "n": 33,
+     "para": 5,
+     "text": "The reading is bounded where its papers bound it: #1574's run 'does not establish that Socrates belongs inside the chapter's \"we.\"', only that every tested route excluding him required a premise the passage does not supply, and #1603 calls #1574's sample responsive, arbitrating 'nothing about the reading'; #1603 asserts nothing about history beyond what the paragraph asserts, demonstrates no inclusion in the first person, and invites a transmitting reading that meets its nine prohibitions, or a non-transmitting one that explains the page better; the Greek is from digital Bekker transcriptions with lines assigned by hand, Ross's OCT the one outstanding witness at 184b1, Ross and Dorion owed (#1574; #1603; #1684), Many and One ranking its claim below the external record (#1576); and the field's own translation keeps the sentence, 'Nothing existed at all' (Pickard-Cambridge; #1603, Appendix A).",
+     "claims": [
+      "SE1574-48",
+      "SE1603-46",
+      "SE1603-07",
+      "SE1603-25",
+      "SE1603-37",
+      "SE1574-49",
+      "SE1603-43",
+      "SE1603-44",
+      "SE1684-02",
+      "SE1576-15",
+      "F39",
+      "SE1603-38"
+     ]
+    }
+   ]
+  },
+  "P": {
+   "title": "Sophistical Refutations 183b34–184b8",
+   "lede": {
+    "text": "is the closing chapter's denial that anything of Aristotle's inquiry was there before it: 'it was not that one part had been worked out beforehand and another had not; rather, nothing at all was there' (183b34–36), and of syllogizing 'we had absolutely nothing else earlier to say' (184b1–2) (#1574; Pickard-Cambridge: 'Nothing existed at all'). The field reads it as marking 'the first work to treat the subject of deductive reasoning' (Wikipedia), 'the earliest formal study of logic' (Smith); The Particle (#1574) and Nothing Before Us (#1603) read the denial as total within its stated domain.",
+    "claims": [
+     "SE1574-04",
+     "SE1574-02",
+     "F39",
+     "F1",
+     "F27",
+     "SE1574-13",
+     "SE1603-01"
+    ]
+   },
+   "sections": [
+    {
+     "icon": "📜",
+     "head": "The sentence",
+     "items": [
+      {
+       "label": "Domain:",
+       "text": "'The clause delimits; the quantifier exhausts' (#1574): this undertaking, dialectic and peirastic (Pickard-Cambridge).",
+       "claims": [
+        "SE1574-13",
+        "SE1603-16",
+        "F35"
+       ]
+      },
+      {
+       "label": "Provenance:",
+       "text": "received from others against found from the beginning; rhetoric grew by succession (#1603; Pickard-Cambridge).",
+       "claims": [
+        "SE1603-10",
+        "F37",
+        "F38"
+       ]
+      },
+      {
+       "label": "The teachers:",
+       "text": "gave 'not the art but its products' (Pickard-Cambridge); denied παραδοῦναι (#1603).",
+       "claims": [
+        "F41",
+        "F42",
+        "SE1603-14"
+       ]
+      },
+      {
+       "label": "Place:",
+       "text": "the conclusion of SE, to some the epilogue of the Topics too (Wikipedia; Smith).",
+       "claims": [
+        "F29",
+        "F33",
+        "F4"
+       ]
+      }
+     ]
+    },
+    {
+     "icon": "🏛️",
+     "head": "The field's account",
+     "items": [
+      {
+       "label": "First:",
+       "text": "'the earliest formal study of logic' (Smith); 'the first work to treat the subject of deductive reasoning' (Wikipedia).",
+       "claims": [
+        "F1",
+        "F27"
+       ]
+      },
+      {
+       "label": "Before him:",
+       "text": "Sophists, Plato, Eubulides; 'logic as a fully systematic discipline begins with Aristotle' (Bobzien).",
+       "claims": [
+        "F12",
+        "F13"
+       ]
+      },
+      {
+       "label": "Reception:",
+       "text": "unrivalled to the nineteenth century; Kant, nothing left to invent.",
+       "claims": [
+        "F19",
+        "F23",
+        "F30",
+        "F3"
+       ]
+      }
+     ]
+    },
+    {
+     "icon": "🔍",
+     "head": "The qualifier",
+     "items": [
+      {
+       "label": "Not transmitted:",
+       "text": "no adjective stands with οὐδέν; each supplement narrows the negation (#1574).",
+       "claims": [
+        "SE1574-14",
+        "SE1574-24"
+       ]
+      },
+      {
+       "label": "Translations:",
+       "text": "keep it total, Arabic, Byzantine, Latin, English; the degree-reading is modern among the witnesses examined (#1603).",
+       "claims": [
+        "SE1603-02",
+        "SE1603-28",
+        "SE1603-38"
+       ]
+      },
+      {
+       "label": "Measured:",
+       "text": "twenty machine reviews supplied 'systematic', 'developed', 'transmissible'; the terminal form deletes οὐ (#1574).",
+       "claims": [
+        "SE1574-29",
+        "SE1574-33"
+       ]
+      },
+      {
+       "label": "Prohibited:",
+       "text": "zero may not become 'systematic, formal' (#1603, P7).",
+       "claims": [
+        "SE1603-34",
+        "SE1603-48"
+       ]
+      }
+     ]
+    },
+    {
+     "icon": "❓",
+     "head": "Socrates",
+     "items": [
+      {
+       "label": "Named once:",
+       "text": "he asked and did not answer, the reason for the inquiry's second task (Pickard-Cambridge; #1574).",
+       "claims": [
+        "F36",
+        "SE1574-06"
+       ]
+      },
+      {
+       "label": "Field:",
+       "text": "peirastic 'almost certainly descended' from his interrogation (Smith); untheorized (Bobzien).",
+       "claims": [
+        "F8",
+        "F14"
+       ]
+      },
+      {
+       "label": "Archive:",
+       "text": "not a predecessor from whom anything was received (#1603); inside the inquiry, argued 'controversially' (#1603), not established by the run (#1574).",
+       "claims": [
+        "SE1603-19",
+        "SE1603-22",
+        "SE1574-48"
+       ]
+      },
+      {
+       "label": "Enactment:",
+       "text": "the ending examines its reader in his form, the completed art (#1603).",
+       "claims": [
+        "SE1603-33"
+       ]
+      }
+     ]
+    },
+    {
+     "icon": "⚖️",
+     "head": "Bounds",
+     "items": [
+      {
+       "label": "Makers:",
+       "text": "one maker's sequence is a hypothesis, 'two is not established by these passages' (#1576); withheld at this sentence (#1603).",
+       "claims": [
+        "SE1576-12",
+        "SE1576-14",
+        "SE1603-36"
+       ]
+      },
+      {
+       "label": "Owed:",
+       "text": "Ross's OCT; Dorion; lines by hand (#1574; #1603).",
+       "claims": [
+        "SE1603-43",
+        "SE1574-49",
+        "SE1684-02"
+       ]
+      }
+     ]
+    }
+   ],
+   "open": [
+    {
+     "question": "Is the field's qualifier ('formal', 'fully systematic', 'deductive reasoning') in the sentence?",
+     "rests_on": [
+      "F1",
+      "F13",
+      "F27",
+      "SE1574-14",
+      "SE1574-24",
+      "SE1603-02",
+      "SE1603-28",
+      "SE1603-34"
+     ],
+     "modality": "interpretation (field: Smith, Bobzien; attributed, Wikipedia); documented and interpretation (#1574, #1603)",
+     "would_resolve": "a premodern witness that renders 183b35 with a degree-qualifier, or a transmitted adjective in Ross's apparatus at 183b35; #1603 holds none among the witnesses it examined"
+    },
+    {
+     "question": "Does Socrates stand inside the chapter's 'we'?",
+     "rests_on": [
+      "SE1603-22",
+      "SE1603-25",
+      "SE1574-48",
+      "SE1603-49",
+      "F8",
+      "F14"
+     ],
+     "modality": "hypothesis, asserted and not demonstrated (#1603 §5); self-description (#1574 §9); hypothesis (field, Smith: 'almost certainly descended')",
+     "would_resolve": "#1603's invitation: a transmitting reading that meets all nine prohibitions, or a non-transmitting reading that explains the four whys of §5 better (SE1603-37)"
+    },
+    {
+     "question": "Does περὶ τοῦ συλλογίζεσθαι (184b1) widen the claim beyond the dialectical programme of 183a37–b8?",
+     "rests_on": [
+      "SE1570-04",
+      "SE1603-15",
+      "SE1603-35",
+      "F43"
+     ],
+     "modality": "self-description, left open (#1570); interpretation (#1603)",
+     "would_resolve": "a philological study of the two clauses' domains (#1570 §0A.5)"
+    },
+    {
+     "question": "Is practice-versus-art Aristotle's own frame in the passage?",
+     "rests_on": [
+      "SE1570-02",
+      "SE1603-50",
+      "F41",
+      "F42"
+     ],
+     "modality": "interpretation, contested within the archive across dates (#1570, 2026-08-29; #1603, 2026-09-08)",
+     "would_resolve": "the operator's ruling on the archive's current reading; the two are carried (P_coh)"
+    },
+    {
+     "question": "How many makers? (the single-maker hypothesis at the sentence)",
+     "rests_on": [
+      "SE1576-12",
+      "SE1576-14",
+      "SE1576-15",
+      "SE1603-36"
+     ],
+     "modality": "hypothesis (#1576), withheld at this sentence (#1603)",
+     "would_resolve": "the external record #1576 §9.5 names: papyri, inscriptions, transmission history"
+    },
+    {
+     "question": "Where is the third παντελῶς?",
+     "rests_on": [
+      "SE1574-08",
+      "SE1574-09"
+     ],
+     "modality": "documented, internally inconsistent in #1574 (184a1–2 against 183b29)",
+     "would_resolve": "the Ross 1958 margin (the checklist's item 4)"
+    },
+    {
+     "question": "Opacities",
+     "rests_on": [
+      "SE1574-46",
+      "SE1603-43",
+      "SE1603-44"
+     ],
+     "modality": "—",
+     "would_resolve": "T's one source label ('Homer Reader') is unlocated and outside the pool; Ross's OCT, Dorion, Hasper, Fait and the Loeb are not on the open shelf; the world-soul passage of #1574 §8 is quoted, not paraphrased"
+    }
+   ],
+   "rail": [
+    {
+     "lineage": "The sentence and its Greek",
+     "claims": [
+      "SE1574-03",
+      "SE1574-01",
+      "SE1574-04",
+      "SE1574-02",
+      "F39",
+      "F43",
+      "SEblog-01"
+     ],
+     "earliest": 1574
+    },
+    {
+     "lineage": "The denial is total within its domain",
+     "claims": [
+      "SE1574-13",
+      "SE1574-17",
+      "SE1603-01",
+      "SE1594-01"
+     ],
+     "earliest": 1574
+    },
+    {
+     "lineage": "The provenance axis of the paragraph",
+     "claims": [
+      "SE1603-10",
+      "SE1603-09",
+      "SE1576-04",
+      "SE1574-39",
+      "F37",
+      "F38"
+     ],
+     "earliest": 1576
+    },
+    {
+     "lineage": "The passage's place",
+     "claims": [
+      "F29",
+      "F4",
+      "F5",
+      "F33",
+      "SE1576-01"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "The originality claim, as the field holds it",
+     "claims": [
+      "F1",
+      "F27",
+      "F13",
+      "F22",
+      "F19"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "The received reading, stated",
+     "claims": [
+      "SE1570-01",
+      "SE1575-01",
+      "SE1576-02",
+      "SE1574-34",
+      "SE1603-05"
+     ],
+     "earliest": 1570
+    },
+    {
+     "lineage": "The qualifier is not in the sentence",
+     "claims": [
+      "SE1574-14",
+      "SE1574-24",
+      "SE1603-02",
+      "SE1611-01"
+     ],
+     "earliest": 1574
+    },
+    {
+     "lineage": "The witnesses keep the sentence",
+     "claims": [
+      "SE1603-28",
+      "SE1603-38",
+      "SE1603-40",
+      "SE1603-42"
+     ],
+     "earliest": 1603
+    },
+    {
+     "lineage": "The reception measured: the deletion of οὐ",
+     "claims": [
+      "SE1574-29",
+      "SE1574-33",
+      "SE1574-37",
+      "SE1587-01"
+     ],
+     "earliest": 1574
+    },
+    {
+     "lineage": "Disciplinary model collapse; the world soul (at the sentence)",
+     "claims": [
+      "SE1574-43",
+      "SE1574-45",
+      "SE1574-46"
+     ],
+     "earliest": 1574
+    },
+    {
+     "lineage": "Socrates in the field: practice before theory",
+     "claims": [
+      "F8",
+      "F14",
+      "F15",
+      "F7",
+      "F9"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "Socrates inside the inquiry",
+     "claims": [
+      "SE1576-08",
+      "SE1603-19",
+      "SE1603-22",
+      "SE1574-47",
+      "SE1585-01"
+     ],
+     "earliest": 1576
+    },
+    {
+     "lineage": "The ending as enactment",
+     "claims": [
+      "SE1603-33",
+      "SE1590-01"
+     ],
+     "earliest": 1590
+    },
+    {
+     "lineage": "The maker question at the sentence",
+     "claims": [
+      "SE1576-12",
+      "SE1576-14",
+      "SE1575-04",
+      "SE1603-36"
+     ],
+     "earliest": 1569
+    },
+    {
+     "lineage": "Bounds and debts",
+     "claims": [
+      "SE1574-48",
+      "SE1603-25",
+      "SE1603-37",
+      "SE1603-43",
+      "SE1684-02"
+     ],
+     "earliest": 1574
+    }
+   ]
+  },
+  "KO_B": {
+   "title": "Sophistical Refutations 183b34–184b8",
+   "sentences": [
+    {
+     "para": 0,
+     "text": "Sophistical Refutations 34 is the conclusion of the work, a final section or appendix of the Topics, whose last section appears to some to form an epilogue to both treatises.",
+     "n": 1,
+     "claims": [
+      "F29",
+      "F4",
+      "F5",
+      "F33",
+      "F24"
+     ]
+    },
+    {
+     "para": 0,
+     "text": "The chapter recalls the programme, to discover a faculty of reasoning from the most generally accepted premisses, the task of dialectic and peirastic, and names Socrates, who asked questions and did not answer, confessing that he did not know.",
+     "n": 2,
+     "claims": [
+      "F35",
+      "F36",
+      "F34",
+      "F6",
+      "F21",
+      "F28",
+      "F26"
+     ]
+    },
+    {
+     "para": 1,
+     "text": "Discoveries handed down from others advance bit by bit, as rhetoric did from Tisias to Thrasymachus and Theodorus, but of this inquiry it was not the case that part had been thoroughly done before and part not: nothing existed at all.",
+     "n": 3,
+     "claims": [
+      "F37",
+      "F38",
+      "F39"
+     ]
+    },
+    {
+     "para": 1,
+     "text": "The paid professors of contentious arguments trained like Gorgias, a teaching ready but rough that imparted not the art but its products, like a man who gives shoes and imparts no art; of rhetoric much had been said long ago, but on reasoning we had nothing else of an earlier date to speak of at all, and the hearers are asked for pardon and thanks.",
+     "n": 4,
+     "claims": [
+      "F40",
+      "F41",
+      "F42",
+      "F43",
+      "F44"
+     ]
+    },
+    {
+     "para": 2,
+     "text": "According to Aristotle at 183b34 ff. the Sophistical Refutations is the first work to treat deductive reasoning in ancient Greece; his logical works are the earliest formal study of logic extant, the Topics perhaps the earliest surviving logical treatise and the Sophistical Refutations the first systematic classification of fallacies, both conjectured earlier than the Prior Analytics.",
+     "n": 5,
+     "claims": [
+      "F27",
+      "F1",
+      "F2",
+      "F22",
+      "F19",
+      "F20"
+     ]
+    },
+    {
+     "para": 2,
+     "text": "Before him the Sophists, Plato and Eubulides worked on sentence analysis, truth and fallacies, Socrates and Zeno refuted without theorizing their procedures, Plato institutionalized Socratic refutation into dialectical contests, and peirastic is almost certainly descended from Socrates' interrogation; logic as a fully systematic discipline begins with Aristotle, who systematized much of his predecessors' inquiry.",
+     "n": 6,
+     "claims": [
+      "F11",
+      "F12",
+      "F14",
+      "F15",
+      "F16",
+      "F17",
+      "F18",
+      "F7",
+      "F8",
+      "F9",
+      "F10",
+      "F13"
+     ]
+    },
+    {
+     "para": 2,
+     "text": "His logic ruled without rival into the nineteenth century, Kant holding that nothing else was to be invented after him, and the Sophistical Refutations' theory of fallacies has been remarkably influential, a link to the Rhetoric commented by Ockham and Scotus.",
+     "n": 7,
+     "claims": [
+      "F23",
+      "F3",
+      "F30",
+      "F25",
+      "F31",
+      "F32"
+     ]
+    }
+   ]
+  },
+  "P_B": {
+   "title": "Sophistical Refutations 183b34–184b8",
+   "lede": {
+    "text": "is the conclusion of Aristotle's Sophistical Refutations, where he says that of this inquiry 'Nothing existed at all' and that on reasoning 'we had nothing else of an earlier date to speak of at all' (Pickard-Cambridge); it is read as his claim that the work is 'the first work to treat the subject of deductive reasoning' (Wikipedia).",
+    "claims": [
+     "F29",
+     "F39",
+     "F43",
+     "F27"
+    ]
+   },
+   "sections": [
+    {
+     "icon": "📜",
+     "head": "The chapter",
+     "items": [
+      {
+       "label": "Programme:",
+       "text": "a faculty of reasoning from accepted premisses; dialectic and peirastic.",
+       "claims": [
+        "F35",
+        "F34"
+       ]
+      },
+      {
+       "label": "Rhetoric:",
+       "text": "grew by succession, Tisias, Thrasymachus, Theodorus.",
+       "claims": [
+        "F37",
+        "F38"
+       ]
+      },
+      {
+       "label": "Teachers:",
+       "text": "gave 'not the art but its products'.",
+       "claims": [
+        "F40",
+        "F41",
+        "F42"
+       ]
+      },
+      {
+       "label": "Envoi:",
+       "text": "pardon for shortcomings, thanks for discoveries.",
+       "claims": [
+        "F44"
+       ]
+      }
+     ]
+    },
+    {
+     "icon": "🏛️",
+     "head": "Originality",
+     "items": [
+      {
+       "label": "First:",
+       "text": "'the earliest formal study of logic' (Smith).",
+       "claims": [
+        "F1",
+        "F2"
+       ]
+      },
+      {
+       "label": "Before him:",
+       "text": "'logic as a fully systematic discipline begins with Aristotle' (Bobzien).",
+       "claims": [
+        "F11",
+        "F12",
+        "F13"
+       ]
+      },
+      {
+       "label": "Socrates:",
+       "text": "peirastic 'almost certainly descended' from his interrogation; he did not theorize.",
+       "claims": [
+        "F7",
+        "F8",
+        "F14",
+        "F15"
+       ]
+      }
+     ]
+    },
+    {
+     "icon": "📚",
+     "head": "Reception",
+     "items": [
+      {
+       "label": "Unrivalled:",
+       "text": "to the nineteenth century; Kant, nothing left to invent.",
+       "claims": [
+        "F19",
+        "F23",
+        "F30",
+        "F3"
+       ]
+      }
+     ]
+    }
+   ],
+   "rail": [
+    {
+     "lineage": "The chapter, translated",
+     "claims": [
+      "F35",
+      "F36",
+      "F37",
+      "F38",
+      "F39",
+      "F40",
+      "F41",
+      "F42",
+      "F43",
+      "F44"
+     ],
+     "earliest": "B7"
+    },
+    {
+     "lineage": "The passage's place",
+     "claims": [
+      "F4",
+      "F5",
+      "F24",
+      "F29",
+      "F33"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "Originality",
+     "claims": [
+      "F1",
+      "F2",
+      "F13",
+      "F19",
+      "F22",
+      "F27"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "Logic before Aristotle",
+     "claims": [
+      "F10",
+      "F11",
+      "F12",
+      "F16",
+      "F17",
+      "F18"
+     ],
+     "earliest": "B2"
+    },
+    {
+     "lineage": "Socrates and peirastic",
+     "claims": [
+      "F7",
+      "F8",
+      "F9",
+      "F14",
+      "F15"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "Reception",
+     "claims": [
+      "F3",
+      "F23",
+      "F25",
+      "F30",
+      "F31",
+      "F32"
+     ],
+     "earliest": "B1"
+    },
+    {
+     "lineage": "The inquiry: dialectic",
+     "claims": [
+      "F6",
+      "F20",
+      "F21",
+      "F26",
+      "F28",
+      "F34"
+     ],
+     "earliest": "B1"
+    }
+   ]
+  },
+  "kernel": [
+   {
+    "K": "K1",
+    "claim": "`SE1574-03`",
+    "source": "#1574",
+    "M_src": "documented",
+    "sense": "the Greek of the passage",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "editions (Ross's OCT apparatus at 183b35 and 184b1)",
+    "contrast": "none"
+   },
+   {
+    "K": "K2",
+    "claim": "`SE1574-01`",
+    "source": "#1574",
+    "M_src": "documented",
+    "sense": "the Greek of the passage",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "editions (Ross's OCT apparatus at 183b35 and 184b1)",
+    "contrast": "none"
+   },
+   {
+    "K": "K3",
+    "claim": "`SE1576-01`",
+    "source": "#1576",
+    "M_src": "interpretation",
+    "sense": "the passage's place: the ending of SE and of the Topics",
+    "qualifiers carried": "SE1576-14, SE1576-15",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "commentary on the Topics–SE relation",
+    "contrast": "qualified claim (F43)"
+   },
+   {
+    "K": "K4",
+    "claim": "`SE1574-13`",
+    "source": "#1574",
+    "M_src": "interpretation",
+    "sense": "the denial is total within its domain",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "translation and commentary on SE 34 (Dorion, Hasper); machine composition at the address",
+    "contrast": "rival claim (F23)"
+   },
+   {
+    "K": "K5",
+    "claim": "`SE1603-10`",
+    "source": "#1603",
+    "M_src": "interpretation",
+    "sense": "the provenance axis of the paragraph",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "commentary on SE 34",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K6",
+    "claim": "`SE1603-01`",
+    "source": "#1603",
+    "M_src": "interpretation",
+    "sense": "the denial is total within its domain",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "translation and commentary on SE 34 (Dorion, Hasper); machine composition at the address",
+    "contrast": "rival claim (F23)"
+   },
+   {
+    "K": "K7",
+    "claim": "`SE1603-02`",
+    "source": "#1603",
+    "M_src": "interpretation",
+    "sense": "the qualifier is not in the sentence",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "translations, reference works and machine compositions at the passage (the Capture Registry)",
+    "contrast": "qualified claim (F11, F23, F37)"
+   },
+   {
+    "K": "K8",
+    "claim": "`SE1574-24`",
+    "source": "#1574",
+    "M_src": "interpretation",
+    "sense": "the qualifier is not in the sentence",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "translations, reference works and machine compositions at the passage (the Capture Registry)",
+    "contrast": "rival claim (F23, F11)"
+   },
+   {
+    "K": "K9",
+    "claim": "`SE1603-34`",
+    "source": "#1603",
+    "M_src": "interpretation",
+    "sense": "the prohibitions",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "a rival reading checked against Appendix P",
+    "contrast": "rival claim (F11, F23)"
+   },
+   {
+    "K": "K10",
+    "claim": "`SE1603-28`",
+    "source": "#1603",
+    "M_src": "documented",
+    "sense": "the witnesses: translations keep the sentence",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "seating of further witnesses (Boethius in Dod; Avicenna; Averroes; Nifo; Ockham)",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K11",
+    "claim": "`SE1574-29`",
+    "source": "#1574",
+    "M_src": "documented",
+    "sense": "the reception measured",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "later machine compositions at the address and at #1574's title (the Capture Registry)",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K12",
+    "claim": "`SE1574-33`",
+    "source": "#1574",
+    "M_src": "documented",
+    "sense": "the deletion of οὐ",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "later machine compositions at the address (the Capture Registry)",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K13",
+    "claim": "`SE1574-39`",
+    "source": "#1574",
+    "M_src": "interpretation",
+    "sense": "the provenance axis of the paragraph",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "commentary on SE 34",
+    "contrast": "qualified claim (F23, F18)"
+   },
+   {
+    "K": "K14",
+    "claim": "`SE1603-03`",
+    "source": "#1603",
+    "M_src": "interpretation",
+    "sense": "Socrates inside the inquiry",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "scholarship on SE 34 and Socratic dialectic; machine composition of T's second question",
+    "contrast": "rival claim (F18)"
+   },
+   {
+    "K": "K15",
+    "claim": "`SE1603-22`",
+    "source": "#1603",
+    "M_src": "hypothesis",
+    "sense": "Socrates inside the inquiry",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "scholarship on SE 34 and Socratic dialectic; machine composition of T's second question",
+    "contrast": "rival claim (F18, F25)"
+   },
+   {
+    "K": "K16",
+    "claim": "`SE1574-47`",
+    "source": "#1574",
+    "M_src": "interpretation",
+    "sense": "Socrates inside the inquiry",
+    "qualifiers carried": "SE1574-41, SE1574-48",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "scholarship on SE 34 and Socratic dialectic; machine composition of T's second question",
+    "contrast": "rival claim (F18, F24)"
+   },
+   {
+    "K": "K17",
+    "claim": "`SE1603-33`",
+    "source": "#1603",
+    "M_src": "interpretation",
+    "sense": "the chapter as the treatise's final exercise",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "commentary on the ending of the SE",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K18",
+    "claim": "`SE1576-12`",
+    "source": "#1576",
+    "M_src": "hypothesis",
+    "sense": "the maker-count question at the sentence",
+    "qualifiers carried": "SE1576-14, SE1576-15",
+    "f (source's own falsifiers)": "none stated (watch condition only)",
+    "w": "the external record (papyri, inscriptions, transmission history)",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K19",
+    "claim": "`SE1603-37`",
+    "source": "#1603",
+    "M_src": "self-description",
+    "sense": "the prohibitions",
+    "qualifiers carried": "SE1603-07, SE1603-25, SE1603-36",
+    "f (source's own falsifiers)": "SE1603-37, SE1603-34 (watch condition: names the observation type, sets no threshold)",
+    "w": "a rival reading checked against Appendix P",
+    "contrast": "missing distinction"
+   },
+   {
+    "K": "K20",
+    "claim": "`F13`",
+    "source": "B2 (field)",
+    "M_src": "interpretation",
+    "sense": "the originality of Aristotle's logic",
+    "qualifiers carried": "—",
+    "f (source's own falsifiers)": "none stated",
+    "w": "translation and commentary on SE 34; later machine compositions",
+    "contrast": "rival claim (SE1574-24, SE1576-06, SE1603-01)"
+   },
+   {
+    "K": "K21",
+    "claim": "`F8`",
+    "source": "B1 (field)",
+    "M_src": "hypothesis",
+    "sense": "the peirastic and Socrates",
+    "qualifiers carried": "—",
+    "f (source's own falsifiers)": "none stated",
+    "w": "translation and commentary on SE 34; later machine compositions",
+    "contrast": "rival claim (SE1603-19, SE1574-47)"
+   },
+   {
+    "K": "K22",
+    "claim": "`F1`",
+    "source": "B1 (field)",
+    "M_src": "interpretation",
+    "sense": "the originality of Aristotle's logic",
+    "qualifiers carried": "—",
+    "f (source's own falsifiers)": "none stated",
+    "w": "translation and commentary on SE 34; later machine compositions",
+    "contrast": "rival claim (SE1603-34)"
+   },
+   {
+    "K": "K23",
+    "claim": "`F27`",
+    "source": "B4 (field)",
+    "M_src": "attributed",
+    "sense": "the sentence's claim, as reported",
+    "qualifiers carried": "—",
+    "f (source's own falsifiers)": "none stated",
+    "w": "translation and commentary on SE 34; later machine compositions",
+    "contrast": "qualified claim (SE1603-48)"
+   }
+  ],
+  "channel": []
+ }
+}

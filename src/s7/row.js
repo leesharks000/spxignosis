@@ -22,7 +22,8 @@ export function buildRow(run) {
   const caseV = onto.case?.value, rhoV = onto.rho?.value;
   const T = input.kind === "entity"
     ? { path: input.T.text ? `${V2}/intake/${r}-${input.address.date.replace(/-/g, "")}/T-transcript.txt` : null, kind: input.T.kind, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: 0,
-        claims: input.T.claims.map((x) => `${x.id} ${x.text}`), wikipedia: input.T.wikipedia, note: input.T.note }
+        claims: input.T.claims.map((x) => `${x.id} ${x.text}`), wikipedia: input.T.wikipedia, note: input.T.note,
+        ...(input.T.capture ? { capture_registry: input.T.capture } : {}), ...(input.T.source ? { source: input.T.source } : {}) }
     : input.kind === "wikipedia"
     ? { path: `${V2}/intake/${r}-${input.address.oldid}/T-revision.txt`, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: input.T.claims.reduce((n, x) => n + (x.cites || []).length, 0), url: input.T.url, licence: "CC BY-SA 4.0 (Wikipedia contributors; the revision URL is the attribution)",
         claims: input.T.claims.map((x) => `${x.id} ${x.text}`), note: "T is the pinned Wikipedia revision, sentence by sentence; its disclosed field B is every source the revision cites (EA-NEGONT-02 v0.9 §0.4 applied to an encyclopedia article: the article is the composition at the address)." }
@@ -41,6 +42,8 @@ export function buildRow(run) {
     field_claims: fieldClaims, field_sources: fieldSources,
     ledger: { archive: `${V2}/ledgers/${r}/ledger-archive.json`, field: `${V2}/ledgers/${r}/field.json`, selection: `${V2}/traversal/${r}/`, audit: null },
     breaches,
+    ...(run.dro?.works?.length ? { works: { rule: "scanned, not read: the deposits the registry gives as by the entity (or by a name the caller counts as its)", count: run.dro.works.length, deposits: run.dro.works } } : {}),
+    ...(run.dro?.division?.scanned ? { division: run.dro.division } : {}),
     composition_gnosis: { service: run.service, protocol: run.protocol, mode: run.mode, models: run.models, archive_release: release, passes: run.calls, cost_usd: run.cost_usd, seconds: run.seconds },
   };
   if (onto.status === "read" || onto.status === "contested") {
@@ -96,7 +99,7 @@ export function writeLanding(run, row) {
     reader: row.status.readings, candidate_files: Object.fromEntries(Object.entries({ ...trav.files, ...(travH.files || {}) }).filter(([k]) => k.startsWith("candidates-"))),
     verdicts, not_admitted: [...dro.not_admitted, ...hop.not_admitted], lineages: lineages(arch.ledger), observations: [],
     counts: { candidate_deposits_DRO: new Set([...trav.D, ...trav.R, ...trav.O].map((c) => c.dep)).size, blog_posts_scanned: run.blog?.posts_scanned, blog_candidate_posts: new Set((run.blog?.D || []).map((c) => c.dep)).size, hop_candidates: (travH.H || []).length, hop_screened: hop.screened, admitted: verdicts.length,
-      admitted_by_hop: hop.verdicts.length, contested: [...dro.contested, ...hop.contested].length, archive_claims: arch.ledger.length, lineages: lineages(arch.ledger).length },
+      admitted_by_hop: hop.verdicts.length, scanned_not_read: dro.division?.scanned?.deposits || 0, works_scanned: (dro.works || []).length, contested: [...dro.contested, ...hop.contested].length, archive_claims: arch.ledger.length, lineages: lineages(arch.ledger).length },
   };
   files.push(put(`${V2}/traversal/${input.row}/reading.json`, reading));
   if (input.kind === "entity" && input.T.text) files.push(put(row.objects.T.path, `${input.T.text}\n`));

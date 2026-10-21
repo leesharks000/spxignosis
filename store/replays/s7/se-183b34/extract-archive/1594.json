@@ -1,0 +1,28 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "the denial excludes even a partially worked-out antecedent within its scope — οὐ τὸ μὲν … τὸ δ᾽ οὐκ ἦν προεξειργασμένον, ἀλλ᾽ οὐδὲν παντελῶς ὑπῆρχεν — and no \"systematic\" occurs (183b15–36)",
+    "locus": "§ (Astra's audit: holds on the page)",
+    "claim": "A second reader's audit: the denial excludes even a partial antecedent; no 'systematic' occurs.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the denial is total within its domain"
+   },
+   {
+    "quote": "\"what we had earlier to say concerning the activity\" and \"whether anyone earlier performed the activity\" are different propositions, and the reading rests on the former.",
+    "locus": "§ (one correction from Astra's Greek)",
+    "claim": "Saying and performing are different propositions; the reading rests on the former.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the sentence 184b1–2, read"
+   }
+  ]
+ }
+}

@@ -1,0 +1,392 @@
+<noinclude>{{Short description|Wikipedia behavioral guideline}} 
+{{hatnote|If you want to report a problematic conflict of interest editor, see [[Wikipedia:Conflict of interest/Noticeboard]].}}
+{{hatnote|For practical advice for editors who might have a conflict of interest, see [[Wikipedia:Plain and simple conflict of interest guide]]}}
+{{redirect|Wikipedia:Conflict}}
+{{pp-move-indef}}
+{{pp|small=yes}}
+{{subcat guideline|behavioral guideline|Conflict of interest|WP:COI}}
+{{nutshell|Do not edit Wikipedia in your own interests, or in the interests of your external relationships. Paid editing must be disclosed.}}</noinclude>
+[[File:Cat stares at itself on computer monitor.jpg|thumb|This cat is wisely refraining from COI editing. You should, too.|alt=A cat looks at a picture of itself uploaded to Wikimedia Commons on a laptop]]
+{{guideline list}}
+
+'''Conflict of interest''' ('''COI''') '''editing''' involves contributing to [[Wikipedia]] articles about yourself, family, friends, clients, employers, or your financial and other relationships. Any [[#What is conflict of interest?|external relationship]] can trigger a [[conflict of interest]]. Someone having a conflict of interest is a description of a {{em|situation}}, not a judgment about that person's opinions, integrity, or [[Wikipedia:Assume good faith|good faith]].
+
+COI editing is strongly discouraged on Wikipedia. It undermines public confidence and risks causing [[Wikipedia:Wikipedia is in the real world|public embarrassment]] to the individuals and companies being promoted. Editors with a COI are sometimes [[#Why is conflict of interest a problem?|unaware of whether or how much]] it has influenced their editing. If COI editing causes disruption, an administrator may opt to place blocks on the involved accounts.
+
+Editors with a COI, including [[WP:PAY|paid editors]], are expected to [[#howtodisclose|disclose it]] whenever they seek to change an affected article's content. Anyone editing for pay [[#COIPAYDISCLOSE|must disclose who is paying them]], who the client is, and any other relevant affiliation; this is a requirement of the [[Wikimedia Foundation]]. COI editors are strongly discouraged from editing affected articles directly, and can propose changes on article talk pages instead. However, our [[WP:BLP|policy on matters relating to living people]] allows very obvious errors to be fixed quickly, [[WP:BLPSELF|including by the subject]].
+
+When investigating COI editing, {{em|do not}} [[WP:OUTING|reveal the identity]] of editors against their wishes. Wikipedia's [[WP:HARASS|policy against harassment]], and in particular the prohibition against disclosing personal information, {{strong|takes precedence}} over this guideline. To report COI editing, follow the advice at {{sectionlink|#How to handle conflicts of interest}}. Editors making or discussing changes to this guideline or related guidance shall disclose whether they have been paid to edit Wikipedia.
+
+== What is conflict of interest? ==
+=== <span class="anchor" id="External relationships"></span>External roles and relationships ===
+{{Shortcut|WP:EXTERNALREL}}
+While editing Wikipedia, an editor's primary role is to further the interests of the encyclopedia. When an external role or relationship could reasonably be said to undermine that primary role, the editor has a conflict of interest similar to how a judge's primary role as an impartial adjudicator would be undermined if they were married to one of the parties.
+
+Any external relationship—personal, religious, political, academic, legal, or financial—can trigger a COI. How close the relationship needs to be before it becomes a concern on Wikipedia is governed by common sense. For example, an article about a band should not be written by the band's manager, and a biography should not be an [[Wikipedia:Autobiography|autobiography]] or written by the subject's spouse. There can be a COI when writing on behalf of a competitor or opponent of the page subject, just as there is when writing on behalf of the page subject.
+
+[[Subject-matter expert]]s (SMEs) are welcome on Wikipedia within their areas of expertise, subject to the guidance below on [[WP:FCOI|financial conflict of interest]] and on [[WP:SELFCITE|citing your work]]. SMEs are expected to make sure that their external roles and relationships in their field of expertise do not interfere with their primary role on Wikipedia.
+
+=== <span class="anchor" id="notbias"></span>COI is not simply bias ===
+{{shortcut|WP:COINOTBIAS}}
+{{further|Wikipedia:Advocacy}}
+Determining that someone has a COI is a '''description of a situation'''. It is not a judgment about that person's state of mind or integrity. A COI can exist in the absence of bias, and bias regularly exists in the absence of a COI. Beliefs and desires may lead to biased editing, but they do not constitute a COI. COI emerges from an editor's roles and relationships, and the ''tendency to bias'' that we assume exists when those roles and relationships conflict.
+
+=== <span class="anchor" id="Why is conflict of interest a problem?"></span>Why is conflict of interest a problem? ===
+On Wikipedia, editors with a conflict of interest who unilaterally add material tend to violate Wikipedia's content and behavioral policies and guidelines. The content they add is typically unsourced or poorly sourced and often violates the [[WP:NPOV|neutral point of view]] policy by being [[wikipedia:PUFF|promotional]] and omitting negative information. They may [[WP:Edit warring|edit war]] to retain content that serves their external interest. They may overuse [[wikipedia:PRIMARY|primary sources]] or [[wikipedia:INDEPENDENT|non-independent sources]], and they may give too much [[wikipedia:WEIGHT|weight]] to certain ideas.
+
+=== Actual, potential and apparent COI ===
+{{Shortcut|WP:ACTUALCOI|WP:POTENTIALCOI|WP:APPARENTCOI}}
+An '''{{vanchor | actualCOI | text=actual COI}}''' exists when an editor has a COI with respect to a certain judgment <em>and</em> is in a position where the judgment must be exercised.
+<div style="margin-left:1.6em;">Example: A business owner has an actual COI if they edit articles and engage in discussions about that business.</div>
+A '''{{vanchor | potentialCOI | text=potential COI }}''' exists when an editor has a COI with respect to a certain judgment ''but is not'' in a position where the judgment must be exercised.
+<div style="margin-left:1.6em;">Example: A business owner has a potential COI with respect to articles and discussions about that business, but they have no actual COI if they stay away from those pages.</div>
+An '''{{vanchor | apparentCOI | text=apparent COI}}''' exists when there is reason to believe that an editor has a COI.
+<div style="margin-left:1.6em;">Example: Editors have an apparent COI if they edit an article about a business, and for some reason they appear to be the business owner or in communication with the business owner, although they may actually have no such connection. Apparent COI raises concern within the community and should be resolved through discussion whenever possible.</div>
+
+== Wikipedia's position ==
+=== Purpose of Wikipedia ===
+{{further|Wikipedia:What Wikipedia is not}}
+As an encyclopedia, [[Wikipedia:Five pillars|Wikipedia's mission]] is to provide the public with articles that summarize accepted knowledge, written neutrally and sourced reliably. Readers expect to find neutral articles written independently of their subject, not corporate or personal webpages, or platforms for advertising and self-promotion. Articles should contain only material that complies with Wikipedia's content policies and best practices, and Wikipedians must place the interests of the encyclopedia and its readers above personal concerns.
+
+=== COI editing ===
+{{Shortcut|WP:COIEDIT|WP:EDITCOI}}
+{{Broader|Wikipedia:Plain and simple conflict of interest guide}}
+Editors with a COI should follow Wikipedia policies and best practices scrupulously:
+* you should '''[[#howtodisclose|disclose]] your COI''' when involved with affected articles;
+* you are '''strongly discouraged''' from editing affected articles directly;
+* you may '''[[Wikipedia:Edit requests|propose changes]]''' on talk pages (by using the {{tlx|edit COI}} template), so that they can be peer-reviewed;
+* you should put new articles through the [[WP:AFC|Articles for Creation (AfC)]] process instead of creating them directly;
+* you should '''not act as a reviewer''' of affected article(s) at AfC, [[WP:NPP|new pages patrol]] or elsewhere;
+* you should '''respect other editors''' by keeping discussions concise.
+
+Note that no one on Wikipedia [[WP:OWN|controls articles]]. If Wikipedia hosts an article about you or your organization, others may add information that would otherwise remain little known. They may also decide to delete the article or decide to keep it should you later request deletion. The media has several times drawn attention to companies that engage in COI editing on Wikipedia (see [[Conflict-of-interest editing on Wikipedia]]), which has led to embarrassment for the organizations concerned.
+
+=== <span class="anchor" id="Paid editing"></span><span class="anchor" id="Paid advocacy"></span>Paid editing ===
+{{Shortcut|WP:PE|WP:PAY|WP:NOPR|WP:NOPAY|WP:FCOI}}
+Being paid to contribute to Wikipedia is one form of financial COI; it places the paid editor in a conflict between their employer's goals and Wikipedia's goals. The kind of paid editing of most concern to the community involves using Wikipedia for public relations and marketing purposes. Sometimes called "paid advocacy," this is problematic because it invariably reflects the interests of the client or employer.
+
+More generally, an editor has a financial conflict of interest whenever they write about a topic with which they have a close financial relationship. This includes being an owner, employee, contractor, investor or other stakeholder.
+
+The [[Wikimedia Foundation]] requires that all paid editing be disclosed. Additionally, [[meta:Linking to external advertising accounts|global policy]] requires that (if applicable) you '''must''' provide links on your user-page to '''all''' active accounts on external websites through which you advertise, solicit or obtain paid editing. If you receive or expect to receive compensation (money, goods or services) for your contributions to Wikipedia, the policy on the English Wikipedia is:
+
+* you must '''[[#COIPAYDISCLOSE|disclose]]''' who is paying you, on whose behalf the edits are made, and any other relevant affiliation;
+* you should make the disclosure on your user page, '''on affected talk pages''', and whenever you discuss the topic;
+* you are '''strongly discouraged''' from editing affected articles directly;
+* you may '''[[Wikipedia:Edit requests|propose changes]]''' on talk pages by using the {{tlx|edit COI}} template, so that they can be peer-reviewed;
+* you should put new articles through the [[WP:AFC|Articles for Creation (AfC)]] process instead of creating them directly;
+* you must '''not act as a reviewer''' of affected article(s) at AfC, [[WP:NPP|new pages patrol]] or elsewhere;
+* you should '''respect volunteers''' by keeping discussions concise (see [[#Paid editors on talk pages|WP:PAYTALK]]).
+
+Requested edits are subject to the same standards as any other, and editors may decline to act on them. The [[Wikipedia:Guide to effective COI edit requests|guide to effective COI edit requests]] provides guidance in this area.  To find an article's talk page, click the "talk" button at the top of the article. See [[WP:TEAHOUSE]] if you have questions about these things. If you are an administrator, you [[WP:TOOLMISUSE|must not use administrative tools for any paid-editing activity]] (except when related to work as a [[WP:Wikipedian-in-residence|Wikipedian-in-residence]], or as someone paid by the Wikimedia Foundation or an affiliate).
+
+=== Wikimedia Foundation terms of use<span class="anchor" id="terms"></span> ===
+{{further|Wikipedia:Paid-contribution disclosure }}
+The [[Wikimedia Foundation]]'s [[wmf:Terms of Use#4. Refraining from Certain Activities|terms of use]] require that editors who are being paid for their contributions disclose their ''employer'' (the person or organization who is paying for the edits); the ''client'' (the person or organization on whose behalf the edits are made); and any other relevant ''affiliation''. This is the policy of the English Wikipedia.
+
+== <span class="anchor" id="howtodisclose"></span><span class="anchor" id="Declaring an interest"></span>How to disclose a COI ==
+=== General COI ===
+{{shortcut|WP:DISCLOSE|WP:DCOI|WP:COID}}
+If you become involved in an article where you have any COI, you should always let other editors know about it, whenever and wherever you discuss the topic. There are three venues to do this:
+# If you want to use a template to do this, place {{tlx|connected contributor}} {{strong|at the top of the affected talk page}}, fill it in as follows, and save:
+#: <code>{{((}}Connected contributor |User1=''Your username'' |U1-declared=yes |U1-otherlinks=''(Optional) Insert relevant affiliations, disclosures, article drafts or diffs showing COI contributions.''{{))}}</code>
+#: Note that someone else may add this for you. 
+# You can also make a statement in the [[Help:Edit summary|edit summary]] of any COI contribution. 
+# If you want to note the COI {{strong|on [[Special:MyPage|your user page]]}}, you can use the {{tlx|UserboxCOI}} template:
+#: <code>{{((}}UserboxCOI |1=''Wikipedia article name''{{))}}</code>
+
+Also, if you propose significant or potentially controversial changes to an affected article, you can use the {{tlx|edit COI}} template. Place this at the bottom of the talk page and state your suggestion beneath it (be sure to sign it with four tildes, <nowiki>~~~~</nowiki>). If the proposal is [[WP:V|verifiable]] and appropriate, it will usually be accepted. If it is declined, the editor declining the request will usually add an explanation below your entry.
+
+Example: In [[Special:Diff/719164069|this edit on Talk:Steve Jobs]], one editor added a COI disclosure for another editor.
+{{clear}}
+
+=== <span class="anchor" id="COIPAYDISCLOSE"></span><span class="anchor" id="COIDISCLOSEPAY"></span>Paid editors ===
+{{shortcut|WP:COIPAYDISCLOSE|WP:COIDISCLOSEPAY|WP:UPE}}
+{{further|Wikipedia:Paid-contribution disclosure}}
+{{redirect-distinguish|WP:UPE|Wikipedia:Use plain English}}
+If you are being paid for your contributions to Wikipedia, you must declare who is paying you, who the client is, and any other relevant role or relationship. You may do this on your user page, on the talk page of affected articles, or in your edit summaries. As you have a conflict of interest, you must ensure everyone with whom you interact is aware of your paid status, in all discussions on Wikipedia pages within any namespace. If you want to use a template to disclose your COI on a talk page, place {{tlx|connected contributor (paid)}} at the top of the page, fill it in as follows, and save:
+
+{{cot|bg=#DCDCDC|fc=#555555|width=75%|Connected contributor (paid) template}}
+:<span style="font-size:100%;"><code><nowiki>{{</nowiki>Connected contributor (paid)|User1=''Username of the paid editor''|U1-employer=''Name of person/organization that is paying for the edits''|U1-client=''Name of client''|U1-otherlinks=''Insert [[Wikipedia:Complete diff and link guide#What are diffs?|diff]] to disclosure on your User page.''<nowiki>}}</nowiki></code></span>
+{{cob}}
+
+The ''employer'' is whoever is paying you to be involved in the article (such as a PR company). The ''client'' is on whose behalf the payment is made (usually the subject of the article). If the employer and client are the same entity—that is, if Acme Corporation is paying you to write about Acme Corporation—the client parameter may be left empty. See {{tlx|connected contributor (paid)}} for more information. Note that other editors may add this template for you. Paid editing without such a declaration is called ''undisclosed paid editing'' ('''UPE''').
+
+You are expected to maintain a clearly visible list on your user page of your paid contributions. Disclosure on user pages may be done using the {{tlx|paid}} template as follows: {{tlx|paid|employer{{=}}{{var|name of employer}}|client{{=}}{{var|name of client}}|article{{=}}{{var|name of article}}}}. If you advertise, solicit or obtain paid editing work via an account on any external website, you must provide links on your user-page to all such accounts.
+
+If you propose changes to an affected article, you can use the {{tlx|edit COI}} template. Post it on the talk page and make your suggestion underneath it.
+
+The use of administrative tools as part of any paid editing activity, except as a Wikipedian-in-Residence, or when the payment is made by the Wikimedia Foundation or an affiliate of the WMF, is considered a [[WP:TOOLMISUSE|serious misuse]] and likely to result in sanctions or their removal.
+
+== <span class="anchor" id="Responding"></span>Dealing with edit requests from COI or paid editors ==
+=== Responding to requests ===
+{{shortcut|WP:COIRESPONSE}}
+Editors responding to [[Wikipedia:Edit requests#COI|edit requests from COI or paid editors]] are expected to do so carefully, particularly when commercial interests are involved. When large amounts of text are added to an article on behalf of the article subject, the article has, in effect, been [[ghostwriter|ghostwritten]] by the subject without the readers' knowledge. Responding volunteers should therefore carefully check the proposed text and sources. That an article has been expanded does not mean that it is better.
+* Make sure the proposed paid text complies with [[WP:WEIGHT]].
+* Look for unnecessary detail that may have been added to overwhelm something negative.
+* Make sure nothing important is missing. Responding editors should do their own search for [[WP:INDY|independent sources]]. '''Do not rely on the sources offered by the paid editor.'''
+* Look for non-neutral language and unsourced or poorly sourced content.
+* Be cautious about accepting content based on [[WP:SPS|self-published sources]] such as a personal website, or [[primary source]]s such as a company website or press release.
+If the paid text is added to the article, the edit summary should include full attribution.
+
+=== <span class="anchor" id="Attribution"></span>Attribution in edit summaries ===
+{{shortcut|WP:COIATTRIBUTE|WP:PAIDATTRIBUTE}}
+{{see|Wikipedia:Copying within Wikipedia|Wikipedia:Copying text from other sources}}
+If editors choose to add material to an article on behalf of a COI or paid editor, they must provide [[WP:ATTREQ|attribution]] for the text in the [[Help:Edit summary|edit summary]]. The edit summary should include the name of the COI or paid editor, a link to the draft or edit request, and that the edit contains a COI or paid contribution. For example:
+<p><code><nowiki>Text inserted on behalf of paid editor User:X; copied from [[Draft:Paid draft]].</nowiki></code></p>
+or you can also use the following format, from text requested in a talk page,
+<p><code><nowiki>Edit made due to [[WP:COI]] edit request by User:SVeatch; copied or adapted from "Revisions to Infobox, Introduction and History" at [[Special:Permalink/1213729307]]</nowiki></code></p>
+<small>The [[Help:Permanent link|permalink]] helps avoid broken links when sections are archived.</small>
+
+This transparency helps editors and readers to determine the extent of COI influence on the article. It also complies with copyright requirements.
+
+=== <span class="anchor" id="talk"></span>Paid editors on talk pages ===
+{{Shortcut|WP:COITALK|WP:PAYTALK}}
+Paid editors must respect the volunteer nature of the project and keep discussions concise. When proposing changes to an article, they should describe the suggested modifications and explain why the changes should be made. Any changes that may be contentious, such as removal of negative text, should be highlighted.
+
+Before being drawn into long exchanges with paid editors, volunteers should be aware that paid editors may be submitting evidence of their talk-page posts to justify their salaries or fees. No editor should be expected to engage in long or repetitive discussions with someone who is being paid to argue with them. 
+
+Editors who refuse to accept a consensus by arguing ''[[ad nauseam]]'' may find themselves in violation of the [[Wikipedia:Disruptive editing|guideline against disruptive editing]]. Paid editors and other editors with conflicts of interest are subject to [[WP:AITALK]], the same as any other editors.
+
+== <span class="anchor" id="Copyright"></span>Copyright of paid contributions ==
+{{shortcut|WP:COICOPYRIGHT|WP:PAIDCOPYRIGHT}}
+{{See also|Work for hire}}
+Editors are reminded that any text they contribute to Wikipedia, assuming they own the copyright, is irrevocably licensed under the Creative Commons Attribution-ShareAlike 4.0 license ([[WP:CCBYSA|license text]]). Content on Wikipedia, including article drafts and talk-page comments, can be freely copied and modified by third parties for commercial and non-commercial use, with the requirements:
+
+# that it be [[Wikipedia:Reusing Wikipedia content#Attribution|attributed to Wikipedia contributors]], and
+# that [[derivative works]] be distributed under the same license.
+
+Paid editors must ensure that they own the copyright of text they have been paid to add to Wikipedia; otherwise, they are unable to release it. A text's author is normally assumed to be the copyright holder. Companies sometimes provide paid editors with text written by someone else. Alternatively, a paid editor might write text for Wikipedia within the scope of their employment (a "[[work for hire]]"), in which case copyright resides with the employer.
+
+Where there is doubt that the paid editor owns the copyright, they (or the employer or author) are advised to forward a release from the copyright holder to the [[WP:Volunteer Response Team|Volunteer Response Team]] (<kbd>{{No spam|permissions-en|wikimedia.org}}</kbd>). See [[WP:PERMISSION]] for how to do this and [[Wikipedia:Declaration of consent for all enquiries]] for a sample letter.
+
+If editors choose to add material to an article on behalf of a paid editor, they must provide [[WP:ATTREQ|attribution]] for the text in the [[Help:Edit summary|edit summary]]. See [[WP:COIATTRIBUTE]] for how to do this.
+
+== <span class="anchor" id="covert"></span>Covert advertising ==
+{{see also|Wikipedia:Reliable sources#Sponsored content}}
+{{nutshell|title=This section|Avoid hidden advertising.|shortcut1=WP:COVERT|shortcut2=WP:NOHIDDENADS}}
+
+=== US: Federal Trade Commission, state law, and native advertising ===
+{{seealso|Native advertising|Consumer protection|Direct-to-consumer advertising}}
+All editors are expected to follow United States law on undisclosed advertising, which is described by the [[Federal Trade Commission]] (FTC) at [http://www.ftc.gov/os/2009/10/091005revisedendorsementguides.pdf ''Endorsement Guidelines''] and ''[https://www.ftc.gov/sites/default/files/attachments/press-releases/ftc-staff-revises-online-advertising-disclosure-guidelines/130312dotcomdisclosures.pdf Dot Com Disclosures]''. The FTC regards advertising as deceptive if it mimics a content format, such as a news report, that appears to come from an independent, impartial source:
+
+{{quotes|[[File:Seal of the United States Federal Trade Commission.svg|right|100px]]
+Marketers and publishers are using innovative methods to create, format, and deliver digital advertising. One form is "native advertising", content that bears a similarity to the news, feature articles, product reviews, entertainment, and other material that surrounds it online.&nbsp;...{{pb}}In digital media, native ads often resemble the design, style, and functionality of the media in which they are disseminated.&nbsp;... The more a native ad is similar in format and topic to content on the publisher's site, the more likely that a disclosure will be necessary to prevent deception. —Federal Trade Commission, 2015}}
+
+To judge whether an ad is deceptive under the [[Federal Trade Commission Act of 1914]], the FTC considers "both what the ad says and the format it uses to convey that information&nbsp;... Advertisements or promotional messages are deceptive if they convey to consumers expressly or by implication that they’re independent, impartial, or from a source other than the sponsoring advertiser&nbsp;...".
+
+State law may have similar prohibitions. While the FTC law may apply only to interstate and foreign commerce, state law applies to intrastate commerce and must be obeyed. At least one state court case found liability for an ad disguised as editorial content.{{Citation needed}}
+
+=== European fair-trading law ===
+[[File:No ads.svg|100px|right]]
+{{See also|Unfair Commercial Practices Directive}}
+In 2012 the Munich [[Oberlandesgericht]] court ruled that if a company or its agents edit Wikipedia with the aim of influencing customers, the edits constitute covert advertising, and as such are a violation of European fair-trading law. The ruling stated that readers cannot be expected to seek out user and talk pages to find editors' disclosures about their corporate affiliation.
+
+=== UK Advertising Standards Authority ===
+The [[Advertising Standards Authority (United Kingdom)|Advertising Standards Authority]] (ASA) in the UK found in 2012 that the content of [[Twitter|tweets]] from two footballers had been "agreed with the help of a member of the Nike marketing team". The tweets were not clearly identified as Nike marketing communications and were therefore in breach of the ASA's code.
+
+=== Advertising Standards Canada ===
+The [[Advertising Standards Canada|Canadian Code of Advertising Standards]], administered by [[Advertising Standards Canada]], states: "No advertisement shall be presented in a format or style that conceals the fact that it is an advertisement."
+
+== Other categories of COI ==
+=== Legal and other disputes<span class="anchor" id="disputes"></span> ===
+{{shortcut|WP:COIBLP|WP:COILEGAL}}
+{{further|Wikipedia:Biographies of living persons#Use in continued disputes}}
+The [[WP:BLP|biographies of living persons policy]] says: "[A]n editor who is involved in a significant controversy or dispute with another individual&nbsp;– whether on- or off-wiki&nbsp;– or who is an avowed rival of that individual, should not edit that person's biography or other material about that person, given the [[WP:POTENTIALCOI|potential conflict of interest]]."
+
+Similarly, editors should not write about court cases in which they or those close to them have been involved, nor about parties or law firms associated with the cases.
+
+=== Campaigning, political<span class="anchor" id="Campaign"></span> ===
+{{shortcut|WP:COICAMPAIGN|WP:COIPOLITICAL}}
+{{seealso|Wikipedia:Advocacy}}
+Activities regarded by insiders as simply "getting the word out" may appear promotional or propagandistic to the outside world. If you edit articles while involved with campaigns in the same area, you may have a conflict of interest. Political candidates and their staff should not edit articles about themselves, their supporters, or their opponents. Government employees should not edit articles about their agencies, government, political party, political opponents, or controversial political topics.
+
+=== Writing about yourself, family, friends ===
+{{Shortcut|WP:COISELF|WP:SELFPROMOTE}}
+{{redirect|WP:COS|the "credible claim of significance" essay|Wikipedia:Credible claim of significance}}
+{{further|Wikipedia:Autobiography|Wikipedia:Biographies of living persons#Use in continued disputes}}
+You should generally refrain from creating articles about yourself, or anyone you know, living or dead, unless through the [[WP:AFC|Articles for Creation]] process. If you have a personal connection to a topic or person with an existing article, you are advised to refrain from editing that article directly and to provide full disclosure of the connection if you comment about the article on talk pages or in other discussions. Requests for updates to an article about yourself or someone with whom you have a personal connection can be made on the article's talk page by following the instructions at [[WP:COIREQ]].
+
+An exception to not editing an article about yourself or someone you know is made if the article contains defamation or a serious error that needs to be corrected quickly. If you do make such an edit, please follow it up with an email to [[WP:VRT]], Wikipedia's volunteer response team, or ask for help on [[WP:BLPN]], our noticeboard for articles about living persons, or the talk page of the article in question.
+
+=== Citing yourself ===
+{{Shortcut|WP:SELFCITE}}
+{{redirect|WP:SELFCITE|Wikipedia citing itself|Wikipedia:Verifiability#Wikipedia and sources that mirror or use it}}
+{{See also|Wikipedia:Identifying reliable sources (medicine)#Personal conflicts of interest}}
+Using material you have written or published is allowed within reason, but only if it is relevant, conforms to the content policies, including [[WP:SELFPUB]], and is not excessive. Citations should be in the third person and should not place [[WP:UNDUE|undue emphasis]] on your work.  You will be permanently identified in the [[Help:Page history|page history]] as the person who added the citation to your own work.  When in doubt, defer to the community's opinion: propose the edit on the article's talk page and allow others to review it. However, adding numerous references to work published by yourself and none by other researchers is considered [[WP:REFSPAM|to be a form of spamming]].
+{{anchor|Culture sector|Culture-sector}}
+
+=== Cultural sector ===
+{{Shortcut|WP:CURATOR}}
+{{Redirect|WP:CURATOR|the tool used by [[Wikipedia:New pages patrol]]|Wikipedia:Page Curation}}
+{{See also|Wikipedia:Expert editors}}
+{{further|Wikipedia:GLAM|Wikipedia:Advice for the cultural sector|Wikipedia:The Wikipedia Library/Cultural Professionals}}
+Museum curators, librarians, archivists, and similar are encouraged to help improve Wikipedia, or to share their information in the form of links to their resources. If a link cannot be used as a reliable source, it may be placed under further reading or external links if it complies with the [[WP:EL|external links guideline]]. Bear in mind that [[WP:NOT#REPOSITORY|Wikipedia is not a mirror or a repository]] of links, images, or media files.
+
+=== <span class="anchor" id="Wikipedians in residence"></span>Wikipedians in residence ===
+{{shortcut|WP:WIRCOI}}
+There are forms of paid editing that the Wikimedia community regards as acceptable. These include [[Wikipedian in residence|Wikipedians in residence]] (WiRs)—Wikipedians who may be paid to collaborate with mission-aligned organizations, such as universities, [[Wikipedia:GLAM|galleries, libraries, archives, and museums]]. WiRs must not engage in public relations or marketing for their organization in Wikipedia, and they should operate within the bounds defined by [[outreach:Wikipedian in Residence#Core characteristics of a Wikipedian in Residence|Core characteristics of a Wikipedian in Residence]] at [[outreach:Main Page|Wikimedia Outreach]]. They must work closely with a Wikipedia project or the general Wikipedia community, and are expected to identify their WiR status on their user page and on talk pages related to their organization when they post there.
+
+===Reward board===
+Another example of acceptable paid editing is the [[WP:REWARD|reward board]], where editors can post incentives, usually to raise articles to featured-article or good-article status. If you participate in this, transparency and neutrality are key.
+
+== Miscellaneous ==
+===Solicitations by paid editors===
+In any solicitation sent to a prospective client, paid editors should disclose the following information:
+* Paid editors do not represent the Wikimedia Foundation nor the Wikipedia editing community, and they have no authority beyond that of any volunteer editor.
+* Paid editors must disclose their employer, client, and affiliations on Wikipedia. There is no confidentiality for the client.
+* Paid edits may be reviewed and revised in the normal course of work on Wikipedia.  Neither the client nor the paid editor owns the article.
+* Paid editors cannot guarantee any outcome for an article on Wikipedia. It can be revised or deleted by other editors at any time.
+
+Providing a client with a link to this section is appropriate disclosure if it is done in a neutral and non-deceptive manner.
+* Paid editors must also provide a link to their user page which includes a [[WP:PAID|declaration of their paid editing status]]. If an external website claims that a particular Wikipedia editor works for them, but that editor's user page has no such declaration, this is likely to indicate that the website is impersonating that editor.
+
+If you received a solicitation from a paid editor that does not include this information, we recommend that you not do business with them. They are not following our policies and guidelines.
+
+====Beware of scams====
+{{shortcut|WP:BEWARESCAM}}
+{{further|Wikipedia:Scam warning}}
+Some solicitations from paid editors have been linked to [[Internet fraud|fraud]]; see for example [[Operation Orangemoody]]. A [[Wikipedia:List of paid editing companies|large number of businesses]] claim to offer editing services, but some of these are scams. If someone claims that experienced editors work for them, ask them for the user names of those editors and check the corresponding editor user pages for a [[Wikipedia:Paid-contribution disclosure|paid-contribution disclosure]]; its absence likely indicates that the claim is false. Offers to guarantee that a page will be saved from deletion, in return for significant sums of money, are always fraudulent, as are offers to use special privileges on Wikipedia.
+
+If you think you've received a fraudulent solicitation, please forward it to {{Nospam|paid-en-wp|wikipedia.org}} for investigation.
+
+=== <span class="anchor" id="LUC"></span>Law of unintended consequences ===
+{{shortcut|WP:LUC}}
+{{further|Wikipedia:Wikipedia is in the real world}}
+Once an article is created about yourself, your group, or your company, [[Wikipedia:Ownership of articles|you have no right]] to control its content, or to delete it outside the [[Wikipedia:Articles for deletion|normal channels]].
+{{blockquote| Even a subject of an article, be that a person or organization, {{strong|does not}} own the article {{strong|or have any right to dictate}} what the article may or may {{em|not}} say. No one, whether a subject or an article creator, has a responsibility to maintain an article or can normally be held responsible for its content. ''(From [[Wikipedia:Ownership of articles]]. Bold original.)''}}
+
+If there is anything publicly available on a topic that you would ''not'' want to have included in an article, it will probably find its way there eventually.
+
+=== No shared accounts, no company accounts ===
+{{further|WP:NOSHARE|WP:ORGNAME}}
+Do not create a shared organizational account, or use the name of an organization as the account name. The account is yours, not your employer's.
+
+===<span class="anchor" id="COIADVICE"></span> Making uncontroversial edits ===
+{{Shortcut|WP:COIADVICE|WP:COIU}}
+Editors who have a general conflict of interest may make unambiguously uncontroversial edits (but see [[WP:FINANCIALCOI]]). They may:
+
+# remove [[Wikipedia:Spam|spam]] and unambiguous [[Wikipedia:Vandalism|vandalism]],
+# remove unambiguous violations of the [[Wikipedia:Biographies of living persons|biography of living persons]] policy,
+# fix spelling, grammatical, or markup errors,
+# repair [[Wikipedia:Link rot|broken links]],
+# remove their own COI edits, and
+# add independent [[WP:Identifying reliable sources|reliable sources]] when another editor has requested them, although it is better to supply them on the talk page for others to add.
+
+If another editor objects for any reason, it is not an uncontroversial edit. Edits not covered by the above should be discussed on the article's talk page. If an article has few uninvolved editors, ask at the talk page of a related [[WP:Wikiproject|WikiProject]] or at [[WP:COIN|the COI noticeboard]]. See also [[WP:COITALK]].
+
+=== Supplying photographs and media files ===
+{{see also|Wikipedia:A picture of you}}
+Editors with a COI are encouraged to upload high-quality media files that are appropriately licensed for Wikipedia and that improve our coverage of a subject. For more information, follow the [[:commons:Commons:Welcome|instructions at Commons]]. In some cases, the addition of media files to an article may be an uncontroversial edit that editors with a COI can make directly, but editors should exercise discretion and rely on talk pages when images may be controversial or promotional. If the addition of an image is challenged by another editor, it is controversial.
+
+The use of [[WP:F|non-free]] contents are restricted. Generally, using press photos or images provided by clients who wish to feature them in the article but unwilling to irrevocably release the copyright under Creative Commons is unacceptable. Editors may not upload images provided by clients for "Wikipedia article purpose only" and falsely claim they're licensed under CC BY-SA, as such photos are fundamentally incompatible with free content principles. Only the copyright owner or their authorized representatives may grant permission to use a work under a Creative Commons license, not the photographed subject or their public relations agent. If the same image is found copyrighted elsewhere prior to the upload date, it may be removed as a copyright violation. If you are the copyright owner and want to release content to Creative Commons for use on Wikipedia, see [[commons:Commons:Volunteer Response Team#Licensing images: when do I contact VRT?|Commons:Volunteer Response Team § Licensing images: when do I contact VRT?]].
+
+== How to handle conflicts of interest ==
+===Advocacy, noticeboards===
+{{main|Wikipedia:Neutral point of view/Noticeboard|Wikipedia:Reliable sources/Noticeboard}}
+If a user's edits lead you to believe that they might have a COI (that is, if they have an [[WP:APPARENTCOI|"apparent COI"]]), and there has been no COI disclosure, consider first whether the issue may be simple [[WP:ADVOCACY|advocacy]]. Most advocacy does not involve COI. Whether an editor is engaged in advocacy should first be addressed at the user's talk page, then at [[WP:NPOVN]], the neutral-point-of-view noticeboard. The appropriate forum for concerns about sources is [[WP:RSN]], the reliable-sources noticeboard. If there are concerns about [[Wikipedia:Sock puppetry|sockpuppets]] or [[Wikipedia:Sock puppetry#Meatpuppetry|meatpuppets]], please bring that concern to [[WP:SPI]].
+
+===<span class="anchor" id="Opening a COIN"></span><span class="anchor" id="Posting at the conflict of interest noticeboard"></span>Reporting to the conflict of interest noticeboard===
+{{shortcut|WP:COICOIN}}
+{{main|Wikipedia:Conflict of interest/Noticeboard}}
+If you believe an editor has an undisclosed COI and is editing in violation of this guideline, raise the issue in a civil manner on the editor's talk page, which is the first step in resolving user-conduct issues, per the [[Wikipedia:Dispute resolution#Resolving user conduct disputes|dispute resolution policy]], citing this guideline. If that fails to resolve the issue, such as when an editor has repeatedly added problematic material over an extended period, then open a discussion at the [[WP:COIN|conflict of interest noticeboard (COIN)]]. This also applies to a [[WP:DCOI|disclosed COI]] that is causing a problem: for example, an acknowledged BLP subject who is editing their own BLP.
+
+During the COIN discussion, avoid making disparaging remarks about the user in question, their motives or the subject of the article(s).
+
+Post whatever public evidence you have to support that there is a COI, or that it is causing a problem, in the form of edits by that user or information the user has posted about themselves. Do not post private information; see [[WP:OUTING]], which is policy, and the section below, "Avoid outing". 
+
+If private information must be shared to resolve a COI issue, it may be emailed to ''{{No spam|paid-en-wp|wikipedia.org}}'', which is staffed by [[Wikipedia:VRT|VRT]] volunteers. Follow the advice in [[WP:OUTING]]: "Only the minimum information necessary should be conveyed and the minimum number of people contacted." The priority should be to avoid unnecessary privacy violations.
+
+=== Avoid outing ===
+{{shortcut|WP:AVOIDOUTING}}
+{{further|Wikipedia:Harassment#Posting of personal information|Wikipedia:Wikimedia Foundation statement on paid editing and outing}}
+When investigating COI editing, the [[WP:HARASS|policy against harassment]] takes precedence. It requires that Wikipedians [[WP:OUTING|not reveal the identity of editors]] against their wishes. Examine editors' behavior instead and seek advice by email if necessary. Do not ask a user if they ''are'' somebody; instead one can ask if they have an undisclosed connection to that person. If revealing private information is needed to resolve COI editing, and if the issue is serious enough to warrant it, editors can '''email''' ''{{No spam|paid-en-wp|wikipedia.org}}''. Also see the section [[#Reporting to the conflict of interest noticeboard|"Reporting to the conflict of interest noticeboard"]] above.
+
+=== Dealing with single-purpose accounts ===
+{{further|Wikipedia:Blocking policy#Disruption-only|Wikipedia:Single-purpose account}}
+Accounts that appear to be [[WP:SPA|single-purpose]], existing for the sole or primary purpose of promotion or denigration of a person, company, product, service, website, organization, etc., and whose postings are in apparent violation of this guideline, should be made aware of this guideline and warned not to continue their problematic editing. If the same pattern of editing continues after the warning, the account may be blocked.
+
+=== Templates ===
+Relevant article talk pages may be tagged with {{tlx|connected contributor}} or {{tlx|connected contributor (paid)}}. The article itself may be tagged with {{tlx|COI}}. A section of an article can be tagged with {{tlx|COI|section}}
+
+Other templates include:
+* {{tlx|uw-coi}} (to be placed on user Talk pages to warn editors that they may have a conflict of interest)
+* {{tlx|uw-coi-brief}} (to be placed on user Talk pages to ask an editor briefly if they are connected to an article topic)
+* {{tlx|uw-coi-username}} (another Talk page warning, this one for editors whose username appears to violate the [[WP:Usernames]] policy)
+* {{tlx|COI editnotice}} (this template goes on article talk pages and gives instructions to COI editors on how to submit edit requests to the article)
+* {{tlx|User COI}} (userbox for users to self-declare on their own Userpages those articles with which they have a conflict of interest; userbox can list up to nine articles)
+
+== See also ==
+{{div col|colwidth=26em}}
+'''Wikimedia Foundation'''
+* [[wmf:Terms of Use#4. Refraining from Certain Activities|Terms of Use#4. Refraining from Certain Activities]]
+* [[Sue Gardner]], [https://web.archive.org/web/20180528004832/https://wikimediafoundation.org/wiki/Press_releases/Sue_Gardner_statement_paid_advocacy_editing "Press releases/Sue Gardner statement paid advocacy editing"], Wikimedia Foundation, 21 October 2013.
+
+'''Contact us'''
+* [[Wikipedia:Contact us/Article subjects]]
+
+'''Article'''
+* [[Conflict of interest editing on Wikipedia]]
+
+'''Policies'''
+* [[Wikipedia:Paid-contribution disclosure]]
+* [[Wikipedia:Username policy]]
+* [[Wikipedia:What Wikipedia is not]]
+
+'''WikiProjects'''
+* [[Wikipedia:WikiProject Integrity]]
+
+'''Miscellaneous'''
+* [[Wikipedia:About you]]
+* [[Wikipedia:The Wikipedia Library/Cultural Professionals]]
+* [[:Category:Wikipedia conflict of interest edit requests]] (lists edits for review where proposer has a conflict of interest)
+* [[:Category:Wikipedia articles with possible conflicts of interest]]
+* [[Wikipedia:Reward board]]
+* [[Wikipedia:FAQ/Article subjects]]
+* [[User:COIBot]]
+* [//en.wikipedia.org/w/index.php?title=Special:AbuseLog&wpSearchFilter=148 Users creating autobiographies] (an edit filter)
+* [[Wikipedia:Statement on Wikipedia from participating communications firms|Statement on Wikipedia from participating communications firms]], June 2014
+
+'''Essays'''
+* [[Wikipedia:Plain and simple conflict of interest guide]]
+* [[Wikipedia:Conflicts of interest (medicine)]]
+* [[Wikipedia:Deceptive advertising]]
+* [[Wikipedia:Don't cry COI]]
+* [[Wikipedia:For publicists publicizing a client's work]]
+* [[Wikipedia:Ghostwriting]]
+* [[Wikipedia:Help available for editors with conflicts of interest]]
+* [[Wikipedia:Independent sources]]
+* [[Wikipedia:Paid editing (essay)]]
+* [[Wikipedia:POV railroad]]
+* [[Wikipedia:Public relations (essay)]]
+* [[Wikipedia:Search engine optimization]]
+* [[Wikipedia:Wikipedia is in the real world]]
+
+'''Historical'''
+* [[Wikipedia:WikiProject Cooperation]] (defunct)
+* [[Wikipedia:Requests for comment/Paid editing|Wikipedia community discussion on paid editing]], 2009, sparked by discovery that admin/crat/OTRS editor was editing for pay
+* [[Wikipedia:Requests for comment/COI|Wikipedia community discussion on conflict of interest]], 2012.
+* [[Wikipedia:COI+]]<small> (failed proposal, 21 February 2013)</small>
+* [[Wikipedia:Commercial editing|Commercial editing]] <small>(failed policy proposal turned into an essay, November 2013)</small>
+* [[Wikipedia:No paid advocacy|No paid advocacy]] <small>(failed policy proposal, November 2013)</small>
+* [[Wikipedia:Paid editing policy proposal|Paid editing policy proposal]] <small>(failed policy proposal, November 2013)</small>
+* [[Wikipedia:Conflict of interest limit|Conflict of interest limit]] <small>(failed policy proposal, December 2013)</small>
+{{div col end}}
+
+== Further reading ==
+{{Commons category|Conflict-of-interest editing on Wikipedia}}
+:''(Chronological)''
+{{Refbegin}}
+* [[Michael Davis (philosopher)|Davis, Michael]] (Summer 1982). [https://www.pdcnet.org/pdc/bvdb.nsf/purchase?openform&fp=bpej&id=bpej_1982_0001_0004_0017_0027 "Conflict of Interest"]. ''Business and Professional Ethics Journal'', 1(4), pp. 17–27. {{Doi|10.5840/bpej1982149}}. (Influential.)
+* Luebke, Neil R. (Spring 1987). "Conflict of Interest as a Moral Category," ''Business & Professional Ethics Journal'', 6(1), pp. 66–81. {{JSTOR|27799930}}. (Influential.)
+* Davis, Michael (Winter 1993). "Conflict of Interest Revisited," ''Business & Professional Ethics Journal'', 12(4), pp. 21–41. {{JSTOR|27800924}}.
+* Stark, Andrew (2003). [http://books.google.com/books?id=CxjXZkCRAMoC&printsec=frontcover ''Conflict of Interest in American Public Life'']. Harvard University Press. {{ISBN|9780674012134}}.
+* Carson, Thomas L. (January 2004). "Conflicts of Interest and Self-Dealing in the Professions: A Review Essay". ''Business Ethics Quarterly'', 14(1), pp. 161–182. {{JSTOR|3857777}}.
+* [[Sheldon Krimsky|Krimsky, Sheldon]] (2006). [http://books.google.com/books?id=uhMH3mis9UAC&pg=PA63 "The Ethical and Legal Foundations of Scientific 'Conflict of Interest{{'"}}]. In Trudo Lemmings and Duff R. Waring (eds.). ''Law and Ethics in Biomedical Research: Regulation, Conflict of Interest, and Liability''. University of Toronto Press. {{ISBN|9780802086433}}.
+* McDonald, Michael (23 April 2006). [http://web.archive.org/web/20070208042741/http://www.ethics.ubc.ca/people/mcdonald/conflict.htm "Ethics and Conflict of Interest"]. The W. Maurice Young Center for Applied Ethics, University of British Columbia.
+{{Refend}}
+
+{{Wikipedia policies and guidelines}}
+{{Conflict of interest|state=uncollapsed}}
+
+[[Category:Wikipedia notability|{{PAGENAME}}]]
+[[Category:Wikipedia conflict of interest guidelines| ]]

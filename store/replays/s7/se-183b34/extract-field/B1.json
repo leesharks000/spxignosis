@@ -1,0 +1,108 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Aristotle’s logical works contain the earliest formal study of logic that we have.",
+    "locus": "§1 Introduction",
+    "claim": "Aristotle's logical works are the earliest formal study of logic extant.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the originality of Aristotle's logic"
+   },
+   {
+    "quote": "It is therefore all the more remarkable that together they comprise a highly developed logical theory, one that was able to command immense respect for many centuries",
+    "locus": "§1 Introduction",
+    "claim": "They form a highly developed theory that commanded respect for centuries.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   },
+   {
+    "quote": "Kant thought that Aristotle had discovered everything there was to know about logic, and the historian of logic Prantl drew the corollary that any logician after Aristotle who said anything new was confused, stupid, or perverse.",
+    "locus": "preamble",
+    "claim": "Kant held Aristotle had discovered everything in logic; Prantl drew the corollary that later innovators were confused, stupid or perverse.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   },
+   {
+    "quote": "On Sophistical Refutations is a final section, or an appendix, to the Topics",
+    "locus": "§2 The Organon",
+    "claim": "SE is a final section or appendix of the Topics.",
+    "kind": "fact",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "Aristotle’s study of sophistical arguments is contained in On Sophistical Refutations, which is actually a sort of appendix to the Topics.",
+    "locus": "§10 Sophistical Arguments",
+    "claim": "SE contains the study of sophistical arguments and is a sort of appendix to the Topics.",
+    "kind": "fact",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "In fact, we can discern in the Topics (and the Rhetoric, which Aristotle says depends on the art explained in the Topics) an art of dialectic for use in such arguments. My reconstruction of this art (which would not be accepted by all scholars) is as follows.",
+    "locus": "§8.1",
+    "claim": "An art of dialectic can be discerned in the Topics; the reconstruction is the author's and not accepted by all.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the inquiry: its programme (183a37–b8)"
+   },
+   {
+    "quote": "Its function is to examine the claims of those who say they have some knowledge, and it can be practiced by someone who does not possess the knowledge in question.",
+    "locus": "§8.3.2 Dialectic That Puts to the Test",
+    "claim": "Peirastic examines those who claim knowledge and can be practised by one who lacks it.",
+    "kind": "definition",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the peirastic and Socrates"
+   },
+   {
+    "quote": "This is strongly reminiscent of Socrates’ style of interrogation, from which it is almost certainly descended.",
+    "locus": "§8.3.2 Dialectic That Puts to the Test",
+    "claim": "Peirastic is almost certainly descended from Socrates' style of interrogation.",
+    "kind": "genealogy",
+    "modality": "hypothesis",
+    "kernel": true,
+    "const": false,
+    "lineage": "the peirastic and Socrates"
+   },
+   {
+    "quote": "Aristotle himself traces the quest for definitions back to Socrates.",
+    "locus": "§7 Definitions",
+    "claim": "Aristotle traces the quest for definitions to Socrates.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the peirastic and Socrates"
+   },
+   {
+    "quote": "This method is part of Aristotle’s Platonic legacy. His attitude towards it, however, is complex.",
+    "locus": "§7.4 The Method of Division",
+    "claim": "Division is part of Aristotle's Platonic legacy, his attitude to it complex.",
+    "kind": "genealogy",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "logic before Aristotle"
+   }
+  ]
+ }
+}

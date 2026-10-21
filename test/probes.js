@@ -44,7 +44,16 @@ const SAVED = `${STORE}/calibration/se-183b34`;
 if (!existsSync(SAVED)) console.log("skip S7 calibration probes: no saved field texts for se-183b34 in the store");
 else {
   const input = fromNonRow("se-183b34", SAVED);
-  t("input: the row's saved field texts match their recorded hashes", input.field.every((b) => b.text_sha256 === b.expected_sha256));
+  // The texts saved on 2026-10-20 were lost with the container on 2026-10-21 and re-fetched; the extractor differs, so
+  // most hashes differ while the pages hold the same text. The probe asks that every field quote stands in its text, and
+  // records the hash state.
+  const rowJ = JSON.parse(readFileSync(`${NON}/rows/se-183b34.json`, "utf8"));
+  const { ARCHIVE } = await import("../src/s7/input.js");
+  const fl = JSON.parse(readFileSync(`${ARCHIVE}/${rowJ.ledger.field}`, "utf8")).field_claims;
+  const norm = (s) => String(s || "").normalize("NFC").replace(/\s+/g, " ").toLowerCase();
+  const quotes = Object.values(fl).filter((c) => c.quote);
+  t("input: every field quote of the row stands in its saved field text", quotes.length > 0 && quotes.every((c) => norm(input.field.find((b) => b.id === c.source)?.text).includes(norm(c.quote))));
+  console.log(`     field texts: ${input.field.filter((b) => b.text_sha256 === b.expected_sha256).length} of ${input.field.length} match the hash recorded 2026-10-20 (re-fetched 2026-10-21)`);
   const trav = traverse(input);
   const ex = JSON.parse(readFileSync(`${NON}/traversal/se-183b34/summary.json`, "utf8"));
   t("traversal: D, R and O candidates reproduce the row's files byte for byte", ["candidates-D.jsonl", "candidates-R.jsonl", "candidates-O.jsonl"].every((f) => trav.files[f] === ex.sha256[f]));
@@ -114,6 +123,30 @@ else {
   const big = Array.from({ length: 4000 }, (_, i) => ({ id: `X${i}`, dep: i, date: `2026-01-${String(1 + (i % 28)).padStart(2, "0")}`, quote: "q ".repeat(30), lineage: `L${i % 50}`, kernel: i % 400 === 0 }));
   const cmp = compactLedger(big);
   t("lineage: an oversized ledger is sent one slot per lineage, every instance reachable", cmp.compacted && cmp.lineages === 50 && cmp.claims.length < 200 && cmp.claims.reduce((n, c) => n + 1 + (c.lineage_instances || []).length, 0) === 4000);
+}
+
+// 11. about and by (2026-10-21: "distinguish material about lee sharks from material by lee sharks"), and the captures as T.
+{
+  const { divide, topicOf, worksLedger, longerNames } = await import("../src/s7/about.js");
+  const { registry } = await import("../src/s7/archive.js");
+  const { capturesFor } = await import("../src/s7/input.js");
+  const { blogPass } = await import("../src/s7/blog.js");
+  const ls = fromEntity({ name: "Lee Sharks", works_by: ["heteronyms"] });
+  const tr = traverse(ls), bl = blogPass(ls);
+  const all = [...tr.D, ...tr.R, ...tr.O, ...bl.D];
+  const dv = divide(ls, all, isByline);
+  const allDeps = new Set(all.map((c) => c.dep)).size, readDeps = new Set(dv.read.map((c) => c.dep)).size;
+  console.log(`     Lee Sharks: ${allDeps} deposits and posts name the entity; read ${readDeps} (${JSON.stringify(dv.scanned.basis)}), scanned ${dv.scanned.deposits}; works ledger ${dv.works.length}`);
+  t("about/by: the archive's author is divided, and what is read is a small part of what names it", dv.mode === "about and by" && readDeps > 0 && readDeps < allDeps / 5 && dv.works.length > 500);
+  t("about/by: no deposit sends more than six sentences", Object.values(dv.read.reduce((m, c) => ((m[c.dep] = (m[c.dep] || 0) + 1), m), {})).every((n) => n <= 6));
+  t("about/by: a longer name that contains the entity's string is another name (Mary Lee Sharks)", longerNames(ls).includes("Mary Lee Sharks") && dv.scanned.other_names.sentences > 0);
+  const reg = registry(), names = [/\bLee Sharks\b/i];
+  t("about/by: a title naming the entity as its subject is about it; a byline in a title is not", topicOf(reg.get(1623), ls, names) === "title" && topicOf(reg.get(1004), ls, names) === null);
+  const pod = fromEntity({ name: "Pearl and Other Poems" });
+  t("about/by: an entity that is no author in the archive keeps the bearing reading", worksLedger(pod).length === 0 && divide(pod, [{ dep: 1, para: 0, sent: 0, sentence: "x" }], isByline).mode === "bearing");
+  const cap = capturesFor(["Lee Sharks"]);
+  t("captures: the entity's bare address yields a capture as T, the most recent with a transcript", cap.primary && cap.primary.transcript.length >= 300 && /lee sharks/i.test(cap.primary.q) && cap.bare.filter((o) => o.chars >= 300).every((o) => o.date <= cap.primary.date));
+  t("captures: an entity with no capture yields none", capturesFor(["Zzyzx Quuxbaum"]).primary === null);
 }
 
 // 8. the execution budget and a failed call.

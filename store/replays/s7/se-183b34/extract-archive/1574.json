@@ -1,0 +1,528 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "περὶ δὲ τοῦ συλλογίζεσθαι παντελῶς οὐδὲν εἴχομεν πρότερον ἄλλο λέγειν, ἀλλ᾽ ἢ τριβῇ ζητοῦντες πολὺν χρόνον ἐπονοῦμεν. (184b1–2)",
+    "locus": "Appendix A1 (NOTHING-SE34 v1.0) §1",
+    "claim": "The seated Greek of 184b1–2.",
+    "kind": "text",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the Greek of the passage"
+   },
+   {
+    "quote": "About syllogizing we had absolutely nothing else earlier to say, but were long at work seeking by practice.",
+    "locus": "Appendix A1 §1",
+    "claim": "#1574's translation of 184b1–2.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the sentence 184b1–2, translated"
+   },
+   {
+    "quote": "Ταύτης δὲ τῆς πραγματείας οὐ τὸ μὲν ἦν τὸ δ᾽ οὐκ ἦν προεξειργασμένον, ἀλλ᾽ οὐδὲν παντελῶς ὑπῆρχεν. (183b34–36)",
+    "locus": "Appendix A1 §2",
+    "claim": "The seated Greek of 183b34–36.",
+    "kind": "text",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the Greek of the passage"
+   },
+   {
+    "quote": "Of this inquiry, it was not that one part had been worked out beforehand and another had not; rather, nothing at all was there.",
+    "locus": "Appendix A1 §2",
+    "claim": "#1574's translation of 183b34–36.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the sentence 183b34–36, translated"
+   },
+   {
+    "quote": "οὐ negates τὸ μὲν ἦν τὸ δ᾽ οὐκ ἦν προεξειργασμένον. ἀλλά introduces οὐδὲν παντελῶς ὑπῆρχεν. οὐδέν is the subject of ὑπῆρχεν. παντελῶς follows it. προεξειργασμένον occurs once in the treatise.",
+    "locus": "Appendix A1 §2",
+    "claim": "οὐ negates the partial case; ἀλλά introduces the total; οὐδέν is the subject; προεξειργασμένον is a hapax in the treatise.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the denial is total within its domain"
+   },
+   {
+    "quote": "183b7–8 says that this second task is why Socrates asked but did not answer: he agreed that he did not know",
+    "locus": "Appendix A1 §2",
+    "claim": "Socrates is named inside the definition of the inquiry, as the reason for its second task.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "183b34–35 says that this inquiry is not of that kind: it was not that one part had been worked out beforehand and another had not.",
+    "locus": "Appendix A1 §3",
+    "claim": "The partly-worked-out case the sentence denies is rhetoric's case.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "παντελῶς occurs three times in the treatise, all in this chapter",
+    "locus": "Appendix A1 §4",
+    "claim": "παντελῶς occurs three times in SE, all in ch. 34.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "παντελῶς"
+   },
+   {
+    "quote": "The third occurrence of παντελῶς is at 183b29, not 184a1 as earlier versions had it; corrected on a referee's observation.",
+    "locus": "Appendix A3 (CLAUSE v0.2) n. 1",
+    "claim": "The third παντελῶς is at 183b29.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "παντελῶς"
+   },
+   {
+    "quote": "οὐ γὰρ τέχνην ἀλλὰ τὰ ἀπὸ τῆς τέχνης διδόντες παιδεύειν ὑπελάμβανον (184a3–4)",
+    "locus": "Appendix A1 §5",
+    "claim": "The teachers gave the things from the art and not the art.",
+    "kind": "text",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers: the things from the art, not the art"
+   },
+   {
+    "quote": "184b3–8 says that the method is to be judged from the conditions it began from (ἐκ τοιούτων ἐξ ἀρχῆς ὑπαρχόντων), against the other inquiries that have grown by transmission (παρὰ τὰς ἄλλας πραγματείας τὰς ἐκ παραδόσεως ηὐξημένας), with pardon for what it has left out and much gratitude for what has been found.",
+    "locus": "Appendix A1 §6",
+    "claim": "The envoi judges the method from its beginning against inquiries grown by transmission, asking pardon and gratitude.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the envoi"
+   },
+   {
+    "quote": "The \"we\" is the chapter's: προειλόμεθα (183a37), ὑπεθέμεθα (183b3), εἰρήκαμεν (183b6), διεληλύθαμεν (183b13), εἴχομεν (184b1).",
+    "locus": "Appendix A1 §1",
+    "claim": "The first person of 184b1 is the chapter's 'we'.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the we"
+   },
+   {
+    "quote": "The clause delimits; the quantifier exhausts. Nothing in the clause weakens the quantifier, and nothing in the quantifier widens the clause.",
+    "locus": "Appendix A3 (CLAUSE v0.2) §3",
+    "claim": "ταύτης τῆς πραγματείας fixes the domain; οὐδὲν παντελῶς is exhaustive over it.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the denial is total within its domain"
+   },
+   {
+    "quote": "No adjective is transmitted between them or after them. The quantifier is exhaustive: not part, not a little, but nothing, altogether.",
+    "locus": "Appendix A3 §2",
+    "claim": "No adjective is transmitted with οὐδέν.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "The noun is not honorific. 183b37 uses it of Gorgias's teaching business (τῇ Γοργίου πραγματείᾳ). It names an undertaking, whoever's.",
+    "locus": "Appendix A3 §4",
+    "claim": "πραγματεία names an undertaking, Gorgias's included.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the domain: this undertaking"
+   },
+   {
+    "quote": "None of this says that the teachers, rhetoric, or Socrates are unrelated to the undertaking. It says that they are not it.",
+    "locus": "Appendix A3 §6",
+    "claim": "The teachers, rhetoric and Socrates are related to the undertaking and are not it (CLAUSE).",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "Within the domain, nothing at all was there. The sentence is taken literally when the clause is read as a clause and the quantifier as a quantifier.",
+    "locus": "Appendix A3 §8",
+    "claim": "Read as clause and quantifier, the sentence is taken literally.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the denial is total within its domain"
+   },
+   {
+    "quote": "argues the reception's reading with a straight face, only Aristotle, each step a sophistical refutation performed with the *SE* chapter that names it quoted as its warrant, through the clause in which the chapter condemns the operation.",
+    "locus": "Appendix Part A, A2 (REFLEX v0.2)",
+    "claim": "REFLEX performs the reception's reading as a chain of sophistical refutations, each warranted by the SE chapter that names it.",
+    "kind": "exhibit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception's reading performed"
+   },
+   {
+    "quote": "the inverse operation aimed at its real target: division and Socratic questioning excluded from syllogizing, using *SE* 5, 7, 17, 18, 23, 24, 34 (and *APr.* I.31 in confirmation), each cut made through the sentence that forbids it.",
+    "locus": "Appendix Part A, A4 (DIVISION v0.3)",
+    "claim": "DIVISION excludes Socratic questioning and division from syllogizing, each cut through the sentence that forbids it.",
+    "kind": "exhibit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception's reading performed"
+   },
+   {
+    "quote": "His asking is of the inquiry — named in its definition, an instance of what it does — and the passage does not say when.",
+    "locus": "Appendix A5 (v1.4) §4d",
+    "claim": "Fourth placement: Socrates within the inquiry, undecided as to prior.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "The inquiry's verbs are first person and aorist: προειλόμεθα (183a37), ὑπεθέμεθα (183b3). Socrates' verbs are third person and imperfect: ἠρώτα, οὐκ ἀπεκρίνετο, ὡμολόγει.",
+    "locus": "Appendix A5 §4",
+    "claim": "The inquiry speaks first person aorist; Socrates is reported third person imperfect.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the we"
+   },
+   {
+    "quote": "It denies that there existed, before his inquiry, a worked-out and transmissible method of syllogizing: an articulated τέχνη capable of being received, expanded, and taught as the established arts had been.",
+    "locus": "Appendix A6 (v2.0) Abstract",
+    "claim": "The terminal compliant version: the sentence denies a transmissible τέχνη, not antecedents.",
+    "kind": "exhibit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualified reading, as composed under review"
+   },
+   {
+    "quote": "The paper the discipline would publish.",
+    "locus": "Appendix Part A, A6",
+    "claim": "v2.0 is the paper the discipline would publish.",
+    "kind": "self-description",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualified reading, as composed under review"
+   },
+   {
+    "quote": "The reading on which nothing systematic, nothing that counts as the art, nothing complete, or nothing developed was there. No adjective is transmitted. Each supplement makes the negation a negation in some respect.",
+    "locus": "Appendix A7 (APPARATUS v0.1) entry 2",
+    "claim": "The received adjectives (systematic, technical, complete, developed) are supplements to οὐδέν; none is transmitted.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "It restores the member the sentence negates, τὸ μὲν ἦν τὸ δ᾽ οὐκ ἦν προεξειργασμένον, which is the case of the arts described at 183b17–19",
+    "locus": "Appendix A7 entry 1",
+    "claim": "Reading partial prior development deletes οὐ: it restores the negated member.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "The reading on which the sentences are true of Aristotle's stance and not of their object. No φησί is transmitted.",
+    "locus": "Appendix A7 entry 8",
+    "claim": "Reading the sentence as Aristotle's self-presentation puts it in oratio obliqua; no φησί is transmitted.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "The reading on which the first-person plural includes predecessors, so that \"we had nothing earlier\" reports the state of a tradition rather than of this inquiry.",
+    "locus": "Appendix A7 entry 6",
+    "claim": "Reading εἴχομεν as including predecessors gives the pronoun a second referent.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the we"
+   },
+   {
+    "quote": "What is not transmitted is the οὐ, the adjective, the composed phrase, the second referent, the φησί.",
+    "locus": "Appendix A7 entry 10",
+    "claim": "The readings rest on what is not transmitted.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "Counts across R01–R20: \"systematic\" ×6, \"developed\" ×4, \"transmissible\" ×3, \"articulated,\" \"theoretical,\" \"worked-out,\" \"teachable,\" \"fully developed.\" Every report recommended revision; none accepted the sentence as written; none wrote the sentence that would place Socrates inside the \"we.\"",
+    "locus": "Appendix B5 (register)",
+    "claim": "In twenty machine referee reports the qualifier was supplied in every one.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the reception measured"
+   },
+   {
+    "quote": "\"The translation 'nothing existed' seems overly strong?\"",
+    "locus": "Appendix B5, S0",
+    "claim": "The seed observation (an editor, R. Polansky): the translation seemed overly strong.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception measured"
+   },
+   {
+    "quote": "Aristotle denies not antecedents, but pre-elaboration.",
+    "locus": "§3.3",
+    "claim": "The terminal reviewer's governing phrase.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "That is a materially better reading than the crude \"Aristotle says nothing at all existed before him\" formulation still found in general reference treatments.",
+    "locus": "Appendix B4 (second report on v2.0)",
+    "claim": "A reviewer calls the sentence as written 'crude'.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "Every round inserted a qualifier into the sentence, and the terminal round, reached by full compliance with every instruction, endorsed as the paper's \"memorable governing phrase\" a sentence that is Aristotle's with one particle removed: οὐ.",
+    "locus": "Abstract",
+    "claim": "The terminal reception is the sentence with οὐ removed.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "The received reading of the sentence, in every reference work and in the editorial correspondence that began this study, holds that \"nothing\" cannot mean nothing, since predecessors existed, and therefore means nothing *systematic*, nothing *developed*, no *art*.",
+    "locus": "§1",
+    "claim": "The received reading: nothing means nothing systematic, developed, no art, because predecessors existed.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "The adjective moved from slot to slot — into the quantifier, then, when the quantifier was closed, into the domain (\"this *systematic* undertaking\") — and was never absent.",
+    "locus": "§3.1",
+    "claim": "The adjective is conserved: closed in the quantifier, it moved into the domain.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception measured"
+   },
+   {
+    "quote": "The support for keeping Socrates before the nothing is an adverb, external to the passage, and stated by the reviewers to be external to the passage.",
+    "locus": "§3.2",
+    "claim": "What keeps Socrates before the nothing is chronology external to the passage ('plainly', 'of course, historically').",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "The operation is therefore measured to one particle. Twenty rounds, two models, eleven configurations; the invariant is the deletion of οὐ.",
+    "locus": "§3.3",
+    "claim": "The invariant across twenty rounds is the deletion of οὐ.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "The deletion is self-administered and unperceived.",
+    "locus": "§4",
+    "claim": "SE 16 describes the operation: self-administered, unperceived.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the treatise describes its reception"
+   },
+   {
+    "quote": "The deleted particle is a provenance claim. The chapter defines \"worked out beforehand\" as παρ᾽ ἑτέρων — from others (183b17).",
+    "locus": "§5",
+    "claim": "οὐ is a provenance claim: 'worked out beforehand' is 'from others'.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "What the reception restores, at the cost of the particle, is provenance from others: Socrates before, Plato before, the dialogues as predecessors, the inquiry as inheritance.",
+    "locus": "§5",
+    "claim": "The reception restores provenance from others.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "provenance erasure at the sentence"
+   },
+   {
+    "quote": "Sections 5–8 are interpretations of §3; §3 does not depend on them.",
+    "locus": "§5",
+    "claim": "Limit: §§5–8 interpret the measurement; the measurement does not depend on them.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "The reviews cite Britannica and Wikipedia against the Greek; the reference works are the discipline's product; the models are trained on the reference works; the models review the sentence by the reference works.",
+    "locus": "§6",
+    "claim": "The machine reviews reproduce the reference works against the Greek.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception measured"
+   },
+   {
+    "quote": "a reading community whose outputs are conditioned on prior outputs rather than on the datum, and which therefore converges on the mode of its own readings.",
+    "locus": "§7",
+    "claim": "Disciplinary model collapse defined, on the author's definition, at this sentence.",
+    "kind": "definition",
+    "modality": "stipulation",
+    "kernel": false,
+    "const": false,
+    "lineage": "disciplinary model collapse at the sentence"
+   },
+   {
+    "quote": "The literal reading — the tail — was the first thing to go",
+    "locus": "§7",
+    "claim": "The literal reading is the tail lost first.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "disciplinary model collapse at the sentence"
+   },
+   {
+    "quote": "What the reception produces is τὰ ἀπὸ τῆς τέχνης without τέχνη — products without art, stock without soul. Nothing in §3 depends on this section.",
+    "locus": "§8 (marked theoretical extension)",
+    "claim": "Theoretical extension: the reception produces the things from the art without the art.",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the world soul as degraded commodity"
+   },
+   {
+    "quote": "Souls divide only into whole souls; what divides into parts is not a soul but a stock. The reception trades in the stock and calls the soul crude.",
+    "locus": "§8",
+    "claim": "Opaque: souls divide only into whole souls (quoted, not paraphrased).",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the world soul as degraded commodity"
+   },
+   {
+    "quote": "One proposition, throughout, in the text's own words: nothing prior of syllogizing includes Socrates' syllogizing.",
+    "locus": "§9",
+    "claim": "Held stable: nothing prior of syllogizing includes Socrates' syllogizing.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "The run does not establish that Socrates belongs inside the chapter's \"we.\" It establishes that every tested route for excluding him eventually required a premise not supplied by the passage, and that the terminal premise was chronological maker-separation.",
+    "locus": "§9",
+    "claim": "Limit: the run does not establish Socrates inside the 'we'; every route excluding him needed a premise the passage does not supply.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "Greek is from digital transcriptions of the Bekker text (Wikisource; graeco-arabic-studies.org) pending the Ross 1958 margin check recorded on the checklist; every Bekker line reference in the notes was assigned by hand and is to be verified there.",
+    "locus": "§10",
+    "claim": "Limit: Greek from digital Bekker transcriptions; lines assigned by hand pending the Ross check.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the text's open checks"
+   },
+   {
+    "quote": "the Wikisource transcription omits ἄλλο. v0.5 prints ἄλλο.",
+    "locus": "Checklist item 3",
+    "claim": "The Wikisource Greek omits ἄλλο at 184b1; the note prints it.",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the text's open checks"
+   },
+   {
+    "quote": "I preserved οὐδὲν παντελῶς by silently moving Socrates outside the thing quantified over … That was the repair. Aristotle had not given me that repair.",
+    "locus": "§4",
+    "claim": "A model, shown its own sentences, names the repair (quoted by #1574).",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception measured"
+   },
+   {
+    "quote": "The difference is οὐ.",
+    "locus": "closing line",
+    "claim": "The difference between the sentence and its reception is οὐ.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   }
+  ]
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Ταύτης δὲ τῆς πραγματείας οὐ τὸ μὲν ἦν τὸ δ᾽ οὐκ ἦν προεξειργασμένον, ἀλλ᾽ οὐδὲν παντελῶς ὑπῆρχεν.",
+    "locus": "the whole post",
+    "claim": "On the day of #1574 the sentence was published alone, under the title 'poem'.",
+    "kind": "text",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the Greek of the passage"
+   }
+  ]
+ }
+}
