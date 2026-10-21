@@ -118,7 +118,9 @@ export function fromEntity(spec, { sources = [], wikipedia = null } = {}) {
 // substantive transcript is T; its source cards are B; every other observation at those addresses, and the captures at
 // the entity's other addresses, are carried as records of T.
 let CAPS = null;
-export function capturesFor(names) {
+// A caller may name which seated capture is T (by its observation id or slug), among those at any address naming the
+// entity; it may never supply one. The registry's own intake decides what a capture is.
+export function capturesFor(names, { pick = null } = {}) {
   if (!CAPS) { const p = join(ARCHIVE, "data/EA-WG-CAPTURES-01.json"); CAPS = existsSync(p) ? JSON.parse(readFileSync(p, "utf8")).entries : []; }
   const low = names.map((n) => n.toLowerCase().trim());
   const bare = new Set(low.flatMap((n) => [n, `who is ${n}`, `who is ${n}?`, `tell me about ${n}`, `${n}?`]));
@@ -132,5 +134,11 @@ export function capturesFor(names) {
       transcript: o.transcript || "", chars: (o.transcript || "").length, cite_list: o.cite_list || [] });
   }
   const usable = obs.filter((o) => o.chars >= 300).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  if (pick) {
+    const chosen = [...obs, ...related].find((o) => o.obs_id === pick || o.slug === pick);
+    if (!chosen) throw new Error(`no capture ${pick} is seated in the Capture Registry at an address naming the entity`);
+    if (chosen.chars < 300) throw new Error(`capture ${pick} carries no substantive transcript (${chosen.chars} characters)`);
+    return { primary: chosen, picked: true, bare: obs.map(({ transcript, cite_list, ...o }) => o), related: related.map(({ transcript, cite_list, ...o }) => o) };
+  }
   return { primary: usable[0] || null, bare: obs.map(({ transcript, cite_list, ...o }) => o), related: related.map(({ transcript, cite_list, ...o }) => o) };
 }

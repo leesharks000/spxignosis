@@ -149,6 +149,34 @@ else {
   t("captures: an entity with no capture yields none", capturesFor(["Zzyzx Quuxbaum"]).primary === null);
 }
 
+// 12. discernment (2026-10-21: "careful on admitting a supplied composition. that would open /non to any kind of
+// falsification"; "there has to be some kind of evaluation/verification"; "it is fine to construct novel entities as long
+// as they are marked as such").
+{
+  const { discern } = await import("../src/s7/discern.js");
+  const { checkSupplied } = await import("../src/run.js");
+  const { provenanceOf } = await import("../src/s7/row.js");
+  const page = { url: "https://example.org/p", final_url: "https://example.org/p", retrieved: "2026-10-21T00:00:00Z", text: "Lee Sharks is a poet and archive operator in Michigan. He wrote Pearl and Other Poems in 2014.", text_sha256: "x" };
+  const good = { name: "Lee Sharks", address: "who is lee sharks", transcript: { text: "Lee Sharks is a poet and archive operator in Michigan. He wrote \"Pearl and Other Poems\" in 2014.", surface: "Google AI Overview", date: "2026-10-20", cite_list: [{ url: page.url, title: "p" }] } };
+  const d1 = discern(good, [page]);
+  t("discernment: an attested composition grounded in the cards it cites is admissible, held from landing, its provenance the caller's attestation", d1.verdict === "admissible" && /attested by the caller/.test(d1.provenance) && /held/.test(d1.landing));
+  const forged = { ...good, transcript: { ...good.transcript, text: "Lee Sharks was convicted of fraud in Ohio, according to \"court records filed in 2019\". He fled the state afterwards and changed names." } };
+  const d2 = discern(forged, [page]);
+  t("discernment: a forged composition is caught: its sentences stand in no card and its quotation in none", d2.checks.grounding.grounded === 0 && d2.breaches.some((b) => b.check === "quotation") && d2.verdict !== "admissible");
+  const nocards = discern({ ...good, transcript: { ...good.transcript, cite_list: [] } }, []);
+  t("discernment: an attested composition engaging no source is not admissible as T (the registry's rule)", nocards.verdict === "not admissible as T");
+  const future = discern({ ...good, transcript: { ...good.transcript, date: "2099-01-01" } }, [page]);
+  t("discernment: an attested date after the quote is a breach", future.breaches.some((b) => b.check === "attestation"));
+  const novel = discern({ name: "The Glass Moon Society", novel: true, transcript: { text: "The Glass Moon Society is an invented reading circle." } }, []);
+  t("discernment: a novel entity is admitted as the caller's construction, marked as such, never held", novel.mode === "novel entity" && /marked as such/.test(novel.provenance) && /not held/.test(novel.landing));
+  let refused = false; try { checkSupplied({ name: "x", sources: [{ text: "anything at all" }] }); } catch { refused = true; }
+  t("discernment: source text supplied by the caller is refused; a source is a URL the service fetches", refused);
+  const mk = (T) => provenanceOf({ kind: "entity", T });
+  t("provenance: every T is marked by class (seated, attested, novel, constructed, null)", mk({ capture: { slug: "s" } }).class === "seated" && mk({ supplied: true, discernment: d1 }).class === "attested" && mk({ supplied: true, discernment: novel }).class === "novel" && mk({ kind: "constructed" }).class === "constructed" && mk({ kind: "null" }).class === "null");
+  const ps = await publicationState({ composed: true, row_key: "x", non_url: "u", manifest: { files: [] }, audit: { ran: false }, provenance: mk({ supplied: true, discernment: d1 }) }, { fetchPublic: false });
+  t("publication: a row whose T is attested and unseated carries the landing hold", /held from landing/.test(ps.hold || ""));
+}
+
 // 8. the execution budget and a failed call.
 {
   const prev = process.env.GNOSIS_READER; process.env.GNOSIS_READER = "anthropic"; const key = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;

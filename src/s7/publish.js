@@ -24,5 +24,7 @@ export async function publicationState(s7, { fetchPublic = true } = {}) {
   const isPublic = pub.observed && pub.status === 200 && pub.names_row;
   return { state: isPublic ? "public" : landed ? "landed" : checked ? "checked" : "composed",
     stages: { composed: true, checked, landed, public: pub }, row: s7.row_key, url: s7.non_url, row_sha256: want || null,
+    provenance: s7.provenance || null,
+    ...(s7.provenance?.class === "attested" ? { hold: "T is a composition the caller attests and the service did not observe: the row is held from landing until the registry's intake seats the composition as a capture" } : {}),
     note: landed ? null : "the row awaits landing in the archive (the operator's act); its landing tree is held by the service under its execution key" };
 }

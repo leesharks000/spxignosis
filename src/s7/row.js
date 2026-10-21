@@ -9,6 +9,18 @@ const V2 = "datasets/negative-of-the-negative/v2";
 const words = (t) => (t || "").match(/[A-Za-z0-9'’-]+/g)?.length || 0;
 const numbered = (ko) => ko && { ...ko, sentences: (ko.sentences || []).map((s, i) => ({ n: i + 1, para: s.para ?? 0, text: s.text, claims: s.claims || [] })) };
 
+// Every T is marked as what it is (operator, 2026-10-21: "it is fine to construct novel entities as long as they are
+// marked as such"). Falsification is a mismarking; the class says who produced T and what was observed.
+export function provenanceOf(input) {
+  const T = input.T || {};
+  if (input.kind !== "entity") return T.kind === "transcript" ? { class: "seated", statement: "the row's own transcript, seated in the archive" } : { class: "observed", statement: "the encyclopedia revision, fetched and hashed by the service" };
+  if (T.capture) return { class: "seated", statement: "a capture seated in the Capture Registry by its intake", registry: T.capture.slug };
+  if (T.supplied && T.discernment?.mode === "attested composition") return { class: "attested", statement: T.discernment.provenance, held: T.discernment.landing };
+  if (T.supplied) return { class: T.discernment?.mode === "novel entity" ? "novel" : "composed by the caller", statement: T.discernment?.provenance };
+  if (T.kind === "constructed") return { class: "constructed", statement: "the article constructed by the service under Wikipedia's content policies, notability not applied" };
+  return { class: "null", statement: "no composition at the address" };
+}
+
 export function buildRow(run) {
   const { input, onto, composition: c, checks, audit, arch, field, verdicts, release } = run;
   const r = input.row, date = new Date().toISOString().slice(0, 10);
@@ -23,7 +35,8 @@ export function buildRow(run) {
   const T = input.kind === "entity"
     ? { path: input.T.text ? `${V2}/intake/${r}-${input.address.date.replace(/-/g, "")}/T-transcript.txt` : null, kind: input.T.kind, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: 0,
         claims: input.T.claims.map((x) => `${x.id} ${x.text}`), wikipedia: input.T.wikipedia, note: input.T.note,
-        ...(input.T.capture ? { capture_registry: input.T.capture } : {}), ...(input.T.source ? { source: input.T.source } : {}) }
+        ...(input.T.capture ? { capture_registry: input.T.capture } : {}), ...(input.T.source ? { source: input.T.source } : {}),
+        provenance: provenanceOf(input), ...(input.T.discernment ? { discernment: input.T.discernment } : {}) }
     : input.kind === "wikipedia"
     ? { path: `${V2}/intake/${r}-${input.address.oldid}/T-revision.txt`, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: input.T.claims.reduce((n, x) => n + (x.cites || []).length, 0), url: input.T.url, licence: "CC BY-SA 4.0 (Wikipedia contributors; the revision URL is the attribution)",
         claims: input.T.claims.map((x) => `${x.id} ${x.text}`), note: "T is the pinned Wikipedia revision, sentence by sentence; its disclosed field B is every source the revision cites (EA-NEGONT-02 v0.9 §0.4 applied to an encyclopedia article: the article is the composition at the address)." }
@@ -37,7 +50,7 @@ export function buildRow(run) {
   const row = {
     row: r, entity: input.entity.slug, address: input.address.string, addresses: [{ address: input.address.string, surface: input.address.surface, date: input.address.date }],
     epoch: date, type: input.entity.type, surface: input.address.surface, auth: input.address.auth, status, spec: "EA-NEGONT-02 v0.9, #1690",
-    objects: { T },
+    objects: { T: { ...T, provenance: T.provenance || provenanceOf(input) } },
     field: input.field.map((b) => ({ id: b.id, card: b.card, url: b.url, role: "field B", sha256: { text: b.text_sha256 }, availability: b.availability, fetched: b.fetched })),
     field_claims: fieldClaims, field_sources: fieldSources,
     ledger: { archive: `${V2}/ledgers/${r}/ledger-archive.json`, field: `${V2}/ledgers/${r}/field.json`, selection: `${V2}/traversal/${r}/`, audit: null },

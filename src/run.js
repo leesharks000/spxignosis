@@ -8,6 +8,7 @@ import { segment } from "./segment.js";
 import { resolveSources } from "./resolve.js";
 import { makeReader, inputFor, READER_PROTOCOL, CALIBRATION } from "./reader.js";
 import { fromWikipedia, fromEntity, capturesFor } from "./s7/input.js";
+import { discern } from "./s7/discern.js";
 import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construct.js";
 import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
 import { snapshot } from "./resolve.js";
@@ -22,7 +23,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.6.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.6.1", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -124,15 +125,35 @@ async function wikipediaAt(title) {
     url: pg.missing ? null : `https://en.wikipedia.org/wiki/${encodeURIComponent((pg.title || title).replace(/ /g, "_"))}` };
 }
 
-// T for an entity: a composition the caller supplies; else the composition layer's own article of it, from the captures
-// seated at its bare addresses; else the article constructed under Wikipedia's content policies from supplied sources.
+// T for an entity, in order: a composition the caller supplies, admitted only through discernment (discern.js: what code
+// verifies at the quote, S3's reading at the opening, and the caller's attestation recorded as attestation, the row held
+// from landing until the registry's intake seats it); the composition layer's own article of the entity, from the
+// captures seated in the Capture Registry (the most recent at its bare addresses, or the seated capture the caller
+// names); the article constructed under Wikipedia's content policies from sources the service fetches itself. Source
+// text is never taken from the caller: a source is a URL the service fetches and hashes, and a card's snippet supplied
+// with a transcript is the caller's attestation, never evidence.
+export function checkSupplied(spec) {
+  for (const s of spec.sources || []) if (typeof s !== "string" || !/^https?:\/\//.test(s)) throw new Error("each source is a URL the service fetches and hashes itself; source text supplied by the caller is not admitted");
+  if (spec.transcript && (typeof spec.transcript.text !== "string" || !spec.transcript.text.trim())) throw new Error("a supplied composition needs its text");
+  for (const c of spec.transcript?.cite_list || []) if (c.url && !/^https?:\/\//.test(c.url)) throw new Error("a card's url must be http(s)");
+}
 async function prepareEntity(spec) {
   const snaps = [];
-  let capture = null, captures = null;
-  if (!spec.transcript?.text) {
-    captures = capturesFor([spec.name, ...(spec.aliases || [])]);
-    capture = captures.primary;
+  checkSupplied(spec);
+  let discernment = null, supplied = false;
+  if (spec.transcript?.text && !spec.transcript.capture) {
+    // The supplied composition's cards: each URL fetched by the service; a card without one carries nothing checkable.
+    for (const c of (spec.transcript.cite_list || []).slice(0, 40)) {
+      if (c.url) { const s = await snapshot(c.url); snaps.push({ ...s, title: `${c.site || ""} — ${c.title || ""}`.trim(), card_snippet_attested: c.snip || null }); }
+      else snaps.push({ url: null, title: `${c.site || ""} — ${c.title || ""}`.trim(), text: "", text_sha256: null, availability: "card without URL (its snippet is the caller's attestation, not evidence)", retrieved: null });
+    }
+    discernment = spec.transcript.discernment || discern(spec, snaps);
+    if (discernment.verdict !== "not admissible as T") return { snaps, capture: null, captures: null, discernment, supplied: true };
+    snaps.length = 0; // not admitted: T falls to the registry or the construction, and the discernment is recorded
   }
+  // A quote already settled on a seated capture carries it; the run fetches the same cards again.
+  const captures = spec.transcript?.capture ? null : capturesFor([spec.name, ...(spec.aliases || [])], { pick: spec.capture || null });
+  const capture = captures?.primary || null;
   const cards = capture?.cite_list || spec.transcript?.capture?.cite_list;
   if (cards) {
     // B is the capture's disclosed field: each card fetched where it carries a URL; a card without one is its snippet.
@@ -141,7 +162,7 @@ async function prepareEntity(spec) {
       else snaps.push({ url: null, title: `${c.site || ""} — ${c.title || ""}`.trim(), text: c.snip || "", text_sha256: c.snip ? sha256(c.snip) : null, availability: c.snip ? "card snippet only (no URL on the card)" : "card without URL or snippet", retrieved: null });
     }
   } else for (const u of (spec.sources || []).slice(0, 40)) snaps.push(await snapshot(u));
-  return { snaps, capture, captures };
+  return { snaps, capture, captures, discernment, supplied };
 }
 const specWithCapture = (spec, capture) => (capture ? { ...spec, address: capture.q, transcript: { text: capture.transcript, surface: capture.surface, date: capture.date, auth: capture.auth,
   capture: { slug: capture.slug, entry: capture.entry, obs_id: capture.obs_id, addr_id: capture.addr_id, q: capture.q, cite_list: capture.cite_list } } } : spec);
@@ -149,14 +170,17 @@ const specWithCapture = (spec, capture) => (capture ? { ...spec, address: captur
 export async function quoteEntity(spec, { tier = "opening" } = {}) {
   if (!spec?.name) throw new Error("entity.name is required");
   if (!ADMITS.has(tier)) throw new Error("an entity without an article is opened at the opening or portable tier");
-  const { snaps, capture, captures } = await prepareEntity(spec);
+  const { snaps, capture, captures, discernment, supplied } = await prepareEntity(spec);
   const wikipedia = await wikipediaAt(spec.name);
+  if (discernment && !supplied) { const { transcript, ...rest } = spec; spec = { ...rest, supplied_not_admitted: { discernment } }; }
+  else if (supplied) spec = { ...spec, transcript: { ...spec.transcript, supplied: true, discernment } };
   spec = specWithCapture(spec, capture);
   const input = fromEntity(spec, { sources: snaps, wikipedia });
   const e = await estimateS7(input);
   const srcTok = input.field.reduce((n, b) => n + Math.min(estimateTokens(b.text), 9000), 0);
   const construct = spec.transcript?.text ? 0 : callCost(S7_MODELS.reading, { input_tokens: srcTok + 2500, output_tokens: 6000 });
-  const nSent = spec.transcript?.text ? 0 : Math.min(30, input.field.filter((b) => b.text).length * 3);
+  // S3 reads each sentence of T against its sources: a capture's or a supplied composition's sentences against its cards.
+  const nSent = spec.transcript?.text ? (input.field.some((b) => b.text) ? Math.min(30, input.T.claims.length) : 0) : Math.min(30, input.field.filter((b) => b.text).length * 3);
   const perSentEst = estimateClaim(TIERS[tier].reader_model, Math.min(9000, Math.ceil(srcTok / Math.max(1, input.field.length))) + 2500);
   const sentence_price = priceClaim(tier, perSentEst, false);
   const s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key: null, ledgered: false, estimate: e, est_cost_usd: e.est_cost_usd,
@@ -168,9 +192,11 @@ export async function quoteEntity(spec, { tier = "opening" } = {}) {
   const q = {
     quote_id: `Q-${sha256(`entity|${spec.name}|${tier}|${Date.now()}`).slice(0, 16)}`, kind: "entity",
     article: { title: spec.name, oldid: null, url: null, entity: true }, entity: spec, wikipedia,
-    T_source: capture ? { kind: "capture (the closed-ontology article)", primary: { slug: capture.slug, q: capture.q, surface: capture.surface, date: capture.date, obs_id: capture.obs_id }, bare_address_observations: captures.bare, related_captures: captures.related.length }
-      : spec.transcript?.text ? { kind: "composition supplied by the caller" } : (spec.sources || []).length ? { kind: "constructed article (Wikipedia's content policies, notability not applied)" } : { kind: "null composition" }, sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
-    tier, tier_steps: spec.transcript?.text ? "S7–S9 on the supplied composition" : "S0′ (the article constructed under Wikipedia's content policies, notability not applied), S3 on each constructed sentence, S7–S9",
+    discernment: discernment || undefined,
+    T_source: supplied ? { kind: discernment.mode === "attested composition" ? "composition supplied by the caller, admitted through discernment" : discernment.provenance, verdict: discernment.verdict, provenance: discernment.provenance, landing: discernment.landing }
+      : capture ? { kind: captures.picked ? "capture named by the caller, seated in the registry" : "capture (the closed-ontology article)", primary: { slug: capture.slug, q: capture.q, surface: capture.surface, date: capture.date, obs_id: capture.obs_id }, bare_address_observations: captures.bare, related_captures: captures.related.length }
+      : (spec.sources || []).length ? { kind: "constructed article (Wikipedia's content policies, notability not applied)" } : { kind: "null composition" }, sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
+    tier, tier_steps: spec.transcript?.text ? `S3 on each sentence of T against its cards (at most 30), S7–S9${spec.transcript.supplied ? "; the supplied composition was discerned at the quote, and its row is held from landing until the registry seats it" : ""}` : "S0′ (the article constructed under Wikipedia's content policies, notability not applied), S3 on each constructed sentence, S7–S9",
     reader_model: TIERS[tier].reader_model, lines: [], s7, construction: spec.transcript?.text ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
     sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
     estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
@@ -264,7 +290,16 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     entityInput = fromEntity(q.entity, { sources: snaps, wikipedia: q.wikipedia });
     if (q.T_source) entityInput.T.source = q.T_source;
     pinned = { title: q.entity.name, oldid: `entity-${entityInput.row}`, url: null };
-    if (q.entity.transcript?.text) { claims = []; sources = {}; }
+    if (q.entity.transcript?.text) {
+      // T's sentences are read against the cards T engages, as an article's sentences are read against their citations.
+      const fetched = snaps.filter((s) => s.text && s.retrieved);
+      const cardSrc = fetched.map((s) => ({ kind: "card", url: s.url, final_url: s.final_url || s.url, citation: s.title, text: s.text, text_sha256: s.text_sha256, availability: s.availability }));
+      claims = entityInput.T.claims.slice(0, 30).map((c) => ({ ...c, section: "T", cited: cardSrc.length > 0, footnotes: [], pointers: [], text_sha256: sha256(c.text) }));
+      sources = Object.fromEntries(claims.map((c) => [c.id, cardSrc]));
+      const dn = q.entity.transcript.discernment;
+      if (q.entity.transcript.supplied) entityInput.T = { ...entityInput.T, supplied: true, discernment: dn,
+        note: dn.mode === "attested composition" ? "T is a composition supplied by the caller, admitted through discernment: its surface, address and date are the caller's attestation, not observed by the service; the row is held from landing until the registry's intake seats it as a capture" : `T is ${dn.provenance}` };
+    }
     else {
       onProgress({ stage: "S0′", detail: "constructing the article under Wikipedia's content policies" });
       construction = await constructArticle(preLog, entityInput);
@@ -321,7 +356,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd });
       s7 = { row_key: input.row, entity: input.entity.slug, non_url: NON_URL(input.entity.slug), landing: out.landing.dir, manifest: out.landing.manifest,
         composed: !!out.row.objects.KO, case: out.row.ontology?.case?.value || null, rho: out.row.ontology?.rho?.value || null, breaches: out.row.breaches.length,
-        audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key };
+        audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key, provenance: out.row.objects?.T?.provenance || null };
       for (const c of out.run.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
       actual += out.run.cost_usd || 0;
       // Only a composed row is ledgered: a run that composed nothing is recomputed on the next request.

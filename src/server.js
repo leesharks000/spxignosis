@@ -19,7 +19,7 @@ app.use(express.json({ limit: "64kb" }));
 app.get("/", (_req, res) => res.json({
   service: SERVICE, network: NETWORK,
   operations: {
-    "POST /v1/quote": "free. body {oldid, tier?: check|ledger|opening|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {entity: {name, aliases?, type?, sources?: [url], transcript?: {text, surface, date}}, tier?: opening|portable}: the article Wikipedia's content policies would compose from the sources is constructed (notability not applied) and opened. Pins the revision, resolves its sources and, at the opening and portable tiers, runs the archive traversal; returns scope, cost-based prices, the execution contract and the maximum price.",
+    "POST /v1/quote": "free. body {oldid, tier?: check|ledger|opening|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {entity: {name, aliases?, type?, works_by?: [name], capture?: obs_id|slug, sources?: [url]}, tier?: opening|portable}; a composition supplied by the caller is refused: the article Wikipedia's content policies would compose from the sources is constructed (notability not applied) and opened. Pins the revision, resolves its sources and, at the opening and portable tiers, runs the archive traversal; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
     "POST /v1/openings/{quote_id}": "paid (x402). Runs the opening for a quote; returns the composition result and the result id. A quote already paid returns its result without a second charge.",
     "GET /v1/results/{result_id}/publication": "the /non row's publication, observed now: composed, checked, landed, public",
@@ -37,9 +37,10 @@ app.get("/", (_req, res) => res.json({
 app.post("/v1/quote", async (req, res) => {
   try {
     const { oldid, entity, tier = "opening", claims } = req.body || {};
-    // An entity the encyclopedia does not hold is opened from its name, strings, sources and, optionally, a composition.
+    // An entity the encyclopedia does not hold is opened from its name and strings, with T from the Capture Registry or
+    // constructed from sources the service fetches; a composition the caller supplies is refused.
     if (entity) return res.json(await quoteEntity(entity, { tier }));
-    if (!/^\d+$/.test(String(oldid))) return res.status(400).json({ error: "oldid (a Wikipedia revision id) or entity {name, aliases?, type?, sources?: [url], transcript?: {text, surface, date}} is required" });
+    if (!/^\d+$/.test(String(oldid))) return res.status(400).json({ error: "oldid (a Wikipedia revision id) or entity {name, aliases?, type?, works_by?, capture?, sources?: [url]} is required" });
     res.json(await quote(Number(oldid), { tier, claims }));
   } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
 });
