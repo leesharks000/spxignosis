@@ -21,7 +21,7 @@ function htmlToText(h) {
     .replace(/\s+/g, " ").trim();
 }
 
-async function snapshot(url) {
+export async function snapshot(url) {
   const key = `snapshots/sources/${sha256(url).slice(0, 24)}.json`;
   const hit = load(key);
   if (hit) return hit;

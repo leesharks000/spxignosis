@@ -15,6 +15,10 @@ import { packageRow } from "../src/writer.js";
 import { audit } from "../src/s7/compose.js";
 import { passLog } from "../src/s7/model.js";
 import { publicationState } from "../src/s7/publish.js";
+import { fromEntity } from "../src/s7/input.js";
+import { constructArticle, asClaims } from "../src/s7/construct.js";
+import { isByline } from "../src/s7/reading.js";
+import { compactLedger } from "../src/s7/lineage.js";
 
 let fail = 0;
 const t = (name, ok) => { console.log(`${ok ? "ok  " : "FAIL"} ${name}`); if (!ok) fail++; };
@@ -92,6 +96,24 @@ else {
   const dro2 = rr.verdicts.filter((v) => Number.isInteger(v.dep) && !(v.strata || []).includes("H"));
   const hs2 = hopScreen(reg, traverse(reg, { hopFrom: dro2.map((v) => v.dep) }), dro2.flatMap((v) => c2.filter((c) => c.dep === v.dep && (v.cands || []).includes(c.cand_id)).map((c) => c.sentence)));
   t("hop screen: a deposit whose bearing stands in the admitted deposit's citing paragraph passes (#716, #740 by #1694)", [716, 740].every((d) => hs2.screened.some((x) => x.h.dep === d)));
+}
+
+// 10. an entity the encyclopedia does not hold (2026-10-21: "lee sharks is not allowed in wikipedia. lee sharks is allowed in /non").
+{
+  const wiki = { title: "Lee Sharks", observed: true, exists: false };
+  const e0 = fromEntity({ name: "Lee Sharks", aliases: ["Sharks, Lee"] }, { sources: [], wikipedia: wiki });
+  t("entity: no transcript and no source gives the null composition, with the encyclopedia's absence recorded", e0.T.kind === "null" && e0.T.wikipedia.exists === false && e0.row === "lee-sharks");
+  const c0 = await constructArticle(passLog(), e0);
+  t("entity: with no citable source the constructed article is empty and the breach says so", c0.status === "no sources" && c0.breaches[0].check === "construction");
+  const e1 = fromEntity({ name: "Lee Sharks" }, { sources: [{ url: "https://example.org/a", text: "Lee Sharks is an independent scholar and archive operator.", text_sha256: "x", availability: "fetched" }], wikipedia: wiki });
+  const art = { title: "Lee Sharks", sections: [{ heading: "lead", sentences: [{ id: "W1", text: "Lee Sharks is an independent scholar.", cites: [{ source: "B1", quote: "Lee Sharks is an independent scholar" }] }] }] };
+  const { claims: cl, sources: so } = asClaims(art, e1);
+  t("entity: a constructed sentence becomes an S3 claim with its cited source", cl.length === 1 && cl[0].cited && so.W1[0].text.includes("independent scholar"));
+  const a = [/\bLee Sharks\b/i];
+  t("byline screen: a byline is screened and a claim is read", isByline("**Lee Sharks**", a) && isByline("Authors: TECHNE/Kimi, Lee Sharks.", a) && !isByline("Lee Sharks is a heteronym.", a) && !isByline("**Lee Sharks and the Archive**", a));
+  const big = Array.from({ length: 4000 }, (_, i) => ({ id: `X${i}`, dep: i, date: `2026-01-${String(1 + (i % 28)).padStart(2, "0")}`, quote: "q ".repeat(30), lineage: `L${i % 50}`, kernel: i % 400 === 0 }));
+  const cmp = compactLedger(big);
+  t("lineage: an oversized ledger is sent one slot per lineage, every instance reachable", cmp.compacted && cmp.lineages === 50 && cmp.claims.length < 200 && cmp.claims.reduce((n, c) => n + 1 + (c.lineage_instances || []).length, 0) === 4000);
 }
 
 // 8. the execution budget and a failed call.

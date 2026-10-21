@@ -89,15 +89,33 @@ function reconcile(packets, [p1, p2]) {
   return { verdicts, not_admitted, contested };
 }
 
+// The byline screen: a candidate sentence that is a byline or metadata line names the entity and says nothing about it
+// (#1690 §3.4: naming is not enough). It is recorded as not admitted, by the screen, and is not sent to reading. The
+// patterns are narrow by design: a short sentence that states something of the entity goes to reading.
+const BYLINE = [/\bORCID\b|orcid\.org|\b\d{4}-\d{4}-\d{4}-\d{3}[\dX]\b/i, /^\W*(by|authors?|creators?|written by|compiled by)\s*:?\s*[^.]{0,80}\.?\s*$/i,
+  /^\W*(cite as|citation)\s*:/i];
+// A bold line is a byline only when its bold text is the entity's name and nothing else (italic venue or date lines may follow).
+const boldName = (s, aliases) => { const m = s.trim().match(/^\W*\*\*([^*]{2,60})\*\*\s*(\*[^*]*\*\s*)*(---)?\s*$/); if (!m) return false;
+  let rest = m[1]; for (const r of aliases) rest = rest.replace(new RegExp(r.source, r.flags.includes("i") ? "gi" : "g"), " "); return !/[\p{L}\p{N}]{2,}/u.test(rest.replace(/\b(and|with|&)\b/gi, " ")); };
+export const isByline = (s, aliases) => s.length < 260 && aliases.some((r) => r.test(s)) && (BYLINE.some((r) => r.test(s.trim())) || boldName(s, aliases));
+
 // DRO candidates, grouped by deposit and read.
 export async function admitDRO(log, input, trav, blog = { D: [] }) {
   const byDep = new Map();
+  const aliasRe = input.aliases.map((a) => new RegExp(a.pattern, a.flags?.includes("i") ? "i" : ""));
+  const screened = [];
   for (const c of [...trav.D, ...trav.R, ...trav.O, ...blog.D]) {
+    if (isByline(c.sentence, aliasRe)) { screened.push(c); continue; }
     if (!byDep.has(c.dep)) byDep.set(c.dep, []);
     byDep.get(c.dep).push(c);
   }
   const packets = [...byDep.entries()].sort((a, b) => depOrder(a[0], b[0])).map(([dep, cs]) => depPacket(dep, cs));
-  return reconcile(packets, await readBatches(log, input, "admit-dro", packets, MODELS.reading));
+  const r = reconcile(packets, await readBatches(log, input, "admit-dro", packets, MODELS.reading));
+  const onlyBylines = [...new Set(screened.map((c) => c.dep))].filter((d) => !byDep.has(d));
+  if (onlyBylines.length) r.not_admitted.push({ dep: onlyBylines, cands: screened.filter((c) => onlyBylines.includes(c.dep)).map((c) => c.cand_id),
+    reason: "every candidate sentence is a byline or metadata line: the entity is named and nothing is said of it (string screen; gnosis S7)" });
+  r.byline_screened = { sentences: screened.length, deposits_with_only_bylines: onlyBylines.length };
+  return r;
 }
 
 // The hop's screen: the sentences in which a hop candidate cites a deposit admitted by reading (by #N, AXN hex or DOI),

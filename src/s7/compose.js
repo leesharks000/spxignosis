@@ -4,6 +4,7 @@
 // separate call, the only one that receives T: it reads T against the composed objects after they exist.
 // Code checks the plan (checks.js); a reverse entailment audit by two independent raters follows (§5.3).
 import { MODELS } from "./model.js";
+import { compactLedger } from "./lineage.js";
 
 export const COMPOSITION_INSTRUCTIONS = `The composition pass writes one entity of the Negative of the Negative (EA-NEGONT-02 v0.9, #1690) from its frozen ledgers and its ontology reading. It returns JSON only.
 
@@ -14,6 +15,8 @@ Objects:
 - kernel: about eleven entries, each a claim admission adds, with its contrast in the field or T.
 
 By case. Equal: one claim space; the archive's definitions, senses, mechanisms and limits enter as claims about the entity on the same terms as the field's, ordered by genealogy and dependency together; the KO neither opens with the field's sentences as a block nor closes with the archive's as one. Witness: the entity is composed in the archive's ontology, E_A first in its dependency order, every field claim standing where its translation places it, its received form kept beside its translation. In both cases standing is excluded: no claim is lowered because of who states it, and none is raised.
+
+Where the field ledger is empty, KO_B and P_B are empty ({"title": str, "sentences": []} and a lede that states the field holds no account), and the KO is composed from the archive's ledger in the archive's ontology.
 
 Rules for every sentence:
 - Every factual element (date, number, name, attribute) is supported by the quote of at least one claim the sentence cites; a paraphrase in the ledger is not support.
@@ -55,8 +58,9 @@ const brief = (c) => ({ id: c.id, ...(c.dep || c.record ? { dep: c.dep ?? `blog:
 
 export async function compose(log, input, onto, fieldClaims, archiveLedger, fieldSources) {
   const F = Object.entries(fieldClaims).filter(([, c]) => c.quote_ok).map(([id, c]) => brief({ id, ...c }));
-  const A = archiveLedger.filter((c) => c.quote_ok).map(brief);
-  const shared = "ENTITY\n" + JSON.stringify({ name: input.entity.name, type: input.entity.type })
+  const cA = compactLedger(archiveLedger.filter((c) => c.quote_ok).map(brief));
+  const A = cA.claims;
+  const shared = (cA.compacted ? `NOTE\nThe archive ledger is sent by lineage (${cA.rule}); a lineage's listed instances are composed through its slot and count as carried.\n\n` : "") + "ENTITY\n" + JSON.stringify({ name: input.entity.name, type: input.entity.type })
     + "\n\nONTOLOGY\n" + JSON.stringify({ case: onto.case, rho: onto.rho, E_F: onto.E_F, E_A: onto.E_A, translation: onto.translation })
     + "\n\nFIELD SOURCES\n" + JSON.stringify(fieldSources) + "\n\nFIELD LEDGER\n" + JSON.stringify(F) + "\n\nARCHIVE LEDGER\n" + JSON.stringify(A);
   return log.run({ row: input.row, stage: "compose", id: "pass1", model: MODELS.reading, maxTokens: 32000, system: COMPOSITION_INSTRUCTIONS, shared,

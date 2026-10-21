@@ -7,7 +7,11 @@ import { pinRevision } from "./pin.js";
 import { segment } from "./segment.js";
 import { resolveSources } from "./resolve.js";
 import { makeReader, inputFor, READER_PROTOCOL, CALIBRATION } from "./reader.js";
-import { fromWikipedia } from "./s7/input.js";
+import { fromWikipedia, fromEntity } from "./s7/input.js";
+import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construct.js";
+import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
+import { snapshot } from "./resolve.js";
+import { politeFetch } from "./util.js";
 import { runS7, s7Key } from "./s7/run.js";
 import { estimateS7 } from "./s7/estimate.js";
 import { publicationState } from "./s7/publish.js";
@@ -18,7 +22,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.4.1", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.5.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -110,41 +114,66 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
   return q;
 }
 
-export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
-  const q = load(`quotes/${quoteId}.json`);
-  if (!q) throw new Error(`unknown quote ${quoteId}`);
-  const t0 = Date.now();
-  const { pinned, claims, sources } = await prepare(q.article.oldid, q.only);
-  const model = TIERS[q.tier].reader_model;
-  const reader = makeReader(undefined, model);
-  const priceOf = Object.fromEntries(q.lines.map((l) => [l.id, l.price_usd]));
+// The entity path: an entity with no encyclopedia article. Its sources are fetched and hashed; the encyclopedia's
+// absence at its title is observed and recorded; the quote prices the construction, the sentences' checks and S7.
+async function wikipediaAt(title) {
+  const r = await politeFetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&redirects=1&format=json&formatversion=2`);
+  if (r.status !== 200) return { title, observed: false, status: r.status, at: new Date().toISOString() };
+  const pg = (JSON.parse(r.body).query?.pages || [])[0] || {};
+  return { title, observed: true, exists: !pg.missing, page_title: pg.title || title, at: new Date().toISOString(),
+    url: pg.missing ? null : `https://en.wikipedia.org/wiki/${encodeURIComponent((pg.title || title).replace(/ /g, "_"))}` };
+}
 
-  const state = {
-    article: { oldid: pinned.oldid, html_sha256: pinned.html_sha256 }, claims: claims.map((c) => c.id),
-    sources: Object.fromEntries(Object.entries(sources).map(([k, v]) => [k, v.map((s) => s.text_sha256 || s.availability)])),
-    policies: policyState(), s7: q.s7?.key || null, protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
+async function prepareEntity(spec) {
+  const snaps = [];
+  for (const u of (spec.sources || []).slice(0, 40)) snaps.push(await snapshot(u));
+  return { snaps };
+}
+
+export async function quoteEntity(spec, { tier = "opening" } = {}) {
+  if (!spec?.name) throw new Error("entity.name is required");
+  if (!ADMITS.has(tier)) throw new Error("an entity without an article is opened at the opening or portable tier");
+  const { snaps } = await prepareEntity(spec);
+  const wikipedia = await wikipediaAt(spec.name);
+  const input = fromEntity(spec, { sources: snaps, wikipedia });
+  const e = estimateS7(input);
+  const srcTok = input.field.reduce((n, b) => n + Math.min(estimateTokens(b.text), 9000), 0);
+  const construct = spec.transcript?.text ? 0 : callCost(S7_MODELS.reading, { input_tokens: srcTok + 2500, output_tokens: 6000 });
+  const nSent = spec.transcript?.text ? 0 : Math.min(30, input.field.filter((b) => b.text).length * 3);
+  const perSentEst = estimateClaim(TIERS[tier].reader_model, Math.min(9000, Math.ceil(srcTok / Math.max(1, input.field.length))) + 2500);
+  const sentence_price = priceClaim(tier, perSentEst, false);
+  const s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key: null, ledgered: false, estimate: e, est_cost_usd: e.est_cost_usd,
+    price_usd: Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
+  s7.budget_usd = Math.round(((s7.price_usd + Math.ceil(construct * POLICY.margin * 100) / 100) / POLICY.s7_budget_ratio) * 100) / 100;
+  const construct_price = construct ? Math.ceil(Math.max(0.10, construct * POLICY.margin) * 100) / 100 : 0;
+  const package_price = tier === "portable" ? POLICY.portable_package : 0;
+  const max = Math.round((construct_price + nSent * sentence_price + s7.price_usd + package_price) * 100) / 100;
+  const q = {
+    quote_id: `Q-${sha256(`entity|${spec.name}|${tier}|${Date.now()}`).slice(0, 16)}`, kind: "entity",
+    article: { title: spec.name, oldid: null, url: null, entity: true }, entity: spec, wikipedia, sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
+    tier, tier_steps: spec.transcript?.text ? "S7–S9 on the supplied composition" : "S0′ (the article constructed under Wikipedia's content policies, notability not applied), S3 on each constructed sentence, S7–S9",
+    reader_model: TIERS[tier].reader_model, lines: [], s7, construction: spec.transcript?.text ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
+    sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
+    estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
+    pricing: { table: PRICE_TABLE.version, margin: POLICY.margin, rule: "the construction, each constructed sentence's check, and the archive's consultation with the row, each at max(floor, estimated cost × margin); the charge is for completed work only" },
+    execution_contract: {
+      sources: "the sources the caller supplies, fetched once and hashed (the disclosed field B); notability is not applied",
+      encyclopedia: wikipedia.exists ? `the encyclopedia holds an article at this title (${wikipedia.url}); the entity is opened as given here, and the article can be opened by its revision id` : "the encyclopedia holds no article at this title (observed at the quote); the absence is recorded in the row",
+      search_scope: "the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4), as for an article",
+      archive_release: e.release, execution_budget: `model spending stops at $${s7.budget_usd}`,
+      publication: `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed`,
+    },
+    expires: new Date(Date.now() + 15 * 60_000).toISOString(),
   };
-  const execution_key = sha256(JSON.stringify(state));
-  const prior = load(`results/by-state/${execution_key}.json`);
-  // A result is served again only when it is complete for its tier: at the tiers that compose the /non row, a result
-  // whose row was not composed is recomputed.
-  if (prior && (!q.s7 || prior.non_row)) {
-    // The same state was computed before: the result is served again, and billed against this quote, at the
-    // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
-    const composition = load(prior.composition_path), record = load(prior.composition_path.replace("composition", "evidence"));
-    const done = composition.entries.filter((e) => ["concordant", "concordant across families", "single-valid", "contested"].includes(e.status)).map((e) => e.id);
-    let charge = done.reduce((n, id) => n + (priceOf[id] || 0), 0);
-    if (q.s7 && prior.non_row) charge += POLICY.ledgered_s7;
-    if (prior.portable_dir) charge += Math.min(q.package_price_usd || 0, POLICY.ledgered_package);
-    charge = Math.min(q.max_price_usd, Math.round(charge * 100) / 100);
-    const billing = { quoted_max_usd: q.max_price_usd, charge_usd: charge, cost_usd: 0, margin_usd: charge, reused_from: prior.result_id,
-      rule: "a result already computed for this exact state is served again at the ledgered rates; no model call is made" };
-    return { ...prior, composition, record: { ...record, billing }, reused: true };
-  }
+  save(`quotes/${q.quote_id}.json`, q);
+  return q;
+}
 
+// S3 over a set of sentences: each read against the sources it cites, two passes, code checks, reconciliation; the
+// claim ledger serves any sentence whose state matches. Shared by the encyclopedia path and the constructed article.
+async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage }) {
   const entries = [], evidence = [], breaches = [];
   let completed = 0, charge = 0, actual = 0;
-  const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   for (const c of claims) {
     if (!c.cited) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "uncited", note: "the sentence carries no citation; nothing to check it against" }); continue; }
     const srcs = sources[c.id];
@@ -201,12 +230,72 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       } : null,
     });
   }
+  return { entries, evidence, breaches, completed, charge, actual };
+}
+
+export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
+  const q = load(`quotes/${quoteId}.json`);
+  if (!q) throw new Error(`unknown quote ${quoteId}`);
+  const t0 = Date.now();
+  let pinned, claims, sources, entityInput = null, construction = null;
+  const preLog = passLog({ budget_usd: q.s7?.budget_usd ?? Infinity });
+  if (q.kind === "entity") {
+    // The entity path: the caller's composition as T, or the article constructed under Wikipedia's policies.
+    const { snaps } = await prepareEntity(q.entity);
+    entityInput = fromEntity(q.entity, { sources: snaps, wikipedia: q.wikipedia });
+    pinned = { title: q.entity.name, oldid: `entity-${entityInput.row}`, url: null };
+    if (q.entity.transcript?.text) { claims = []; sources = {}; }
+    else {
+      onProgress({ stage: "S0′", detail: "constructing the article under Wikipedia's content policies" });
+      construction = await constructArticle(preLog, entityInput);
+      ({ claims, sources } = asClaims(construction.article, entityInput));
+      const text = claims.map((c) => c.text).join("\n");
+      entityInput.T = { ...entityInput.T, kind: construction.article ? "constructed" : "null", text, sha256: sha256(text), claims: claims.map((c) => ({ id: c.id, section: c.section, text: c.text, cites: c.cites })),
+        construction: construction.article ? { protocol: CONSTRUCTION_PROTOCOL, title: construction.article.title, classes: construction.article.classes, excluded: construction.article.excluded, breaches: construction.breaches } : { status: construction.status, breaches: construction.breaches },
+        note: construction.article ? "T is the article constructed under Wikipedia's content policies (V, NOR, NPOV, BLP, ABOUTSELF/SPS), notability not applied, from the sources the caller supplied: a construction, labelled as such, never a Wikipedia article" : entityInput.T.note };
+      entityInput.address = { ...entityInput.address, surface: construction.article ? "constructed article (Wikipedia's content policies, notability not applied)" : entityInput.address.surface };
+    }
+  } else ({ pinned, claims, sources } = await prepare(q.article.oldid, q.only));
+  const model = TIERS[q.tier].reader_model;
+  const reader = makeReader(undefined, model);
+  const priceOf = q.kind === "entity" ? new Proxy({}, { get: () => q.sentence_price_usd }) : Object.fromEntries(q.lines.map((l) => [l.id, l.price_usd]));
+
+  const state = {
+    article: { oldid: pinned.oldid, html_sha256: pinned.html_sha256 || null, T: entityInput ? entityInput.T.sha256 : undefined }, claims: claims.map((c) => c.id),
+    sources: Object.fromEntries(Object.entries(sources).map(([k, v]) => [k, v.map((s) => s.text_sha256 || s.availability)])),
+    policies: policyState(), s7: q.s7?.key || null, protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
+  };
+  const execution_key = sha256(JSON.stringify(state));
+  const prior = load(`results/by-state/${execution_key}.json`);
+  // A result is served again only when it is complete for its tier: at the tiers that compose the /non row, a result
+  // whose row was not composed is recomputed.
+  if (prior && (!q.s7 || prior.non_row)) {
+    // The same state was computed before: the result is served again, and billed against this quote, at the
+    // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
+    const composition = load(prior.composition_path), record = load(prior.composition_path.replace("composition", "evidence"));
+    const done = composition.entries.filter((e) => ["concordant", "concordant across families", "single-valid", "contested"].includes(e.status)).map((e) => e.id);
+    let charge = done.reduce((n, id) => n + (priceOf[id] || 0), 0);
+    if (q.s7 && prior.non_row) charge += POLICY.ledgered_s7;
+    if (prior.portable_dir) charge += Math.min(q.package_price_usd || 0, POLICY.ledgered_package);
+    charge = Math.min(q.max_price_usd, Math.round(charge * 100) / 100);
+    const billing = { quoted_max_usd: q.max_price_usd, charge_usd: charge, cost_usd: 0, margin_usd: charge, reused_from: prior.result_id,
+      rule: "a result already computed for this exact state is served again at the ledgered rates; no model call is made" };
+    return { ...prior, composition, record: { ...record, billing }, reused: true };
+  }
+
+  const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  for (const c of preLog.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
+  const s3 = await readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage });
+  const { entries, evidence, breaches } = s3;
+  let completed = s3.completed, charge = s3.charge, actual = s3.actual + preLog.cost();
+  if (construction?.article && q.construction) charge += Math.min(q.construction.price_usd, Math.ceil(Math.max(0.10, preLog.cost() * POLICY.margin) * 100) / 100);
   // S7–S8: the archive consulted by its own procedure; the entity's /non row composed and written for landing.
   let s7 = null;
   if (q.s7) {
     onProgress({ stage: "S7", detail: "the archive's bearing on the entity" });
-    const input = fromWikipedia(pinned, claims, sources);
-    const cached = load(`s7/${input.row}/by-key/${q.s7.key}.json`);
+    const input = entityInput || fromWikipedia(pinned, claims, sources);
+    const key = s7Key(input);
+    const cached = load(`s7/${input.row}/by-key/${key}.json`);
     if (cached?.composed) s7 = { ...cached, from_ledger: true };
     else {
       const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd });
@@ -216,7 +305,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       for (const c of out.run.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
       actual += out.run.cost_usd || 0;
       // Only a composed row is ledgered: a run that composed nothing is recomputed on the next request.
-      if (s7.composed) save(`s7/${input.row}/by-key/${q.s7.key}.json`, s7);
+      if (s7.composed) save(`s7/${input.row}/by-key/${key}.json`, s7);
     }
     // The quoted S7 line is an upper bound (every candidate deposit costed as admitted); the charge is the measured cost
     // times the margin, at the floor, and never above the quote.
@@ -238,6 +327,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
   const result_id = `R-${execution_key.slice(0, 16)}`;
   const composition = {
     result_id, service: SERVICE, tier: q.tier, article: q.article,
+    ...(entityInput ? { entity: { name: entityInput.entity.name, wikipedia: q.wikipedia, T: entityInput.T.kind, construction: entityInput.T.construction || null } } : {}),
     licence_note: "Wikipedia sentences are CC BY-SA 4.0, attributed to the revision URL; the service's account is licensed to the caller under the service terms.",
     notice: "The treatment of this article's entities by composing systems may be recorded and measured.",
     non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,

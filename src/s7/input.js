@@ -81,3 +81,32 @@ export function fromNonRow(rowKey, savedDir) {
     prefix: existsSync(join(ARCHIVE, row.ledger?.archive || "-")) ? (JSON.parse(readFileSync(join(ARCHIVE, row.ledger.archive), "utf8"))[0]?.id.match(/^[A-Za-z]+/) || [null])[0] : null,
   };
 }
+
+// fromEntity: an entity with no encyclopedia article. /non admits what exists; Wikipedia's notability standard is
+// Wikipedia's admission rule and gates nothing here. The caller names the entity and its strings, and may supply
+// a composition at an address (a transcript, with its surface and date) and sources (URLs, fetched and hashed as B).
+// With no transcript, T is the null composition (#1690 §2.2: "A null composition, a refusal, a body with no source is a
+// transcript"), and the encyclopedia's absence at the entity's title is checked and recorded as an observation.
+export function fromEntity(spec, { sources = [], wikipedia = null } = {}) {
+  const name = String(spec.name || "").trim();
+  const strings = [...new Set([name, ...(spec.aliases || [])].map((s) => String(s).trim()).filter((s) => s.length >= 3))];
+  const aliases = strings.map((n) => {
+    const latin = /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.test(n);
+    return { pattern: latin ? `\\b${reEsc(n)}\\b` : reEsc(n), flags: latin ? "i" : "", from: n === name ? "name" : "alias (caller)" };
+  });
+  const field = sources.map((s, i) => ({ id: `B${i + 1}`, kind: "supplied", card: (s.title || s.url || "").slice(0, 300), url: s.final_url || s.url, text: s.text || "", text_sha256: s.text_sha256 || null,
+    availability: s.availability, fetched: s.retrieved ? `gnosis, ${s.retrieved.slice(0, 10)} (verbatim save; text extracted by code)` : `not fetchable: ${s.availability}` }));
+  const tr = spec.transcript?.text ? String(spec.transcript.text) : "";
+  const sentences = tr ? tr.split(/\n+|(?<=[.!?])\s+(?=[A-Z“"'(])/).map((s) => s.trim()).filter((s) => s.length > 2) : [];
+  const address = spec.address || name.toLowerCase();
+  return {
+    kind: "entity",
+    row: slug(name),
+    entity: { slug: slug(name), name, type: spec.type || "C (an entity the encyclopedia does not hold; its type is read from its defining papers)" },
+    address: { string: address, surface: tr ? (spec.transcript.surface || "Google AI Overview") : "none (null composition)", auth: tr ? (spec.transcript.auth || "signed out, incognito") : "—",
+      date: (spec.transcript?.date || new Date().toISOString()).slice(0, 10) },
+    T: { kind: tr ? "transcript" : "null", text: tr, sha256: sha256(tr), claims: sentences.map((t, i) => ({ id: `T${i + 1}`, text: t, cites: [] })), wikipedia,
+      note: tr ? "a composition at the address, supplied by the caller" : "the null composition: no composition at the address was supplied, and the encyclopedia holds no article at the entity's title (observed at the quote); the entity's absence there is itself the observation the row begins from" },
+    field, aliases,
+  };
+}

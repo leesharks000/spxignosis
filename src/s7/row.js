@@ -20,7 +20,10 @@ export function buildRow(run) {
     ...(run.budget?.exhausted ? [{ check: "budget", detail: `the execution budget ($${run.budget.budget_usd}) was spent before every pass ran; the row is composed from what was read` }] : []),
     ...(run.budget?.failed_calls ? [{ check: "failed-calls", detail: `${run.budget.failed_calls} model calls failed; their passes are recorded as not read` }] : []), ...(onto.breaches || []), ...(checks?.breaches || []), ...(audit?.breaches || [])];
   const caseV = onto.case?.value, rhoV = onto.rho?.value;
-  const T = input.kind === "wikipedia"
+  const T = input.kind === "entity"
+    ? { path: input.T.text ? `${V2}/intake/${r}-${input.address.date.replace(/-/g, "")}/T-transcript.txt` : null, kind: input.T.kind, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: 0,
+        claims: input.T.claims.map((x) => `${x.id} ${x.text}`), wikipedia: input.T.wikipedia, note: input.T.note }
+    : input.kind === "wikipedia"
     ? { path: `${V2}/intake/${r}-${input.address.oldid}/T-revision.txt`, sha256: input.T.sha256, words: words(input.T.text), cards: input.field.length, inline_source_labels: input.T.claims.reduce((n, x) => n + (x.cites || []).length, 0), url: input.T.url, licence: "CC BY-SA 4.0 (Wikipedia contributors; the revision URL is the attribution)",
         claims: input.T.claims.map((x) => `${x.id} ${x.text}`), note: "T is the pinned Wikipedia revision, sentence by sentence; its disclosed field B is every source the revision cites (EA-NEGONT-02 v0.9 §0.4 applied to an encyclopedia article: the article is the composition at the address)." }
     : { path: input.T.path || null, register: input.T.register, cards: input.T.cards ?? input.field.length, inline_source_labels: input.T.inline_source_labels ?? 0, sha256: input.T.sha256, words: words(input.T.text), claims: input.T.claims.map((x) => `${x.id} ${x.text}`), note: "re-run by SPXI-gnΩsis from the row's own transcript" };
@@ -96,6 +99,7 @@ export function writeLanding(run, row) {
       admitted_by_hop: hop.verdicts.length, contested: [...dro.contested, ...hop.contested].length, archive_claims: arch.ledger.length, lineages: lineages(arch.ledger).length },
   };
   files.push(put(`${V2}/traversal/${input.row}/reading.json`, reading));
+  if (input.kind === "entity" && input.T.text) files.push(put(row.objects.T.path, `${input.T.text}\n`));
   if (input.kind === "wikipedia") files.push(put(row.objects.T.path, `${input.T.text}\n\n— Wikipedia, "${input.entity.name}", revision ${input.address.oldid}: ${input.T.url}. Text by Wikipedia contributors, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).\n`));
   const panel = { entity: input.entity.slug, name: input.entity.name, type: input.entity.type,
     source: `SPXI-gnΩsis opening, ${row.epoch} (${row.status.readings})`,

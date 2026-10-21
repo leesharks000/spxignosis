@@ -26,7 +26,8 @@ export function estimateS7(input) {
   const exTok = [...deps, ...hopAdmit].reduce((n, d) => n + Math.min(estimateTokens(depText(d).text), 15000) + 1500, 0);
   const fieldTok = input.field.reduce((n, b) => n + Math.min(estimateTokens(b.text), 9000) + 1500, 0);
   const claimsEst = deps.length * 10 + input.field.length * 8;
-  const ledgerTok = claimsEst * 140 + input.T.claims.length * 60;
+  // Composition by lineage caps what one call receives (lineage.js); the estimate costs the larger ledger at that cap.
+  const ledgerTok = Math.min(claimsEst * 140, 90000) + input.T.claims.length * 60;
   const stages = {
     admission: two(MODELS.reading, Math.ceil(droChars / 4) + 1200, deps.length * 120),
     hop: two(MODELS.triage, Math.ceil(hopChars / 4) + 1200, hs.screened.length * 120),

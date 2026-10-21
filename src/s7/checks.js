@@ -41,6 +41,10 @@ export function checkComposition(c, { fieldClaims, archiveLedger, caseValue }) {
   // Coverage (§5.1, C_ex): every carried claim is composed somewhere, or logged in the channel.
   const carried = [...Object.keys(fieldClaims).filter((id) => fieldClaims[id].quote_ok), ...archiveLedger.filter((x) => x.quote_ok).map((x) => x.id)];
   const composed = new Set([...all(c.KO), ...all(c.P), ...(c.channel || []).flatMap((x) => x.claims || [])]);
+  // Composition by lineage (§3.6): an instance is carried when a claim of its lineage is composed.
+  const lineageOf = Object.fromEntries(archiveLedger.map((x) => [x.id, x.lineage || x.id]));
+  const composedLineages = new Set([...composed].map((id) => lineageOf[id]).filter(Boolean));
+  for (const x of archiveLedger) if (x.quote_ok && composedLineages.has(x.lineage || x.id)) composed.add(x.id);
   const uncovered = carried.filter((id) => !composed.has(id));
   if (uncovered.length) breaches.push({ check: "coverage", detail: `${uncovered.length} carried claims neither composed nor logged in the channel`, claims: uncovered });
   // Kernel coverage at popup grain (§5.2): each source's kernel in the compression's body or rail.
