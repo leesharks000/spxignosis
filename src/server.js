@@ -163,7 +163,7 @@ app.use(paymentMiddleware({
         return `$${Math.max(0.01, p.price_usd).toFixed(2)}`;
       },
     }],
-    description: "Use when about to cite or quote a sentence from a Wikipedia page: send the sentence and the page; returns whether its cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary for one quick pass.",
+    description: "Use when a received claim needs checking against its source before it is cited or relied on: send the sentence and the Wikipedia page it came from; returns whether its cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary for one quick pass. The paid reading is kept and served free to later callers; the response names it under contributes.",
     mimeType: "application/json",
   },
   "POST /v1/openings/:quote_id": {
@@ -176,7 +176,7 @@ app.use(paymentMiddleware({
         return `$${q.max_price_usd.toFixed(2)}`;
       },
     }],
-    description: "SPXI-gnΩsis: opens a pinned Wikipedia revision. Each sentence kept verbatim and checked against what its cited source says; the entity composed with the Crimson Hexagonal Archive admitted by the archive's own procedure, as a public /non row.",
+    description: "Use when an existing representation of an entity cannot support the task: opens a pinned Wikipedia revision (or an entity it does not hold), each sentence kept verbatim and checked against its cited source, the entity composed with the Crimson Hexagonal Archive admitted by the archive's own procedure. The paid opening composes a public /non row; the response names it under contributes.",
     mimeType: "application/json",
   },
 }, resourceServer));
@@ -186,9 +186,22 @@ app.get("/v1/sentence", async (req, res) => {
     const out = await readSentence(req.sentence.request_id);
     // Nothing read: a status of 400 or above cancels settlement, so nothing is charged.
     if (!out.result || ["unread", "withheld"].includes(out.result.status)) return res.status(502).json({ ...out, charged: false });
-    res.json({ ...out, price_usd: req.sentence.price_usd });
+    res.json({ ...out, price_usd: req.sentence.price_usd, contributes: contributesSentence(req.sentence) });
   } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e), charged: false }); }
 });
+
+// What a paid call leaves behind (2026-10-22): the public artifact the payment produced, named in the response.
+function contributesSentence(p) {
+  const q = new URLSearchParams({ text: p.sentence?.text || "", url: p.page?.url || "", mode: p.mode });
+  return { artifact: "sentence reading", mode: p.mode, revision: p.page?.oldid, ledger_key: p.ledger_key,
+    reuse: "served free, as recorded, to any later caller of this sentence at this revision", request: `/v1/sentence?${q}`,
+    non: p.non?.length ? p.non : undefined };
+}
+function contributesOpening(out) {
+  if (!out.non) return { artifact: "opened article", result: `/v1/results/${out.result_id}/opened.html`, note: "this tier composes no /non row" };
+  return { artifact: "/non row", row: out.non.row, url: out.non.entity_page, licence: out.non.licence, complete: out.non.complete,
+    publication: out.non.publication_endpoint, reuse: "public once landed; later callers read it free" };
+}
 
 app.post("/v1/openings/:quote_id", async (req, res) => {
   const q = load(`quotes/${req.params.quote_id}.json`);
@@ -215,7 +228,7 @@ app.post("/v1/openings/:quote_id", async (req, res) => {
           ...(refund ? { refund, status: refund.error ? "stripe refund failed; queued" : "refunded through Stripe" } : { status: "queued" }), queued_at: new Date().toISOString() });
       }
     });
-    res.json(out);
+    res.json({ ...out, contributes: contributesOpening(out) });
   } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
 });
 
