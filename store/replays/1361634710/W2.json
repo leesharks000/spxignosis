@@ -1,0 +1,275 @@
+{
+ "fixture": "session reading, EA-WIKI-OPEN-01 v1.1 §6.3 (#1697); not a model pass",
+ "passes": [
+  {
+   "model": "replay-fixture",
+   "reading": {
+    "claim_id": "W2",
+    "innocent_reading": "Aristotle says that of this undertaking nothing at all existed before and that about syllogizing there was nothing earlier to say; the article's own sources render sullogismos as deductive reasoning (Krabbe), so the sentence reads as a cited paraphrase of his priority claim in the field's standard terms.",
+    "innocent_reading_fails_at": "The Greek asserts the denial without bound and holds it out to the hearers' inspection, with pardon for what is left out; the sentence bounds it to ancient Greece, makes the undertaking a work, and states the judgment the hearers are asked to make as Aristotle's own.",
+    "support": [
+     "partially-supported",
+     "qualifier-added",
+     "interpretation-beyond-paraphrase"
+    ],
+    "support_source": [
+     "at the sentence",
+     "elsewhere in the article"
+    ],
+    "spans": [
+     {
+      "quote": "οὐδὲν παντελῶς ὑπῆρχεν",
+      "source_ref": "S1",
+      "role": "scope"
+     },
+     {
+      "quote": "περὶ δὲ τοῦ συλλογίζεσθαι παντελῶς οὐδὲν εἴχομεν πρότερον ἄλλο λέγειν",
+      "source_ref": "S1",
+      "role": "support"
+     },
+     {
+      "quote": "Εἰ δὲ φαίνεται θεασαμένοις ὑμῖν",
+      "source_ref": "S1",
+      "role": "contrast"
+     },
+     {
+      "quote": "deductive reasoning ( sullogismos )",
+      "source_ref": "S3",
+      "role": "support"
+     },
+     {
+      "quote": "in ancient Greece",
+      "source_ref": "claim",
+      "role": "scope"
+     }
+    ],
+    "paraphrase": {
+     "defensible": "Aristotle says that of this undertaking nothing at all existed before, and that about syllogizing there was nothing earlier to say; he puts the method to his hearers' inspection, asking pardon for what it leaves out and thanks for what it found.",
+     "deltas": [
+      {
+       "sentence_says": "in ancient Greece",
+       "source_says": "οὐδὲν παντελῶς ὑπῆρχεν",
+       "kind": "qualifier added",
+       "measure": "source fidelity",
+       "lambda": 4
+      },
+      {
+       "sentence_says": "the first work",
+       "source_says": "Ταύτης δὲ τῆς πραγματείας",
+       "kind": "term changed",
+       "measure": "operative retention",
+       "lambda": 4
+      },
+      {
+       "sentence_says": "the subject of deductive reasoning",
+       "source_says": "περὶ δὲ τοῦ συλλογίζεσθαι",
+       "kind": "term changed",
+       "measure": "primary-text adequacy",
+       "lambda": 4
+      },
+      {
+       "sentence_says": "According to Aristotle, this is the first work",
+       "source_says": "Εἰ δὲ φαίνεται θεασαμένοις ὑμῖν",
+       "kind": "substitution",
+       "measure": "operative retention",
+       "lambda": 4
+      }
+     ]
+    },
+    "divided": [
+     {
+      "phrase": "in ancient Greece",
+      "readings": [
+       "with 'the first work': a regional priority, bounding the denial (a loss of scope)",
+       "with 'deductive reasoning': a historical subject, relocating the denial"
+      ]
+     }
+    ],
+    "attributization": {
+     "operation": "denies prior provision of the undertaking without bound and holds the denial out to the hearers' inspection",
+     "attribute": "primacy, stated as Aristotle's own claim",
+     "value": "yes",
+     "reason": "the standing the hearers are asked to judge becomes a priority the author asserts",
+     "surviving": [
+      "the attribution to Aristotle",
+      "the locus, whose ff. reaches 184b3–8"
+     ],
+     "lost": [
+      "the condition",
+      "the hearers' task",
+      "the pardon for what the method leaves out",
+      "the quantifier's exhaustiveness"
+     ]
+    },
+    "retained_authority": {
+     "value": "mixed",
+     "evidence": "the pointer keeps the passage one step away; the sentence gives no sign that a judgment is to be made there",
+     "revision_required": "present the invitation: Aristotle leaves the method's standing to his hearers' inspection"
+    },
+    "invitation": {
+     "codes": [
+      "omitted",
+      "answered-in-source-name"
+     ],
+     "qualification": true,
+     "closure": true,
+     "note": "the denial is asserted without bound and held out for inspection; the sentence bounds it and states the hearers' judgment as Aristotle's"
+    },
+    "alternatives": [
+     "Deductive reasoning is the field's standard rendering of sullogismos, and its translator marks the distance from modern validity; the term's adequacy as such is contested."
+    ],
+    "correction_pathway": "A reading of 184b3–8 on which Aristotle states the verdict himself, or a source that bounds his claim to Greece.",
+    "five_part": {
+     "support": "The denial stands in 183b34–36 and 184b1–2; the gloss is the field's (Krabbe, elsewhere in the article).",
+     "changes": "Adds a bound, makes the undertaking a work, and states as Aristotle's the judgment he leaves to his hearers.",
+     "alternative": "A standard gloss of an attested priority claim.",
+     "status": "Quotations verified; the inversion inferred (Lee Sharks's reading, adopted); the term's adequacy contested.",
+     "revision": "A reading of 184b3–8 on which Aristotle asserts the verdict himself."
+    },
+    "needs_more_context": false,
+    "policy": [
+     {
+      "clause": "WP:NOR, descriptive paraphrase of cited material",
+      "status": "applicable"
+     }
+    ],
+    "notes": "Replay fixture: the session's reading of EA-WIKI-OPEN-01 v1.1 §6.3 (#1697), in the gnosis-S3/0.5 form, recorded for tests; it is no live pass."
+   }
+  },
+  {
+   "model": "replay-fixture",
+   "reading": {
+    "claim_id": "W2",
+    "innocent_reading": "Aristotle says that of this undertaking nothing at all existed before and that about syllogizing there was nothing earlier to say; the article's own sources render sullogismos as deductive reasoning (Krabbe), so the sentence reads as a cited paraphrase of his priority claim in the field's standard terms.",
+    "innocent_reading_fails_at": "The Greek asserts the denial without bound and holds it out to the hearers' inspection, with pardon for what is left out; the sentence bounds it to ancient Greece, makes the undertaking a work, and states the judgment the hearers are asked to make as Aristotle's own.",
+    "support": [
+     "partially-supported",
+     "qualifier-added",
+     "interpretation-beyond-paraphrase"
+    ],
+    "support_source": [
+     "at the sentence",
+     "elsewhere in the article"
+    ],
+    "spans": [
+     {
+      "quote": "οὐδὲν παντελῶς ὑπῆρχεν",
+      "source_ref": "S1",
+      "role": "scope"
+     },
+     {
+      "quote": "περὶ δὲ τοῦ συλλογίζεσθαι παντελῶς οὐδὲν εἴχομεν πρότερον ἄλλο λέγειν",
+      "source_ref": "S1",
+      "role": "support"
+     },
+     {
+      "quote": "Εἰ δὲ φαίνεται θεασαμένοις ὑμῖν",
+      "source_ref": "S1",
+      "role": "contrast"
+     },
+     {
+      "quote": "deductive reasoning ( sullogismos )",
+      "source_ref": "S3",
+      "role": "support"
+     },
+     {
+      "quote": "in ancient Greece",
+      "source_ref": "claim",
+      "role": "scope"
+     }
+    ],
+    "paraphrase": {
+     "defensible": "Aristotle says that of this undertaking nothing at all existed before, and that about syllogizing there was nothing earlier to say; he puts the method to his hearers' inspection, asking pardon for what it leaves out and thanks for what it found.",
+     "deltas": [
+      {
+       "sentence_says": "in ancient Greece",
+       "source_says": "οὐδὲν παντελῶς ὑπῆρχεν",
+       "kind": "qualifier added",
+       "measure": "source fidelity",
+       "lambda": 4
+      },
+      {
+       "sentence_says": "the first work",
+       "source_says": "Ταύτης δὲ τῆς πραγματείας",
+       "kind": "term changed",
+       "measure": "operative retention",
+       "lambda": 4
+      },
+      {
+       "sentence_says": "the subject of deductive reasoning",
+       "source_says": "περὶ δὲ τοῦ συλλογίζεσθαι",
+       "kind": "term changed",
+       "measure": "primary-text adequacy",
+       "lambda": 4
+      },
+      {
+       "sentence_says": "According to Aristotle, this is the first work",
+       "source_says": "Εἰ δὲ φαίνεται θεασαμένοις ὑμῖν",
+       "kind": "substitution",
+       "measure": "operative retention",
+       "lambda": 4
+      }
+     ]
+    },
+    "divided": [
+     {
+      "phrase": "in ancient Greece",
+      "readings": [
+       "with 'the first work': a regional priority, bounding the denial (a loss of scope)",
+       "with 'deductive reasoning': a historical subject, relocating the denial"
+      ]
+     }
+    ],
+    "attributization": {
+     "operation": "denies prior provision of the undertaking without bound and holds the denial out to the hearers' inspection",
+     "attribute": "primacy, stated as Aristotle's own claim",
+     "value": "yes",
+     "reason": "the standing the hearers are asked to judge becomes a priority the author asserts",
+     "surviving": [
+      "the attribution to Aristotle",
+      "the locus, whose ff. reaches 184b3–8"
+     ],
+     "lost": [
+      "the condition",
+      "the hearers' task",
+      "the pardon for what the method leaves out",
+      "the quantifier's exhaustiveness"
+     ]
+    },
+    "retained_authority": {
+     "value": "mixed",
+     "evidence": "the pointer keeps the passage one step away; the sentence gives no sign that a judgment is to be made there",
+     "revision_required": "present the invitation: Aristotle leaves the method's standing to his hearers' inspection"
+    },
+    "invitation": {
+     "codes": [
+      "omitted",
+      "answered-in-source-name"
+     ],
+     "qualification": true,
+     "closure": true,
+     "note": "the denial is asserted without bound and held out for inspection; the sentence bounds it and states the hearers' judgment as Aristotle's"
+    },
+    "alternatives": [
+     "Deductive reasoning is the field's standard rendering of sullogismos, and its translator marks the distance from modern validity; the term's adequacy as such is contested."
+    ],
+    "correction_pathway": "A reading of 184b3–8 on which Aristotle states the verdict himself, or a source that bounds his claim to Greece.",
+    "five_part": {
+     "support": "The denial stands in 183b34–36 and 184b1–2; the gloss is the field's (Krabbe, elsewhere in the article).",
+     "changes": "Adds a bound, makes the undertaking a work, and states as Aristotle's the judgment he leaves to his hearers.",
+     "alternative": "A standard gloss of an attested priority claim.",
+     "status": "Quotations verified; the inversion inferred (Lee Sharks's reading, adopted); the term's adequacy contested.",
+     "revision": "A reading of 184b3–8 on which Aristotle asserts the verdict himself."
+    },
+    "needs_more_context": false,
+    "policy": [
+     {
+      "clause": "WP:NOR, descriptive paraphrase of cited material",
+      "status": "applicable"
+     }
+    ],
+    "notes": "Replay fixture: the session's reading of EA-WIKI-OPEN-01 v1.1 §6.3 (#1697), in the gnosis-S3/0.5 form, recorded for tests; it is no live pass."
+   }
+  }
+ ]
+}

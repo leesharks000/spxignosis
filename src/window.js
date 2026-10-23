@@ -49,3 +49,18 @@ export function structure(text) {
   }
   return out;
 }
+
+// How strongly a source bears on a claim: the best window's overlap score (0 when nothing in it matches).
+// Used to choose which of the article's other sources travel with a sentence (S3 rule 1, EA-WIKI-OPEN-01 v1.1).
+export function relevance(text, claim, { size = 1800, step = 600 } = {}) {
+  if (!text) return 0;
+  const want = terms(claim), fold = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  let best = 0;
+  for (let s = 0; s < Math.max(1, text.length); s += step) {
+    const w = fold.slice(s, s + size); let score = 0;
+    for (const t of want) if (/^\d+$/.test(t) ? new RegExp(`(^|\\D)${t}(\\D|$)`).test(w) : w.includes(t)) score += /^\d+$/.test(t) ? 3 : t.length > 6 ? 2 : 1;
+    if (score > best) best = score;
+    if (s + size >= text.length) break;
+  }
+  return best;
+}

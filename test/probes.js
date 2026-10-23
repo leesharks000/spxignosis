@@ -2,9 +2,10 @@
 // Usage: node test/probes.js <result_id with a composed opening or none>   (GNOSIS_STORE names the store)
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { reconcile } from "../src/validate.js";
+import { reconcile, validateReading } from "../src/validate.js";
+import { normalizeReading, INSTRUCTIONS, READER_PROTOCOL } from "../src/reader.js";
 import { windows } from "../src/window.js";
-import { claimKey } from "../src/run.js";
+import { claimKey, withArticleSources } from "../src/run.js";
 import { fromNonRow, NON } from "../src/s7/input.js";
 import { traverse } from "../src/s7/traverse.js";
 import { hopScreen } from "../src/s7/reading.js";
@@ -19,6 +20,7 @@ import { fromEntity } from "../src/s7/input.js";
 import { constructArticle, asClaims } from "../src/s7/construct.js";
 import { isByline } from "../src/s7/reading.js";
 import { compactLedger } from "../src/s7/lineage.js";
+const savedCands = (row) => ["D", "R", "O"].flatMap((k) => { try { return readFileSync(`${NON}/traversal/${row}/candidates-${k}.jsonl`, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)); } catch { return []; } });
 
 let fail = 0;
 const t = (name, ok) => { console.log(`${ok ? "ok  " : "FAIL"} ${name}`); if (!ok) fail++; };
@@ -27,8 +29,38 @@ const STORE = process.env.GNOSIS_STORE || "store";
 // 1. reconcile: authority alone separates two readings.
 const r = { support: ["supported"], attributization: { converted: true, retains_authority: true } };
 const r2 = structuredClone(r); r2.attributization.retains_authority = false;
-t("reconcile: authority alone separates two readings", reconcile(r, r2).differs?.includes("authority"));
+t("reconcile: authority alone separates two readings (a 0.4 reading, normalized)", reconcile(r, r2).differs?.includes("authority"));
 t("reconcile: identical readings agree", reconcile(r, structuredClone(r)).status === "concordant");
+
+// 1a. The v1.1 reading (gnosis-S3/0.5, EA-WIKI-OPEN-01 v1.1 §5.3 S3, §6.3 (c), §9.7).
+{
+  const base = { support: ["partially-supported"], attributization: { value: "partial" }, retained_authority: { value: "mixed" }, invitation: { codes: ["omitted"] } };
+  const inv = structuredClone(base); inv.invitation.codes = ["omitted", "answered-in-source-name"];
+  const rc = reconcile(base, inv);
+  t("reconcile: readings that differ only on the invitation codes concur; the difference is recorded, not counted (prospective)", rc.status === "concordant" && !!rc.invitation_differs);
+  const attr = structuredClone(base); attr.attributization.value = "no";
+  t("reconcile: partial against no attributization is contested", reconcile(base, attr).differs?.includes("attributization"));
+  const ra = structuredClone(base); ra.retained_authority.value = "retained";
+  t("reconcile: mixed against retained authority is contested", reconcile(base, ra).differs?.includes("authority"));
+  const old = normalizeReading({ attributization: { converted: true, retains_authority: false }, paraphrase: { scope_changes: ["bounded"], introduced: [] } });
+  t("normalize: a 0.4 reading reads as attributization yes, authority lost, its scope change a delta", old.attributization.value === "yes" && old.retained_authority.value === "lost" && old.paraphrase.deltas[0].kind === "scope");
+  const sha = (x) => createHash("sha256").update(x).digest("hex");
+  const cl = { text: "He identified thirteen kinds.", cited: false }; cl.text_sha256 = sha(cl.text);
+  const src = { S1: { text: "Aristotle divides sophistical refutations into six kinds dependent on language and seven that are not. The list is complete." } };
+  const shown = { S1: "Aristotle divides sophistical refutations into six kinds dependent on language and seven that are not." };
+  const rd = (q, where = ["elsewhere in the article"]) => ({ claim_id: "W1", support: ["supported"], support_source: where, spans: [{ quote: q, source_ref: "S1", role: "support" }], paraphrase: { defensible: "x", deltas: [] }, attributization: { value: "no" } });
+  const v1 = validateReading(rd("The list is complete."), cl, src, shown);
+  t("validate: a quotation in the source but outside the passages sent is recorded and does not withhold the pass", v1.ok && v1.breaches.some((b) => b.check === "quote-outside-passages"));
+  const v2 = validateReading(rd("The list is incomplete."), cl, src, shown);
+  t("validate: a quotation found nowhere in the source withholds the pass", !v2.ok && v2.breaches.some((b) => b.check === "quote-in-source"));
+  const v3 = validateReading(rd("six kinds dependent on language", ["at the sentence"]), cl, src, shown);
+  t("validate: support placed at the sentence for a sentence that cites nothing is recorded", v3.breaches.some((b) => b.check === "support-located"));
+  const sources = withArticleSources([{ id: "W1", text: "Aristotle identified thirteen kinds of sophistical refutation.", cited: false }, { id: "W5", text: "Chapters on tactics for the Questioner.", cited: true }],
+    { W5: [{ kind: "footnote", url: "k", text_sha256: "k", text: "In Chapter 4, sophistical refutations are divided into two groups; thirteen kinds in all." }, { kind: "footnote", url: "z", text_sha256: "z", text: "Bees and honey production in alpine meadows." }] });
+  t("article sources: an uncited sentence receives the article's sources that bear on it, marked elsewhere in the article", sources.W1.length === 1 && sources.W1[0].url === "k" && sources.W1[0].located === "elsewhere in the article");
+  t("article sources: a cited sentence keeps its own sources first, marked at the sentence", sources.W5[0].located === "at the sentence" && sources.W5.filter((x) => x.located === "at the sentence").length === 2);
+  t("instructions: the S3 rules of v1.1 are in the reader's instructions", READER_PROTOCOL === "gnosis-S3/0.5" && ["innocent reading", "never by itself supports fidelity", "species put for its genus", "answered-in-source-name", "elsewhere in the article", "primary-text adequacy"].every((k) => INSTRUCTIONS.includes(k)));
+}
 
 // 2. ledger: a replay reading and a live reading never share a key.
 const claim = { id: "W2", text_sha256: "h" }, srcs = [{ text_sha256: "s" }];
@@ -56,11 +88,20 @@ else {
   console.log(`     field texts: ${input.field.filter((b) => b.text_sha256 === b.expected_sha256).length} of ${input.field.length} match the hash recorded 2026-10-20 (re-fetched 2026-10-21)`);
   const trav = traverse(input);
   const ex = JSON.parse(readFileSync(`${NON}/traversal/se-183b34/summary.json`, "utf8"));
-  t("traversal: D, R and O candidates reproduce the row's files byte for byte", ["candidates-D.jsonl", "candidates-R.jsonl", "candidates-O.jsonl"].every((f) => trav.files[f] === ex.sha256[f]));
+  // The archive grows, and a later deposit that names the row's strings adds candidates and renumbers their ids; the
+  // row's files are a record of the archive at its release. What must hold at any later release: every candidate the
+  // row holds is produced again (same deposit, same sentence); what later deposits add is reported, never compared.
+  const sig = (c) => `${c.dep}|${String(c.sentence || "").slice(0, 200)}`;
+  const savedSe = savedCands("se-183b34"), nowSe = new Set([...trav.D, ...trav.R, ...trav.O].map(sig));
+  const lostSe = savedSe.filter((c) => !nowSe.has(sig(c)));
+  t("traversal: every candidate the row's files hold is produced again at the archive's current release", lostSe.length === 0);
+  const sameRelease = ["candidates-D.jsonl", "candidates-R.jsonl", "candidates-O.jsonl"].every((f) => trav.files[f] === ex.sha256[f]);
+  console.log(`     traversal: ${sameRelease ? "byte-identical to the row's files" : `${[...trav.D, ...trav.R, ...trav.O].filter((c) => !savedSe.some((x) => sig(x) === sig(c))).length} candidates added since the row's release, from #${[...new Set([...trav.D, ...trav.R, ...trav.O].filter((c) => !savedSe.some((x) => sig(x) === sig(c))).map((c) => c.dep))].join(", #")}`}`);
   const reading = JSON.parse(readFileSync(`${NON}/traversal/se-183b34/reading.json`, "utf8"));
   const dro = reading.verdicts.filter((v) => !/reached by the hop/.test(v.reason));
   const cands = [...trav.D, ...trav.R, ...trav.O];
-  const passages = dro.flatMap((v) => cands.filter((c) => c.dep === v.dep && v.cands.includes(c.cand_id)).map((c) => c.sentence));
+  // A reading's candidate ids belong to the traversal it read: they are resolved against the row's saved files.
+  const passages = dro.flatMap((v) => savedSe.filter((c) => c.dep === v.dep && v.cands.includes(c.cand_id)).map((c) => c.sentence));
   const hs = hopScreen(input, traverse(input, { hopFrom: dro.map((v) => v.dep) }), passages);
   t("hop screen: every deposit the row admitted by hop passes the screen (#1582, #1587, #1590)", [1582, 1587, 1590].every((d) => hs.screened.some((x) => x.h.dep === d)));
   const prev = process.env.GNOSIS_READER; process.env.GNOSIS_READER = "replay";
@@ -103,7 +144,8 @@ else {
   const rr = JSON.parse(readFileSync(`${NON}/traversal/ai-overview-capture-registry/reading.json`, "utf8"));
   const tr2 = traverse(reg), c2 = [...tr2.D, ...tr2.R, ...tr2.O];
   const dro2 = rr.verdicts.filter((v) => Number.isInteger(v.dep) && !(v.strata || []).includes("H"));
-  const hs2 = hopScreen(reg, traverse(reg, { hopFrom: dro2.map((v) => v.dep) }), dro2.flatMap((v) => c2.filter((c) => c.dep === v.dep && (v.cands || []).includes(c.cand_id)).map((c) => c.sentence)));
+  const saved2 = savedCands("ai-overview-capture-registry");
+  const hs2 = hopScreen(reg, traverse(reg, { hopFrom: dro2.map((v) => v.dep) }), dro2.flatMap((v) => saved2.filter((c) => c.dep === v.dep && (v.cands || []).includes(c.cand_id)).map((c) => c.sentence)));
   t("hop screen: a deposit whose bearing stands in the admitted deposit's citing paragraph passes (#716, #740 by #1694)", [716, 740].every((d) => hs2.screened.some((x) => x.h.dep === d)));
 }
 
