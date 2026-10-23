@@ -6,7 +6,7 @@ import { HTTPFacilitatorClient } from "@x402/core/server";
 import { decodePaymentResponseHeader } from "@x402/core/http";
 import { quote, quoteEntity, runOpening, SERVICE } from "./run.js";
 import { publicationState } from "./s7/publish.js";
-import { load, save } from "./util.js";
+import { load, save, BLOB } from "./util.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
 import { stripe, LIVE, x402Config, facilitatorConfig, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
 
@@ -77,7 +77,8 @@ const INDEX = {
 };
 // Agents and scripts get the service description as JSON; a browser gets the same description as a page.
 app.get("/", (req, res) => {
-  const index = { ...INDEX, payments: PAY_TO ? "configured" : "not configured yet: paid routes answer 503" };
+  const index = { ...INDEX, payments: PAY_TO ? "configured" : "not configured yet: paid routes answer 503",
+    storage: BLOB ? "private Vercel Blob, with this instance's /tmp in front" : process.env.VERCEL ? "local only (/tmp, not shared between instances): connect a Blob store" : "local folder" };
   if (!req.accepts(["application/json", "text/html"]) || req.accepts(["application/json", "text/html"]) === "application/json") return res.json(index);
   res.type("html").send(frontPage(index));
 });
@@ -102,7 +103,7 @@ a{color:var(--red)}p{margin:10px 0}.small{font-size:.9rem;color:var(--muted)}
 <img class="mark" src="/spxi-gnosis.png" alt="SPXI-gnΩsis: an Omega with a red vertical line through its centre" width="1774" height="887">
 <h1>opens pinned Wikipedia revisions, sentence by sentence, against the sources they cite</h1>
 <p>Each sentence is read against the sources it cites and the sources its article cites elsewhere, under the policy texts it was written against, and the reading is kept as evidence: what the source says, quoted; what the sentence adds or drops; whether an act of the source has been restated as a property of the entity. A sentence costs cents. A commissioned article consults the Crimson Hexagonal Archive and composes the entity's row in the <a href="https://www.alexanarch.org/non/">Negative of the Negative</a>, which is public.</p>
-<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · network ${esc(index.network)} · payments ${esc(index.payments)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
+<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · network ${esc(index.network)} · payments ${esc(index.payments)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
 <h2>Operations</h2><dl>${ops}</dl>
 <h2>Publication</h2><p>${esc(index.publication)}</p><p class="small">${esc(index.notice)}</p>
 <p class="small">Protocol home: <a href="https://spxi.dev">spxi.dev</a> · archive: <a href="https://www.alexanarch.org">alexanarch.org</a> · source: <a href="https://github.com/leesharks000/spxignosis">github.com/leesharks000/spxignosis</a> (PolyForm Shield 1.0.0)</p>
