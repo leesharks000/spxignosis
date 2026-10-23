@@ -11,7 +11,7 @@ import { pinRevision } from "./pin.js";
 import { segment } from "./segment.js";
 import { resolveSources } from "./resolve.js";
 import { makeReader } from "./reader.js";
-import { claimKey, readSentences, TIERS } from "./run.js";
+import { claimKey, readSentences, TIERS, withArticleSources } from "./run.js";
 import { inputFor } from "./reader.js";
 import { estimateClaim, estimateTokens, priceClaim } from "./cost.js";
 import { load, save, sha256, politeFetch } from "./util.js";
@@ -91,9 +91,10 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   if (!found.claim) return { ...base, state: "not found", status: 404, note: "the sentence is not on this revision of the page", closest: found.closest };
   const c = found.claim;
   const non = nonEntriesFor(c.text);
-  if (!c.cited) return { ...base, state: "uncited", status: 200, sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, note: "the sentence carries no citation; there is nothing to read it against", non };
-  const sources = await resolveSources([c]);
+  // S3 rule 1: the sentence travels with its own sources and the ones the article cites elsewhere that bear on it.
+  const sources = withArticleSources([c], await resolveSources(claims.filter((x) => x.cited)));
   const srcs = sources[c.id];
+  if (!srcs.length) return { ...base, state: "uncited", status: 200, sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, note: "the sentence carries no citation, and no source the article cites elsewhere bears on it; there is nothing to read it against", non };
   const M = MODES[mode], reader = makeReader(undefined, M.model, { passes: M.passes });
   const key = claimKey(c, srcs, M.model, reader);
   const ledgered = load(`ledger/claims/${key}.json`);
@@ -101,7 +102,7 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   const est = estimateClaim(M.model, tokens) * (M.passes === 1 ? 0.5 : 1);
   const price = ledgered ? 0 : priceClaim(M.tier, est, false);
   const prepared = { ...base, state: ledgered ? "recorded" : "quoted", sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, ledger_key: key,
-    sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability, text_sha256: s.text_sha256 || null })),
+    sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, located: s.located, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability, text_sha256: s.text_sha256 || null })),
     est_cost_usd: Math.round(est * 1e5) / 1e5, price_usd: price, non, created: new Date().toISOString(),
     expires: new Date(Date.now() + 2 * 3600e3).toISOString() };
   save(`sentences/pending/${rid}.json`, prepared);
@@ -115,7 +116,7 @@ export async function readSentence(rid) {
   const pinned = await pinRevision(p.page.oldid);
   const { claims } = segment(pinned);
   const c = claims.find((x) => x.id === p.sentence.id);
-  const sources = await resolveSources([c]);
+  const sources = withArticleSources([c], await resolveSources(claims.filter((x) => x.cited)));
   const M = MODES[p.mode], reader = makeReader(undefined, M.model, { passes: M.passes });
   const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   const s3 = await readSentences({ claims: [c], sources, pinned, model: M.model, reader, priceOf: { [c.id]: p.price_usd }, onProgress: () => {}, usage });
@@ -123,7 +124,7 @@ export async function readSentence(rid) {
   const recorded = load(`ledger/claims/${p.ledger_key}.json`);
   const out = {
     request_id: rid, mode: p.mode, mode_label: p.mode_label, page: p.page, sentence: p.sentence,
-    result: entry ? { status: entry.status, support: entry.support, what_the_source_says: entry.what_the_source_says, changes: entry.changes, operation: entry.operation, converted: entry.converted,
+    result: entry ? { status: entry.status, support: entry.support, support_source: entry.support_source, innocent_reading: entry.innocent_reading, what_the_source_says: entry.what_the_source_says, changes: entry.changes, deltas: entry.deltas, operation: entry.operation, converted: entry.converted, attributization: entry.attributization, retained_authority: entry.retained_authority, invitation: entry.invitation, five_part: entry.five_part,
       readings: entry.readings, spans: entry.spans, sources: entry.sources, from_ledger: !!entry.from_ledger } : null,
     state: recorded ? { recorded: recorded.created, ledger_key: p.ledger_key, revision: p.page.oldid, source_hashes: p.sources.map((s) => s.text_sha256) } : null,
     non: p.non, evidence: ev ? { passes: ev.passes.map((x) => ({ model: x.model, validation: x.validation })), verdict: ev.verdict } : null,

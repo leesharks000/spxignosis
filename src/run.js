@@ -6,7 +6,8 @@ import { join } from "node:path";
 import { pinRevision } from "./pin.js";
 import { segment } from "./segment.js";
 import { resolveSources } from "./resolve.js";
-import { makeReader, inputFor, READER_PROTOCOL, CALIBRATION } from "./reader.js";
+import { makeReader, inputFor, normalizeReading, READER_PROTOCOL, CALIBRATION, INVITATION_STATUS } from "./reader.js";
+import { relevance } from "./window.js";
 import { fromWikipedia, fromEntity, capturesFor } from "./s7/input.js";
 import { discern } from "./s7/discern.js";
 import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construct.js";
@@ -17,13 +18,13 @@ import { runS7, s7Key } from "./s7/run.js";
 import { estimateS7 } from "./s7/estimate.js";
 import { publicationState } from "./s7/publish.js";
 import { archiveRelease } from "./s7/traverse.js";
-import { validateReading, reconcile, NORMALIZATION } from "./validate.js";
+import { validateReading, reconcile, NORMALIZATION, deltaText } from "./validate.js";
 import { sha256, save, load, STORE } from "./util.js";
 import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.9.0", protocol: "EA-WIKI-OPEN-01 v0.10" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.10.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -56,8 +57,33 @@ export async function prepare(oldid, only) {
   const pinned = await pinRevision(oldid);
   const { claims: all } = segment(pinned);
   const claims = only ? all.filter((c) => only.includes(c.id)) : all;
-  const sources = await resolveSources(claims.filter((c) => c.cited));
-  return { pinned, claims, sources };
+  // Every cited sentence of the article is resolved, so a sentence can be read against the sources the article cites
+  // elsewhere (S3 rule 1); only the requested claims are read.
+  const cited = await resolveSources(all.filter((c) => c.cited));
+  return { pinned, claims, sources: withArticleSources(claims, cited) };
+}
+
+// S3 rule 1 (EA-WIKI-OPEN-01 v1.1): the innocent reading is built first from the sources the article itself cites
+// anywhere, then from the cited source; an uncited sentence is read against the sources the article cites elsewhere,
+// and support found there is recorded as article-internal, never as a citation at the sentence. Each claim keeps its
+// own sources first ("at the sentence"); the article's other sources follow ("elsewhere in the article"), ranked by
+// how strongly their passages bear on the sentence, at most ARTICLE_SOURCES of them, none that bears on it not at all.
+export const ARTICLE_SOURCES = Number(process.env.GNOSIS_ARTICLE_SOURCES || 4);
+export function withArticleSources(claims, cited) {
+  const idOf = (s) => s.text_sha256 || s.final_url || s.url || `${s.edition || ""}|${s.scope || ""}`;
+  const pool = new Map();
+  for (const [cid, srcs] of Object.entries(cited)) for (const s of srcs) if (s.text && !pool.has(idOf(s))) pool.set(idOf(s), { ...s, first_cited_at: cid });
+  const out = {};
+  for (const c of claims) {
+    const own = (cited[c.id] || []).map((s) => ({ ...s, located: "at the sentence" }));
+    const ownIds = new Set(own.map(idOf));
+    const others = [...pool.values()].filter((s) => !ownIds.has(idOf(s)))
+      .map((s) => ({ s, r: relevance(s.text, c.text) })).filter((x) => x.r > 0)
+      .sort((a, b) => b.r - a.r).slice(0, ARTICLE_SOURCES)
+      .map(({ s }) => ({ ...s, located: "elsewhere in the article" }));
+    out[c.id] = [...own, ...others];
+  }
+  return out;
 }
 
 // Quote (free): S0–S2, a per-claim cost estimate from the passages that would be sent, and a price that clears it.
@@ -66,7 +92,8 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
   const { pinned, claims, sources } = await prepare(oldid, only);
   const model = TIERS[tier].reader_model;
   const reader = makeReader(undefined, model);
-  const lines = claims.filter((c) => c.cited).map((c) => {
+  // Every sentence with something to read it against is priced: its own sources, or the article's (S3 rule 1).
+  const lines = claims.filter((c) => (sources[c.id] || []).length).map((c) => {
     const srcs = sources[c.id];
     const ledgered = !!load(`ledger/claims/${claimKey(c, srcs, model, reader)}.json`);
     const tokens = estimateTokens(JSON.stringify(inputFor(c, srcs, pinned))) + 2500; // + instructions
@@ -93,13 +120,14 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
     quote_id: `Q-${sha256(`${oldid}|${tier}|${(only || []).join(",")}|${Date.now()}`).slice(0, 16)}`,
     article: { title: pinned.title, oldid: pinned.oldid, url: pinned.url, html_sha256: pinned.html_sha256 },
     tier, tier_steps: TIERS[tier].steps, reader_model: model,
-    claims_total: claims.length, claims_cited: lines.length, claims_uncited: claims.length - lines.length,
+    claims_total: claims.length, claims_cited: claims.filter((c) => c.cited).length, claims_uncited: claims.filter((c) => !c.cited).length,
+    claims_read: lines.length, claims_read_against_the_article: lines.filter((l) => !claims.find((c) => c.id === l.id).cited).length,
     claims_ledgered: lines.filter((l) => l.ledgered).length,
     lines, s7: s7 || undefined, package_price_usd: package_price || undefined,
     estimated_cost_usd: Math.round(est_cost * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
     pricing: { table: PRICE_TABLE.version, margin: POLICY.margin, rule: "price per claim = max(floor, estimated cost × margin); the archive's consultation and the /non row priced as one line, max(floor, estimated cost × margin), from the traversal it would run; work already in the ledger at the ledgered rates; the charge is for completed work only" },
     execution_contract: {
-      sources: "the sources each sentence cites (footnotes and classical pointers), fetched once and hashed",
+      sources: `the sources each sentence cites (footnotes and classical pointers), fetched once and hashed; and, for every sentence, at most ${ARTICLE_SOURCES} of the sources the article cites elsewhere that bear on it, marked "elsewhere in the article" (S3 rule 1); an uncited sentence is read against those alone`,
       sent_to_reader: "the passages of each source that bear on the claim (classical chapters whole), with a code-computed structure summary; quotations are checked against the full text",
       search_scope: ADMITS.has(tier) ? "the sources the article cites (the disclosed field B); and the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4): every deposit text and every blog post the blog–deposit map does not assign to a deposit, scanned for the entity's strings (the article's title and the names its lead gives) at D, R and O; one citation hop from the deposits admitted by reading, screened by string; admission by two reading passes" : "cited sources only at this tier",
       archive_release: s7?.estimate?.release || (s7 ? archiveRelease() : null),
@@ -239,8 +267,8 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
   const entries = [], evidence = [], breaches = [];
   let completed = 0, charge = 0, actual = 0;
   for (const c of claims) {
-    if (!c.cited) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "uncited", note: "the sentence carries no citation; nothing to check it against" }); continue; }
-    const srcs = sources[c.id];
+    const srcs = sources[c.id] || [];
+    if (!srcs.length) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "uncited", note: "the sentence carries no citation, and no source the article cites elsewhere bears on it; nothing to check it against" }); continue; }
     const srcMap = Object.fromEntries(srcs.map((s, i) => [`S${i + 1}`, s]));
     const key = claimKey(c, srcs, model, reader);
     onProgress({ stage: "S3", detail: c.id });
@@ -255,9 +283,12 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     }
     if (!r) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "unread", note: err || "no reading available for this claim" }); continue; }
     if (!fromLedger) for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
-    const checked = r.passes.map((p) => ({ ...p, validation: validateReading(p.reading, c, srcMap) }));
+    // The passages each pass was shown, so a quotation from outside them is recorded (validate.js).
+    const shownInput = r.input || inputFor(c, srcs, pinned, expanded ? { size: 3000, keep: 8 } : undefined);
+    const shown = Object.fromEntries(shownInput.sources.map((x) => [x.id, x.passages.map((q) => q.text).join(" \n ")]));
+    const checked = r.passes.map((p) => ({ ...p, reading: normalizeReading(p.reading), validation: validateReading(p.reading, c, srcMap, shown) }));
     const valid = checked.filter((p) => p.validation.ok);
-    checked.filter((p) => !p.validation.ok).forEach((p) => breaches.push({ claim: c.id, model: p.model, breaches: p.validation.breaches }));
+    checked.filter((p) => p.validation.breaches.length).forEach((p) => breaches.push({ claim: c.id, model: p.model, withheld: !p.validation.ok, breaches: p.validation.breaches }));
     let verdict;
     const fam = (m) => (/claude/.test(m || "") ? "anthropic" : String(m || "").split(/[-:/]/)[0]);
     if (valid.length === 2) verdict = reconcile({ ...valid[0].reading, __family: fam(valid[0].model) }, { ...valid[1].reading, __family: fam(valid[1].model) });
@@ -269,12 +300,24 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     if (verdict.status !== "withheld") { completed++; charge += priceOf[c.id] || 0; }
     entries.push({
       id: c.id, section: c.section, sentence: c.text, status: verdict.status, from_ledger: fromLedger || undefined,
+      cited: !!c.cited,
       support: verdict.support || null,
+      support_source: lead?.support_source || null,
+      innocent_reading: lead?.innocent_reading || null,
+      innocent_reading_fails_at: lead?.innocent_reading_fails_at ?? null,
       operation: lead?.attributization?.operation || null,
       converted: lead?.attributization?.converted ?? null,
+      attributization: lead?.attributization ? { value: lead.attributization.value, attribute: lead.attributization.attribute || null, reason: lead.attributization.reason || null } : null,
+      retained_authority: lead?.retained_authority || null,
       what_the_source_says: lead?.paraphrase?.defensible || null,
-      changes: lead ? [...(lead.paraphrase?.scope_changes || []), ...(lead.paraphrase?.introduced || [])] : [],
-      sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, kind: s.kind, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability })),
+      deltas: lead?.paraphrase?.deltas || [],
+      changes: lead ? (lead.paraphrase?.deltas || []).map(deltaText) : [],
+      divided: lead?.divided?.length ? lead.divided : undefined,
+      invitation: lead?.invitation ? { ...lead.invitation, status: INVITATION_STATUS } : null,
+      alternatives: lead?.alternatives || [], correction_pathway: lead?.correction_pathway || null,
+      five_part: lead?.five_part || null,
+      invitation_differs: verdict.invitation_differs,
+      sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, kind: s.kind, located: s.located, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability })),
       readings: verdict.status === "contested" ? verdict.readings : undefined, differs: verdict.differs,
       spans: lead ? lead.spans : verdict.status === "contested" ? valid.flatMap((p) => p.reading.spans || []) : [],
       expanded: expanded || undefined,
@@ -285,13 +328,15 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
       verdict,
       tuple: lead ? {
         "ω": lead.attributization?.operation, w: c.text, "δ": c.section === "lead" ? "lead statement" : `statement in ${c.section}`,
-        G_W: lead.policy, "Δ_D": lead.paraphrase?.scope_changes, "Δ_C": lead.attributization?.lost,
+        G_W: lead.policy, "Δ_D": lead.paraphrase?.deltas, "Δ_C": lead.attributization?.lost,
         R_W: lead.attributization?.converted ? `${lead.attributization.operation} → ${lead.attributization.attribute}` : null,
+        "λ": (lead.paraphrase?.deltas || []).filter((d) => d.lambda).map((d) => ({ change: d.sentence_says, lambda: d.lambda, measure: d.measure })),
         P_W: { required: "inline citation (WP:V)", available: srcs.map((s) => s.final_url || s.url) },
         "ρ_W": lead.notes || null,
-        // Elements of §5.2's tuple the 0.4 runner does not produce; named here so a reader sees the gap.
+        // Elements of §5.2's tuple the 0.10 runner does not produce; named here so a reader sees the gap. λ is the reader's
+        // location of each change, per delta; code does not yet verify it.
         "∼_W": "unimplemented: substitutability under WP:V is not computed", K_W: "unimplemented: the closure kind is not computed (S4 not run)",
-        B_W: "unimplemented: S4's grammar ledger is not run", C_W: "unimplemented: talk-page and deletion pointers are not fetched", "λ": "unimplemented: qualifying-material location is not computed",
+        B_W: "unimplemented: S4's grammar ledger is not run", C_W: "unimplemented: talk-page and deletion pointers are not fetched",
       } : null,
     });
   }

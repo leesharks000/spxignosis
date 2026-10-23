@@ -28,7 +28,9 @@ export function estimateTokens(text) {
 }
 
 // Estimated cost of reading one claim with two passes, the second reading the first's cached prefix.
-export function estimateClaim(model, promptTokens, outTokens = 1500) {
+// A gnosis-S3/0.5 reading carries the innocent reading, deltas, the invitation and the five-part account: about 2,800
+// output tokens a pass, against 1,500 for the 0.4 form.
+export function estimateClaim(model, promptTokens, outTokens = 2800) {
   const a = callCost(model, { cache_creation_input_tokens: promptTokens, output_tokens: outTokens });
   const b = callCost(model, { cache_read_input_tokens: promptTokens, input_tokens: 200, output_tokens: outTokens });
   return a + b;
