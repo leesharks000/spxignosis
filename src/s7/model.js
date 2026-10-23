@@ -49,7 +49,7 @@ export function passLog({ budget_usd = Infinity } = {}) {
     exhausted() { return calls.some((c) => c.how === "not run: execution budget exhausted"); },
     async run({ row, stage, id, system, shared, task, model, maxTokens = 8000 }) {
       if (mode() === "replay") {
-        const r = load(`replays/s7/${row}/${stage}/${id}.json`);
+        const r = await load(`replays/s7/${row}/${stage}/${id}.json`);
         const entry = { stage, id, how: r ? `replay: ${r.recorded || "recorded"}` : "not run: no recording", model: r?.model || null, usage: null, cost_usd: 0 };
         calls.push(entry);
         return r ? r.out : null;

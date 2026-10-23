@@ -1,12 +1,12 @@
 // S0. Pin: an article at an exact revision, with hashes of what was read.
-import { politeFetch, sha256, save, load, STORE } from "./util.js";
-import { readdirSync, readFileSync } from "node:fs";
+import { politeFetch, sha256, save, load, STORE, SEED } from "./util.js";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 // Rendered HTML of a revision. Order: snapshot store, then the parse API, then a seed file.
 export async function pinRevision(oldid) {
   const key = `snapshots/wikipedia/${oldid}.json`;
-  const cached = load(key);
+  const cached = await load(key);
   if (cached) return { ...cached, from: "store" };
 
   const api = `https://en.wikipedia.org/w/api.php?action=parse&oldid=${oldid}&prop=text|revid|displaytitle&format=json&formatversion=2`;
@@ -18,9 +18,10 @@ export async function pinRevision(oldid) {
     html = j.parse.text; title = j.parse.title; from = "parse-api";
   } else {
     // Seeds are full page saves; accept one only if its own wgRevisionId matches.
-    const seed = readdirSync(STORE).find((f) => f.startsWith("seed-wp-") && f.includes(String(oldid)));
+    const base = [STORE, SEED].find((d) => existsSync(d) && readdirSync(d).some((f) => f.startsWith("seed-wp-") && f.includes(String(oldid))));
+    const seed = base && readdirSync(base).find((f) => f.startsWith("seed-wp-") && f.includes(String(oldid)));
     if (!seed) throw new Error(`wikipedia unavailable (HTTP ${r.status}) and no seed for ${oldid}`);
-    const page = readFileSync(join(STORE, seed), "utf8");
+    const page = readFileSync(join(base, seed), "utf8");
     const rev = (page.match(/"wgRevisionId":(\d+)/) || [])[1];
     if (rev !== String(oldid)) throw new Error(`seed revision ${rev} does not match ${oldid}`);
     title = (page.match(/"wgTitle":"([^"]+)"/) || [])[1];
@@ -35,6 +36,6 @@ export async function pinRevision(oldid) {
     html, html_sha256: sha256(html),
     licence: { name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
   };
-  save(key, pinned);
+  await save(key, pinned);
   return pinned;
 }

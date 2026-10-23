@@ -60,6 +60,18 @@ t("reconcile: identical readings agree", reconcile(r, structuredClone(r)).status
     { W5: [{ kind: "footnote", url: "k", text_sha256: "k", text: "In Chapter 4, sophistical refutations are divided into two groups; thirteen kinds in all." }, { kind: "footnote", url: "z", text_sha256: "z", text: "Bees and honey production in alpine meadows." }] });
   t("article sources: an uncited sentence receives the article's sources that bear on it, marked elsewhere in the article", sources.W1.length === 1 && sources.W1[0].url === "k" && sources.W1[0].located === "elsewhere in the article");
   t("article sources: a cited sentence keeps its own sources first, marked at the sentence", sources.W5[0].located === "at the sentence" && sources.W5.filter((x) => x.located === "at the sentence").length === 2);
+  // 0.12.0: the store is layered (this process's writes, the committed seed, Vercel Blob where configured).
+  {
+    const U = await import("../src/util.js");
+    const k = `probe-store/${Date.now()}.json`;
+    await U.save(k, { a: 1 });
+    t("store: a record written is read back, and a missing one is null", (await U.load(k))?.a === 1 && (await U.load("probe-store/none.json")) === null);
+    t("store: a directory lists what was written to it", (await U.list("probe-store")).includes(k.split("/")[1]));
+    t("store: the committed seed is readable from any store (the policy texts)", existsSync(U.SEED + "/policies") && (U.STORE === U.SEED || (await U.list("policies")).length > 0));
+    t("store: without a Blob token the service uses the local store only", U.BLOB === !!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID));
+    const src = readFileSync(new URL("../src/run.js", import.meta.url), "utf8") + readFileSync(new URL("../src/sentence.js", import.meta.url), "utf8") + readFileSync(new URL("../src/server.js", import.meta.url), "utf8");
+    t("store: no await binds to a property of a pending read (await load(x)?.y)", !/(?<!\()await (load|save)\(`[^`]*`\)\?\./.test(src));
+  }
   // 2026-10-23: archive-grounded sentences, from a commissioned row, at two cents over the sentence.
   {
     const { groundingFor } = await import("../src/grounding.js");
@@ -71,13 +83,13 @@ t("reconcile: identical readings agree", reconcile(r, structuredClone(r)).status
     writeFileSync(join(land, V, "rows", "probe-row.json"), JSON.stringify({ objects: { T: { url: "https://en.wikipedia.org/w/index.php?oldid=42", claims: ["W1 Aristotle had nothing to say of syllogizing.", "W2 A sentence the archive does not touch."] } },
       ontology: { t_alignment: [{ t: "W1", bears: "qualifies", note: "the claim is a priority claim", archive_claims: ["A1", "A9"] }] } }));
     writeFileSync(join(land, V, "ledgers", "probe-row", "ledger-archive.json"), JSON.stringify([{ id: "A1", dep: 1697, quote: "q" }]));
-    sv("s7/probe-row/by-key/k-old.json", { complete: true, landing: land, key: "k-old", release: { commit: "r1" }, created: "2026-10-01T00:00:00Z", non_url: "u" });
-    sv("s7/probe-row/by-key/k-partial.json", { complete: false, landing: land, key: "k-partial", created: "2026-10-22T00:00:00Z" });
-    const g = groundingFor("probe-row", "Aristotle had  nothing to say of syllogizing.[3]", { commit: "r2" });
+    await sv("s7/probe-row/by-key/k-old.json", { complete: true, landing: land, key: "k-old", release: { commit: "r1" }, created: "2026-10-01T00:00:00Z", non_url: "u" });
+    await sv("s7/probe-row/by-key/k-partial.json", { complete: false, landing: land, key: "k-partial", created: "2026-10-22T00:00:00Z" });
+    const g = await groundingFor("probe-row", "Aristotle had  nothing to say of syllogizing.[3]", { commit: "r2" });
     t("grounded: a sentence held in a complete commissioned row is served its alignment, with the archive claims the row's ledger holds", g?.sentence_id === "W1" && g.archive.bears === "qualifies" && g.archive.claims.length === 1 && g.archive.claims[0].url.endsWith("/records/1697/") && g.revision === "42");
     t("grounded: the row's release is disclosed beside the current one, and a moved archive is said", g.release === "r1" && g.current_release === "r2" && g.archive_moved === true && /recomposes/.test(g.note));
-    t("grounded: a sentence the alignment does not touch is served as none recorded", groundingFor("probe-row", "A sentence the archive does not touch.")?.archive.bears === "none recorded");
-    t("grounded: no row holding the sentence, no grounding (the commission is offered instead)", groundingFor("probe-row", "Nothing like this is in T.") === null && groundingFor("no-such-row", "x") === null);
+    t("grounded: a sentence the alignment does not touch is served as none recorded", (await groundingFor("probe-row", "A sentence the archive does not touch."))?.archive.bears === "none recorded");
+    t("grounded: no row holding the sentence, no grounding (the commission is offered instead)", (await groundingFor("probe-row", "Nothing like this is in T.")) === null && (await groundingFor("no-such-row", "x")) === null);
     const { sentencePrice: sp } = await import("../src/sentence.js");
     t("grounded: a grounded sentence costs its opening and two cents; with its reading already ledgered, the two cents alone", sp({ tier: "ledger", est: 0.02, ledgered: false, grounded: true }) === 0.07 && sp({ tier: "ledger", est: 0, ledgered: true, grounded: true }) === 0.02 && sp({ tier: "ledger", est: 0.02, ledgered: false, grounded: false }) === 0.05);
   }

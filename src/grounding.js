@@ -6,7 +6,7 @@
 // offered the commission, and S7 is never run for one sentence.
 import { readdirSync, existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { STORE, load } from "./util.js";
+import { load, list } from "./util.js";
 
 export const V2 = "datasets/negative-of-the-negative/v2";
 const norm = (s) => String(s || "").normalize("NFKC").replace(/\[\s*(\d+|[a-z]|citation needed|note \d+)\s*\]/gi, " ")
@@ -25,19 +25,19 @@ export function readLanding(landing, rowKey) {
 }
 
 // The newest complete commissioned row for this entity whose T holds the sentence, with the sentence's alignment.
-export function groundingFor(rowKey, text, currentRelease = null) {
-  const rel = `s7/${rowKey}/by-key`, dir = join(STORE, rel);
-  if (!rowKey || !existsSync(dir)) return null;
+export async function groundingFor(rowKey, text, currentRelease = null) {
+  const rel = `s7/${rowKey}/by-key`;
+  if (!rowKey) return null;
   const t = norm(text), found = [];
-  for (const f of readdirSync(dir).filter((x) => x.endsWith(".json"))) {
-    const s7 = load(`${rel}/${f}`);
+  for (const f of (await list(rel)).filter((x) => x.endsWith(".json"))) {
+    const s7 = await load(`${rel}/${f}`);
     if (!s7?.complete || !s7.landing) continue;
     const { row, ledger } = readLanding(s7.landing, rowKey);
     // The row keeps T's sentences as "W3 the sentence" (row.js); an object form is read as well.
     const claim = (row?.objects?.T?.claims || []).map((c) => (typeof c === "string" ? { id: c.split(" ")[0], text: c.slice(c.indexOf(" ") + 1) } : c)).find((c) => norm(c.text) === t);
     if (!claim) continue;
     const a = (row.ontology?.t_alignment || []).find((x) => x.t === claim.id);
-    found.push({ key: s7.key || f.replace(/\.json$/, ""), composed: s7.created || statSync(join(dir, f)).mtime.toISOString(), release: s7.release?.commit || null,
+    found.push({ key: s7.key || f.replace(/\.json$/, ""), composed: s7.created || null, release: s7.release?.commit || null,
       revision: row.address?.oldid ?? row.objects?.T?.url?.match(/oldid=(\d+)/)?.[1] ?? null, sentence_id: claim.id, non_url: s7.non_url || null,
       archive: a ? archiveOn(a, ledger) : { bears: "none recorded", note: "the row's alignment records no archive claim on this sentence", claims: [] } });
   }

@@ -128,7 +128,7 @@ export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", mode
     return {
       id: `replay/${READER_PROTOCOL}${suffix}`, mode: "replay", passes: nPasses,
       async read(claim, srcs, article) {
-        const r = load(`replays/${article.oldid}/${claim.id}.json`);
+        const r = await load(`replays/${article.oldid}/${claim.id}.json`);
         if (!r) return null;
         return { passes: r.passes.slice(0, nPasses).map((p) => ({ reading: p.reading, model: p.model, usage: null })), input: inputFor(claim, srcs, article) };
       },

@@ -14,7 +14,7 @@ import { discern } from "./s7/discern.js";
 import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construct.js";
 import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
 import { snapshot } from "./resolve.js";
-import { politeFetch } from "./util.js";
+import { politeFetch, SEED } from "./util.js";
 import { runS7, s7Key } from "./s7/run.js";
 import { estimateS7 } from "./s7/estimate.js";
 import { archiveOn, readLanding } from "./grounding.js";
@@ -26,7 +26,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.11.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.12.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -39,8 +39,9 @@ export const TIERS = {
 };
 
 function policyState() {
-  const dir = join(STORE, "policies");
-  if (!existsSync(dir)) return { _none: "no policy texts saved in the store" };
+  // The policy texts are seed data: in this process's store when it was seeded (tests), else as committed.
+  const dir = [join(STORE, "policies"), join(SEED, "policies")].find((d) => existsSync(d));
+  if (!dir) return { _none: "no policy texts saved in the store" };
   return Object.fromEntries(readdirSync(dir).map((f) => [f.replace(/\.wiki$/, "").replace(/_/g, " ").replace("Wikipedia ", "Wikipedia:"), sha256(readFileSync(join(dir, f), "utf8"))]));
 }
 
@@ -97,19 +98,19 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
   const model = TIERS[tier].reader_model;
   const reader = makeReader(undefined, model);
   // Every sentence with something to read it against is priced: its own sources, or the article's (S3 rule 1).
-  const lines = claims.filter((c) => (sources[c.id] || []).length).map((c) => {
+  const lines = await Promise.all(claims.filter((c) => (sources[c.id] || []).length).map(async (c) => {
     const srcs = sources[c.id];
-    const ledgered = !!load(`ledger/claims/${claimKey(c, srcs, model, reader)}.json`);
+    const ledgered = !!await load(`ledger/claims/${claimKey(c, srcs, model, reader)}.json`);
     const tokens = estimateTokens(JSON.stringify(inputFor(c, srcs, pinned))) + 2500; // + instructions
     const est = ledgered ? 0 : estimateClaim(model, tokens);
     return { id: c.id, ledgered, est_tokens: tokens, est_cost_usd: Math.round(est * 1e5) / 1e5, price_usd: priceClaim(tier, est, ledgered) };
-  });
+  }));
   // S7–S8: the archive consulted and the /non row composed, priced from the traversal it would run.
   let s7 = null;
   if (ADMITS.has(tier)) {
     const input = fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
-    const ledgered = !!load(`s7/${input.row}/by-key/${key}.json`)?.complete;
+    const ledgered = !!(await load(`s7/${input.row}/by-key/${key}.json`))?.complete;
     const e = ledgered ? null : await estimateS7(input);
     s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e,
       est_cost_usd: ledgered ? 0 : e.est_cost_usd, price_usd: ledgered ? POLICY.ledgered_s7 : Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
@@ -143,7 +144,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
     },
     expires: new Date(Date.now() + 15 * 60_000).toISOString(),
   };
-  save(`quotes/${q.quote_id}.json`, { ...q, only: only || null });
+  await save(`quotes/${q.quote_id}.json`, { ...q, only: only || null });
   return q;
 }
 
@@ -261,7 +262,7 @@ export async function quoteEntity(spec, { tier = "commission" } = {}) {
     },
     expires: new Date(Date.now() + 15 * 60_000).toISOString(),
   };
-  save(`quotes/${q.quote_id}.json`, q);
+  await save(`quotes/${q.quote_id}.json`, q);
   return q;
 }
 
@@ -276,7 +277,7 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     const srcMap = Object.fromEntries(srcs.map((s, i) => [`S${i + 1}`, s]));
     const key = claimKey(c, srcs, model, reader);
     onProgress({ stage: "S3", detail: c.id });
-    let r = load(`ledger/claims/${key}.json`), fromLedger = !!r, err = null, expanded = false;
+    let r = await load(`ledger/claims/${key}.json`), fromLedger = !!r, err = null, expanded = false;
     const billFailed = (e) => { for (const p of e.spent || []) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; } };
     if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); billFailed(e); } }
     // Windowing can drop the passage that revises a claim. When a pass says the passages lack what it needs,
@@ -298,7 +299,7 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     if (valid.length === 2) verdict = reconcile({ ...valid[0].reading, __family: fam(valid[0].model) }, { ...valid[1].reading, __family: fam(valid[1].model) });
     else if (valid.length === 1) verdict = { status: reader.passes === 1 ? "preliminary" : "single-valid", support: valid[0].reading.support };
     else verdict = { status: "withheld" };
-    if (!fromLedger && verdict.status !== "withheld") save(`ledger/claims/${key}.json`, { key, claim: c.id, oldid: pinned.oldid, model, created: new Date().toISOString(), passes: r.passes.map((p) => ({ model: p.model, reading: p.reading })) });
+    if (!fromLedger && verdict.status !== "withheld") await save(`ledger/claims/${key}.json`, { key, claim: c.id, oldid: pinned.oldid, model, created: new Date().toISOString(), passes: r.passes.map((p) => ({ model: p.model, reading: p.reading })) });
     // A contested claim carries both readings; no single paraphrase stands for it.
     // The full account comes from the first pass; the second returns only the reconciled fields.
     const lead = verdict.status === "contested" ? null : (valid.find((v) => v.reading?.five_part) || valid[0])?.reading;
@@ -349,7 +350,7 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
 }
 
 export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
-  const q = load(`quotes/${quoteId}.json`);
+  const q = await load(`quotes/${quoteId}.json`);
   if (!q) throw new Error(`unknown quote ${quoteId}`);
   const t0 = Date.now();
   let pinned, claims, sources, entityInput = null, construction = null;
@@ -396,7 +397,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     policies: policyState(), s7: q.s7?.key || (entityInput && q.s7 ? s7Key(entityInput) : null), protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
   };
   const execution_key = sha256(JSON.stringify(state));
-  const prior = load(`results/by-state/${execution_key}.json`);
+  const prior = await load(`results/by-state/${execution_key}.json`);
   // A result is served again only when it is complete for its tier: at the tiers that compose the /non row, a result
   // whose row was not composed is recomputed.
   // Reuse needs a complete row: a partial one (a pass failed, was skipped by the budget, or the audit is incomplete) is
@@ -404,7 +405,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
   if (prior && (!q.s7 || (prior.non_row && prior.s7_complete))) {
     // The same state was computed before: the result is served again, and billed against this quote, at the
     // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
-    const composition = load(prior.composition_path), record = load(prior.composition_path.replace("composition", "evidence"));
+    const composition = await load(prior.composition_path), record = await load(prior.composition_path.replace("composition", "evidence"));
     const done = composition.entries.filter((e) => ["concordant", "concordant across families", "single-valid", "contested"].includes(e.status)).map((e) => e.id);
     let charge = done.reduce((n, id) => n + (priceOf[id] || 0), 0);
     if (q.s7 && prior.non_row) charge += POLICY.ledgered_s7;
@@ -427,7 +428,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     onProgress({ stage: "S7", detail: "the archive's bearing on the entity" });
     const input = entityInput || fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
-    const cached = load(`s7/${input.row}/by-key/${key}.json`);
+    const cached = await load(`s7/${input.row}/by-key/${key}.json`);
     if (cached?.complete) s7 = { ...cached, from_ledger: true };
     else {
       // One log for the job: the construction's spending and S7's share the budget the quote declared.
@@ -445,7 +446,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       s7.complete = s7.composed && !s7.coverage.budget_exhausted && !failed && !notRun && s7.coverage.audit_complete;
       // The release and the time are kept with the row, so a grounded sentence served from it can disclose both.
       s7.release = out.run.release || null; s7.created = new Date().toISOString();
-      save(`s7/${input.row}/${s7.complete ? "by-key" : "partial"}/${key}.json`, s7);
+      await save(`s7/${input.row}/${s7.complete ? "by-key" : "partial"}/${key}.json`, s7);
     }
     // The quoted S7 line is an upper bound (every candidate deposit costed as admitted); the charge is the measured cost
     // times the margin, at the floor, and never above the quote.
@@ -479,7 +480,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       onProgress({ stage: "package", detail: "the knowledge object" });
       const pkg = packageRow(s7.row, s7.ledger, { result_id, service: SERVICE, article: q.article, audit: s7.audit, rowUrl: s7.non_url });
       const dir = `results/${result_id}/portable`;
-      const manifest = writePackage(dir, pkg, { result_id, article: q.article, service: SERVICE, non_row: s7.row_key });
+      const manifest = await writePackage(dir, pkg, { result_id, article: q.article, service: SERVICE, non_row: s7.row_key });
       const clean = !!s7.audit?.ran && !!s7.audit.complete && s7.audit.breaches.length === 0;
       portable = { ok: true, dir, manifest, charged: clean, breaches: clean ? [] : [{ check: "package", detail: !s7.audit?.ran ? "the audit did not run; the package fee is released" : !s7.audit.complete ? `the audit is incomplete (${(s7.audit.missing || []).length} units unjudged); the package fee is released` : `${s7.audit.breaches.length} units marked by the audit; the package fee is released` }] };
       if (clean) charge += q.package_price_usd || 0;
@@ -494,12 +495,12 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     billing: { quoted_max_usd: q.max_price_usd, charge_usd: charge, margin_usd: Math.round((charge - actual) * 1e5) / 1e5,
       cost_measured: reader.mode === "live", ...(reader.mode === "live" ? {} : { note: "replay mode: no model was called, so cost and margin are not measured" }), rule: "charged for completed claims only, at quoted per-claim prices; the rest of the reservation is released" },
   };
-  save(`results/${result_id}/composition.json`, composition);
-  save(`results/${result_id}/evidence.json`, record);
-  save(`results/${result_id}/opened.html`, renderOpenedHTML(composition, pinned));
-  save(`results/${result_id}/annotations.jsonld`, annotations(composition));
-  if (s7) save(`results/${result_id}/s7.json`, { ...s7, row: undefined, ledger: undefined });
+  await save(`results/${result_id}/composition.json`, composition);
+  await save(`results/${result_id}/evidence.json`, record);
+  await save(`results/${result_id}/opened.html`, renderOpenedHTML(composition, pinned));
+  await save(`results/${result_id}/annotations.jsonld`, annotations(composition));
+  if (s7) await save(`results/${result_id}/s7.json`, { ...s7, row: undefined, ledger: undefined });
   const pointer = { result_id, composition_path: `results/${result_id}/composition.json`, portable_dir: portable?.ok ? portable.dir : undefined, non_row: s7?.composed ? s7.row_key : undefined, s7_complete: !!s7?.complete };
-  save(`results/by-state/${execution_key}.json`, pointer);
+  await save(`results/by-state/${execution_key}.json`, pointer);
   return { ...pointer, composition, record, reused: false };
 }

@@ -108,14 +108,14 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   let grounding = null;
   if (mode === "grounded") {
     const row = fromWikipedia(pinned, [c], { [c.id]: srcs }).row;
-    grounding = groundingFor(row, c.text, archiveRelease());
+    grounding = await groundingFor(row, c.text, archiveRelease());
     if (!grounding) return { ...base, state: "not grounded", status: 200, sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, non,
       note: "no commissioned /non row of this article's entity holds the sentence; the archive is consulted on commission, never for one sentence",
       commission: { request: "POST /v1/quote", body: { oldid: pinned.oldid, tier: "commission" } }, opening: { request: "GET /v1/sentence", mode: "opening" } };
   }
   const M = MODES[mode], reader = makeReader(undefined, M.model, { passes: M.passes });
   const key = claimKey(c, srcs, M.model, reader);
-  const ledgered = load(`ledger/claims/${key}.json`);
+  const ledgered = await load(`ledger/claims/${key}.json`);
   const tokens = estimateTokens(JSON.stringify(inputFor(c, srcs, pinned))) + 2500;
   const est = M.passes === 1 ? estimateClaim(M.model, tokens, 1200, 0) : estimateClaim(M.model, tokens);
   // A grounded sentence pays its own reading (nothing where ledgered) and the grounding line.
@@ -124,13 +124,13 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
     sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, located: s.located, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability, text_sha256: s.text_sha256 || null })),
     est_cost_usd: Math.round(est * 1e5) / 1e5, price_usd: price, non, created: new Date().toISOString(),
     expires: new Date(Date.now() + 2 * 3600e3).toISOString() };
-  save(`sentences/pending/${rid}.json`, prepared);
+  await save(`sentences/pending/${rid}.json`, prepared);
   return prepared;
 }
 
 // Reads the sentence (or serves its ledgered reading): the opening, or the preliminary reading, as an entry.
 export async function readSentence(rid) {
-  const p = load(`sentences/pending/${rid}.json`);
+  const p = await load(`sentences/pending/${rid}.json`);
   if (!p) throw Object.assign(new Error("unknown sentence request; ask again"), { status: 404 });
   const pinned = await pinRevision(p.page.oldid);
   const { claims } = segment(pinned);
@@ -140,7 +140,7 @@ export async function readSentence(rid) {
   const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   const s3 = await readSentences({ claims: [c], sources, pinned, model: M.model, reader, priceOf: { [c.id]: p.price_usd }, onProgress: () => {}, usage });
   const entry = s3.entries[0], ev = s3.evidence[0] || null;
-  const recorded = load(`ledger/claims/${p.ledger_key}.json`);
+  const recorded = await load(`ledger/claims/${p.ledger_key}.json`);
   const out = {
     request_id: rid, mode: p.mode, mode_label: p.mode_label, page: p.page, sentence: p.sentence,
     result: entry ? { status: entry.status, support: entry.support, support_source: entry.support_source, innocent_reading: entry.innocent_reading, what_the_source_says: entry.what_the_source_says, changes: entry.changes, deltas: entry.deltas, operation: entry.operation, converted: entry.converted, attributization: entry.attributization, retained_authority: entry.retained_authority, invitation: entry.invitation, five_part: entry.five_part,
@@ -152,6 +152,6 @@ export async function readSentence(rid) {
     breaches: s3.breaches, cost: { actual_usd: Math.round(s3.actual * 1e5) / 1e5, charged_usd: s3.charge },
     note: p.mode === "preliminary" ? "a preliminary reading: one pass on the small model; ask with mode=opening for the opening" : undefined,
   };
-  save(`sentences/results/${rid}.json`, out);
+  await save(`sentences/results/${rid}.json`, out);
   return out;
 }

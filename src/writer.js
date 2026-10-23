@@ -78,9 +78,9 @@ function jsonld(row, by, cited, { result_id, service, article, rowUrl, ledeState
   };
 }
 
-export function writePackage(dir, pkg, meta) {
-  for (const [n, body] of Object.entries(pkg.files)) save(`${dir}/${n}`, body);
+export async function writePackage(dir, pkg, meta) {
+  for (const [n, body] of Object.entries(pkg.files)) await save(`${dir}/${n}`, body);
   const manifest = { ...meta, protocol: PACKAGE_PROTOCOL, verification: pkg.verification, flagged_units: pkg.flagged, files: Object.fromEntries(Object.entries(pkg.files).map(([n, b]) => [n, sha256(b)])) };
-  save(`${dir}/manifest.json`, manifest);
+  await save(`${dir}/manifest.json`, manifest);
   return manifest;
 }

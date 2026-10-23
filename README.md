@@ -10,10 +10,10 @@ Two tiers (0.11.0):
 - **Commission.** The opening, with the Crimson Hexagonal Archive consulted by its own procedure: the archive's claims aligned to each sentence and the entity's /non row composed (public). Priced from the traversal it would run. `portable` adds the entity's knowledge object as a package. An entity the encyclopedia does not hold is always a commission.
 - **Grounded sentences.** Once an article has been commissioned, any sentence its /non row holds can be asked for with `mode=grounded`: the opening, with the archive's claims on that sentence from the row's alignment, at two cents over the sentence's price (two cents alone where the reading is already in the ledger). The row's archive release is disclosed beside the current one. Where no commissioned row holds the sentence, the commission is offered and nothing is charged; S7 never runs for one sentence.
 
-- Service: https://gnosis.spxi.dev (planned)
+- Service: https://gnosis.spxi.dev (Vercel project spxignosis)
 - Protocol home: https://spxi.dev
 - Archive: https://www.alexanarch.org
 
-`npm install`, then `npm start` (port 4402). Keys are read from the environment; see `src/payments.js` and `src/reader.js`. `store/` holds the pinned policy texts and calibration replays the reader uses; runtime records (quotes, receipts, results) are written there and are not tracked.
+`npm install`, then `npm start` (port 4402). On Vercel (0.12.0) the Express app runs as a function: the committed `store/` is read-only seed data (policy texts, snapshots, replays), records are written to `/tmp` and to a private Vercel Blob store (`BLOB_READ_WRITE_TOKEN`, set when a Blob store is connected to the project), and read back from Blob by any instance. Without a receiving address the service starts with its page and the free quote, and the paid routes answer 503. `public/` holds the mark and icons. The archive-consulting tiers need an archive checkout (`GNOSIS_ARCHIVE`) and do not run on Vercel yet. Keys are read from the environment; see `src/payments.js` and `src/reader.js`. `store/` holds the pinned policy texts and calibration replays the reader uses; runtime records (quotes, receipts, results) are written there and are not tracked.
 
 Licensed under the PolyForm Shield License 1.0.0. See `LICENSE.md`.
