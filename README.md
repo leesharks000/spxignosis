@@ -8,6 +8,7 @@ Two tiers (0.11.0):
 
 - **Opening.** Sentences opened against their own sources and the article's, at the point of contact (`GET /v1/sentence`) or a whole revision at a time. The archive is not consulted. Priced in cents: a sentence lists at $0.05 (raised only where long sources put the estimate times 1.5 above it), a preliminary single pass at $0.01, a sentence already in the ledger at $0.01.
 - **Commission.** The opening, with the Crimson Hexagonal Archive consulted by its own procedure: the archive's claims aligned to each sentence and the entity's /non row composed (public). Priced from the traversal it would run. `portable` adds the entity's knowledge object as a package. An entity the encyclopedia does not hold is always a commission.
+- **Grounded sentences.** Once an article has been commissioned, any sentence its /non row holds can be asked for with `mode=grounded`: the opening, with the archive's claims on that sentence from the row's alignment, at two cents over the sentence's price (two cents alone where the reading is already in the ledger). The row's archive release is disclosed beside the current one. Where no commissioned row holds the sentence, the commission is offered and nothing is charged; S7 never runs for one sentence.
 
 - Service: https://gnosis.spxi.dev (planned)
 - Protocol home: https://spxi.dev

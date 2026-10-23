@@ -1,6 +1,7 @@
 // Probes: the review of Appendix B (2026-10-21) and the S7 build. Each must hold; exits 1 on any failure.
 // Usage: node test/probes.js <result_id with a composed opening or none>   (GNOSIS_STORE names the store)
 import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { reconcile, validateReading } from "../src/validate.js";
 import { normalizeReading, INSTRUCTIONS, READER_PROTOCOL } from "../src/reader.js";
@@ -59,6 +60,27 @@ t("reconcile: identical readings agree", reconcile(r, structuredClone(r)).status
     { W5: [{ kind: "footnote", url: "k", text_sha256: "k", text: "In Chapter 4, sophistical refutations are divided into two groups; thirteen kinds in all." }, { kind: "footnote", url: "z", text_sha256: "z", text: "Bees and honey production in alpine meadows." }] });
   t("article sources: an uncited sentence receives the article's sources that bear on it, marked elsewhere in the article", sources.W1.length === 1 && sources.W1[0].url === "k" && sources.W1[0].located === "elsewhere in the article");
   t("article sources: a cited sentence keeps its own sources first, marked at the sentence", sources.W5[0].located === "at the sentence" && sources.W5.filter((x) => x.located === "at the sentence").length === 2);
+  // 2026-10-23: archive-grounded sentences, from a commissioned row, at two cents over the sentence.
+  {
+    const { groundingFor } = await import("../src/grounding.js");
+    const { POLICY: PO, priceClaim: pc } = await import("../src/cost.js");
+    const { STORE: ST, save: sv } = await import("../src/util.js");
+    const { mkdirSync, writeFileSync } = await import("node:fs");
+    const land = join(ST, "probe-landing"), V = "datasets/negative-of-the-negative/v2";
+    mkdirSync(join(land, V, "rows"), { recursive: true }); mkdirSync(join(land, V, "ledgers", "probe-row"), { recursive: true });
+    writeFileSync(join(land, V, "rows", "probe-row.json"), JSON.stringify({ objects: { T: { url: "https://en.wikipedia.org/w/index.php?oldid=42", claims: ["W1 Aristotle had nothing to say of syllogizing.", "W2 A sentence the archive does not touch."] } },
+      ontology: { t_alignment: [{ t: "W1", bears: "qualifies", note: "the claim is a priority claim", archive_claims: ["A1", "A9"] }] } }));
+    writeFileSync(join(land, V, "ledgers", "probe-row", "ledger-archive.json"), JSON.stringify([{ id: "A1", dep: 1697, quote: "q" }]));
+    sv("s7/probe-row/by-key/k-old.json", { complete: true, landing: land, key: "k-old", release: { commit: "r1" }, created: "2026-10-01T00:00:00Z", non_url: "u" });
+    sv("s7/probe-row/by-key/k-partial.json", { complete: false, landing: land, key: "k-partial", created: "2026-10-22T00:00:00Z" });
+    const g = groundingFor("probe-row", "Aristotle had  nothing to say of syllogizing.[3]", { commit: "r2" });
+    t("grounded: a sentence held in a complete commissioned row is served its alignment, with the archive claims the row's ledger holds", g?.sentence_id === "W1" && g.archive.bears === "qualifies" && g.archive.claims.length === 1 && g.archive.claims[0].url.endsWith("/records/1697/") && g.revision === "42");
+    t("grounded: the row's release is disclosed beside the current one, and a moved archive is said", g.release === "r1" && g.current_release === "r2" && g.archive_moved === true && /recomposes/.test(g.note));
+    t("grounded: a sentence the alignment does not touch is served as none recorded", groundingFor("probe-row", "A sentence the archive does not touch.")?.archive.bears === "none recorded");
+    t("grounded: no row holding the sentence, no grounding (the commission is offered instead)", groundingFor("probe-row", "Nothing like this is in T.") === null && groundingFor("no-such-row", "x") === null);
+    const { sentencePrice: sp } = await import("../src/sentence.js");
+    t("grounded: a grounded sentence costs its opening and two cents; with its reading already ledgered, the two cents alone", sp({ tier: "ledger", est: 0.02, ledgered: false, grounded: true }) === 0.07 && sp({ tier: "ledger", est: 0, ledgered: true, grounded: true }) === 0.02 && sp({ tier: "ledger", est: 0.02, ledgered: false, grounded: false }) === 0.05);
+  }
   // 2026-10-23: sentences in cents, the archive on commission only.
   {
     const { POLICY: PO, priceClaim: pc, estimateClaim: ec } = await import("../src/cost.js");

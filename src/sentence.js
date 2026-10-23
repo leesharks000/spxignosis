@@ -14,7 +14,10 @@ import { resolveSources } from "./resolve.js";
 import { makeReader } from "./reader.js";
 import { claimKey, readSentences, TIERS, withArticleSources } from "./run.js";
 import { inputFor } from "./reader.js";
-import { estimateClaim, estimateTokens, priceClaim } from "./cost.js";
+import { estimateClaim, estimateTokens, priceClaim, POLICY } from "./cost.js";
+import { groundingFor } from "./grounding.js";
+import { fromWikipedia } from "./s7/input.js";
+import { archiveRelease } from "./s7/traverse.js";
 import { load, save, sha256, politeFetch } from "./util.js";
 import { NON } from "./s7/input.js";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
@@ -23,6 +26,7 @@ import { join } from "node:path";
 export const MODES = {
   opening: { tier: "ledger", model: TIERS.ledger.reader_model, passes: 2, label: "opening: two independent readings, reconciled, with the declared checks" },
   preliminary: { tier: "check", model: TIERS.check.reader_model, passes: 1, label: "preliminary reading: one pass on the small model; not an opening" },
+  grounded: { tier: "ledger", model: TIERS.ledger.reader_model, passes: 2, label: "archive-grounded: the opening, with the archive's claims on the sentence from a commissioned /non row" },
 };
 
 // A Wikipedia page address: /wiki/Title, or index.php?title=…&oldid=…; other hosts are not read yet.
@@ -74,11 +78,15 @@ export function nonEntriesFor(text) {
   return NON_INDEX.filter((x) => x.q.includes(t) || (t.includes(x.q) && x.q.length >= 25)).map((x) => ({ row: x.row, field_claim: x.id, url: `https://www.alexanarch.org/non/${x.row}/` }));
 }
 
+// A sentence's price: its reading (nothing where the reading is ledgered: it is served free as recorded) and, when
+// grounded, the grounding line.
+export const sentencePrice = ({ tier, est, ledgered, grounded }) => Math.round(((ledgered ? 0 : priceClaim(tier, est, false)) + (grounded ? POLICY.grounded_sentence : 0)) * 100) / 100;
+
 export const requestId = ({ text, url, mode }) => `S-${sha256(`${norm(text)}|${String(url).trim()}|${mode}`).slice(0, 20)}`;
 
 // Prepares a sentence request: pins, locates, resolves; returns the ledgered reading (free), or the quote to pay.
 export async function prepareSentence({ text, url, mode = "opening" }) {
-  if (!MODES[mode]) throw Object.assign(new Error("mode is opening or preliminary"), { status: 400 });
+  if (!MODES[mode]) throw Object.assign(new Error("mode is opening, preliminary or grounded"), { status: 400 });
   if (!text || String(text).trim().length < 8) throw Object.assign(new Error("text: the sentence as you have it"), { status: 400 });
   const page = parsePage(url || "");
   if (!page) throw Object.assign(new Error("url: the page the sentence came from"), { status: 400 });
@@ -96,13 +104,23 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   const sources = withArticleSources([c], await resolveSources(claims.filter((x) => x.cited)));
   const srcs = sources[c.id];
   if (!srcs.length) return { ...base, state: "uncited", status: 200, sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, note: "the sentence carries no citation, and no source the article cites elsewhere bears on it; there is nothing to read it against", non };
+  // Grounded: the archive's claims on the sentence, from a complete commissioned row of the article's entity.
+  let grounding = null;
+  if (mode === "grounded") {
+    const row = fromWikipedia(pinned, [c], { [c.id]: srcs }).row;
+    grounding = groundingFor(row, c.text, archiveRelease());
+    if (!grounding) return { ...base, state: "not grounded", status: 200, sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, non,
+      note: "no commissioned /non row of this article's entity holds the sentence; the archive is consulted on commission, never for one sentence",
+      commission: { request: "POST /v1/quote", body: { oldid: pinned.oldid, tier: "commission" } }, opening: { request: "GET /v1/sentence", mode: "opening" } };
+  }
   const M = MODES[mode], reader = makeReader(undefined, M.model, { passes: M.passes });
   const key = claimKey(c, srcs, M.model, reader);
   const ledgered = load(`ledger/claims/${key}.json`);
   const tokens = estimateTokens(JSON.stringify(inputFor(c, srcs, pinned))) + 2500;
   const est = M.passes === 1 ? estimateClaim(M.model, tokens, 1200, 0) : estimateClaim(M.model, tokens);
-  const price = ledgered ? 0 : priceClaim(M.tier, est, false);
-  const prepared = { ...base, state: ledgered ? "recorded" : "quoted", sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, ledger_key: key,
+  // A grounded sentence pays its own reading (nothing where ledgered) and the grounding line.
+  const price = sentencePrice({ tier: M.tier, est, ledgered: !!ledgered, grounded: !!grounding });
+  const prepared = { ...base, state: ledgered && !grounding ? "recorded" : "quoted", grounding, sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, ledger_key: key,
     sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, located: s.located, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability, text_sha256: s.text_sha256 || null })),
     est_cost_usd: Math.round(est * 1e5) / 1e5, price_usd: price, non, created: new Date().toISOString(),
     expires: new Date(Date.now() + 2 * 3600e3).toISOString() };
@@ -128,6 +146,8 @@ export async function readSentence(rid) {
     result: entry ? { status: entry.status, support: entry.support, support_source: entry.support_source, innocent_reading: entry.innocent_reading, what_the_source_says: entry.what_the_source_says, changes: entry.changes, deltas: entry.deltas, operation: entry.operation, converted: entry.converted, attributization: entry.attributization, retained_authority: entry.retained_authority, invitation: entry.invitation, five_part: entry.five_part,
       readings: entry.readings, spans: entry.spans, sources: entry.sources, from_ledger: !!entry.from_ledger } : null,
     state: recorded ? { recorded: recorded.created, ledger_key: p.ledger_key, revision: p.page.oldid, source_hashes: p.sources.map((s) => s.text_sha256) } : null,
+    archive: p.grounding ? { bears: p.grounding.archive.bears, note: p.grounding.archive.note, claims: p.grounding.archive.claims,
+      row: { key: p.grounding.key, sentence: p.grounding.sentence_id, revision: p.grounding.revision, composed: p.grounding.composed, release: p.grounding.release, current_release: p.grounding.current_release, archive_moved: p.grounding.archive_moved, non_url: p.grounding.non_url }, note: p.grounding.note } : undefined,
     non: p.non, evidence: ev ? { passes: ev.passes.map((x) => ({ model: x.model, validation: x.validation })), verdict: ev.verdict } : null,
     breaches: s3.breaches, cost: { actual_usd: Math.round(s3.actual * 1e5) / 1e5, charged_usd: s3.charge },
     note: p.mode === "preliminary" ? "a preliminary reading: one pass on the small model; ask with mode=opening for the opening" : undefined,

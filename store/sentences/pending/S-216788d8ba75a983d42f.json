@@ -1,0 +1,65 @@
+{
+ "request_id": "S-216788d8ba75a983d42f",
+ "mode": "opening",
+ "mode_label": "opening: two independent readings, reconciled, with the declared checks",
+ "page": {
+  "title": "Sophistical Refutations",
+  "oldid": 1361634710,
+  "url": "https://en.wikipedia.org/w/index.php?title=Sophistical_Refutations&oldid=1361634710",
+  "html_sha256": "0b8bb858a111f5d2aeb3c19ca8f658e71443486ea2490905539f6dd0ad583534"
+ },
+ "state": "quoted",
+ "grounding": null,
+ "sentence": {
+  "id": "W2",
+  "section": "lead",
+  "text": "According to Aristotle, this is the first work to treat the subject of deductive reasoning in ancient Greece (Soph. Ref., 34, 183b34 ff.).",
+  "match": "exact"
+ },
+ "ledger_key": "aac77bcc91f8d8df8e7529b7cd986781c6e5f7f42efdad505454635ad6f701cf",
+ "sources": [
+  {
+   "ref": "S1",
+   "located": "at the sentence",
+   "label": "Aristotle, De sophisticis elenchis",
+   "url": "https://raw.githubusercontent.com/OpenGreekAndLatin/First1KGreek/7881c563436f52fb3550e6daa6df94be1b83b0e3/data/tlg0086/tlg040/tlg0086.tlg040.1st1K-grc1.xml",
+   "availability": "fetched",
+   "text_sha256": "3a5aaa17de513d42b82d0cfc17af70bab8c47926f8c05cc59ea69d171499b9df"
+  },
+  {
+   "ref": "S2",
+   "located": "elsewhere in the article",
+   "label": "Edward N. Zalta, ed. (18 March 2000). \"Aristotle's Logic, < Stanford Encyclopedia of Philosophy>\". Retrieved 2020-12-19.",
+   "url": "https://plato.stanford.edu/archives/fall2020/entries/aristotle-logic/",
+   "availability": "fetched",
+   "text_sha256": "4bfff26b053e1b138c73ab3e81bde00f612918e7be45d0de6a623724a620dade"
+  },
+  {
+   "ref": "S3",
+   "located": "elsewhere in the article",
+   "label": "Krabbe, E.C.W. (2012). \"Aristotle's On Sophistical Refutations\". Topoi. 31: 243–248. doi:10.1007/s11245-012-9124-0. hdl:11370/9e6b3574-e6b1-4b91-bbe4-78954ac9ea80. S2CID 170350834.",
+   "url": "https://link.springer.com/article/10.1007/s11245-012-9124-0?error=cookies_not_supported&code=f68f23c0-da6c-479e-b8a8-fee7c3aee4b5",
+   "availability": "fetched",
+   "text_sha256": "1b06edd97b739f38b681d4be6c837f2546900502945061c073b1e82123ecdd42"
+  },
+  {
+   "ref": "S4",
+   "located": "elsewhere in the article",
+   "label": "Aristotle; Translated by W. A. Pickard-Cambridge. \"On Sophistical Refutations\". Retrieved 2020-12-19.",
+   "url": "https://classics.mit.edu/Aristotle/sophist_refut.mb.txt",
+   "availability": "fetched",
+   "text_sha256": "d4708842c9d61156d4fe6ca39d1d7bdaa2f77e3f003c521f2ffabbbb2b23f6e3"
+  }
+ ],
+ "est_cost_usd": 0.0475,
+ "price_usd": 0.08,
+ "non": [
+  {
+   "row": "se-183b34",
+   "field_claim": "F37",
+   "url": "https://www.alexanarch.org/non/se-183b34/"
+  }
+ ],
+ "created": "2026-10-23T16:49:22.281Z",
+ "expires": "2026-10-23T18:49:22.281Z"
+}

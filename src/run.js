@@ -17,6 +17,7 @@ import { snapshot } from "./resolve.js";
 import { politeFetch } from "./util.js";
 import { runS7, s7Key } from "./s7/run.js";
 import { estimateS7 } from "./s7/estimate.js";
+import { archiveOn, readLanding } from "./grounding.js";
 import { publicationState } from "./s7/publish.js";
 import { archiveRelease } from "./s7/traverse.js";
 import { validateReading, reconcile, NORMALIZATION, deltaText } from "./validate.js";
@@ -25,7 +26,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.11.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.11.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -442,6 +443,8 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
       const notRun = out.run.budget.not_run || 0, failed = out.run.budget.failed_calls || 0;
       s7.coverage = { composed: s7.composed, budget_exhausted: !!out.run.budget.exhausted, failed_passes: failed, passes_not_run: notRun, audit_complete: !!out.run.audit?.complete };
       s7.complete = s7.composed && !s7.coverage.budget_exhausted && !failed && !notRun && s7.coverage.audit_complete;
+      // The release and the time are kept with the row, so a grounded sentence served from it can disclose both.
+      s7.release = out.run.release || null; s7.created = new Date().toISOString();
       save(`s7/${input.row}/${s7.complete ? "by-key" : "partial"}/${key}.json`, s7);
     }
     // The quoted S7 line is an upper bound (every candidate deposit costed as admitted); the charge is the measured cost
@@ -449,15 +452,10 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     if (s7.composed) s7.charge_usd = s7.from_ledger ? POLICY.ledgered_s7 : Math.min(q.s7.price_usd, Math.ceil(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin) * 100) / 100);
     charge += s7.charge_usd || 0;
     // Each sentence of the article, with what the archive's claims do to it (the ontology pass's alignment).
-    const V2 = "datasets/negative-of-the-negative/v2";
-    const rd = (rel) => (existsSync(join(s7.landing, rel)) ? JSON.parse(readFileSync(join(s7.landing, rel), "utf8")) : null);
-    const row = rd(`${V2}/rows/${input.row}.json`);
-    const ledger = rd(`${V2}/ledgers/${input.row}/ledger-archive.json`) || [];
-    const byA = Object.fromEntries(ledger.map((c) => [c.id, c]));
+    const { row, ledger } = readLanding(s7.landing, input.row);
     for (const a of row?.ontology?.t_alignment || []) {
       const e = entries.find((x) => x.id === a.t);
-      if (e) e.archive = { bears: a.bears, note: a.note, claims: (a.archive_claims || []).filter((id) => byA[id]).map((id) => ({ id, dep: byA[id].dep, record: byA[id].record, locus: byA[id].locus, quote: byA[id].quote,
-        url: byA[id].dep ? `https://www.alexanarch.org/s/records/${byA[id].dep}/` : byA[id].record?.url })) };
+      if (e) e.archive = archiveOn(a, ledger);
     }
     s7.row = row; s7.ledger = ledger;
   }

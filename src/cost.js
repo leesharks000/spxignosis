@@ -50,6 +50,7 @@ export const POLICY = {
   floor_s7: 1.0, // the archive's consultation and the /non row, fresh
   s7_budget_ratio: 1.5, // model spending on S7 stops at price / ratio
   ledgered_s7: 0.10, // a /non row already composed for the same input
+  grounded_sentence: 0.02, // a sentence served the archive's claims on it from a commissioned row, added to its own price
   portable_package: 0.25, // the knowledge object packaged, charged when the audit marks no unit
   ledgered_package: 0.05,
 };

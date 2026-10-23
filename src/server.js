@@ -57,7 +57,7 @@ app.get("/", (_req, res) => res.json({
     "POST /v1/quote": "free. body {oldid, tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
     "POST /v1/openings/{quote_id}": "paid (x402, USDC on Base, settling to the service's Stripe balance). Runs the work for a quote; returns the composition result and the result id. A quote already paid returns its result without a second charge; what the work did not use is refunded.",
-    "GET /v1/sentence?text=&url=&mode=": "the sentence as you have it and the Wikipedia page it came from: free where it has been read (as recorded); otherwise 402 with the price, then the opening (two readings) or, with mode=preliminary, one quick pass",
+    "GET /v1/sentence?text=&url=&mode=": "the sentence as you have it and the Wikipedia page it came from: free where it has been read (as recorded); otherwise 402 with the price, then the opening (two readings); mode=preliminary, one quick pass; mode=grounded, the opening with the archive's claims on the sentence from a commissioned /non row (two cents more; where no row holds the sentence, the commission is offered and nothing is charged)",
     "POST /v1/openings/{quote_id}/checkout": "for people: a Stripe Checkout link for the quote's maximum (at least $0.50); the work runs when the payment completes, and what it did not use is refunded",
     "GET /v1/quotes/{quote_id}/status": "where a quote stands: quoted, paid and running, delivered; its receipt and any refund",
     "GET /v1/results/{result_id}/publication": "the /non row's publication, observed now: composed, checked, landed, public",
@@ -123,7 +123,7 @@ app.get("/v1/sentence", async (req, res, next) => {
   try {
     const { text, url, mode = "opening" } = req.query;
     const p = await prepareSentence({ text, url, mode });
-    if (p.state === "not found" || p.state === "uncited") return res.status(p.status).json(p);
+    if (p.state === "not found" || p.state === "uncited" || p.state === "not grounded") return res.status(p.status).json(p);
     if (p.state === "recorded") return res.json({ ...(await readSentence(p.request_id)), price_usd: 0, free: "this reading exists; it is served as recorded. Re-reading against changed sources is new work." });
     req.sentence = p; next(); // quoted: the payment layer answers 402 with this price
   } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }); }
@@ -165,7 +165,7 @@ app.use(paymentMiddleware({
         return `$${Math.max(0.01, p.price_usd).toFixed(2)}`;
       },
     }],
-    description: "Use when a received claim needs checking against its source before it is cited or relied on: send the sentence and the Wikipedia page it came from; returns whether its cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary for one quick pass. The paid reading is kept and served free to later callers; the response names it under contributes.",
+    description: "Use when a received claim needs checking against its source before it is cited or relied on: send the sentence and the Wikipedia page it came from; returns whether its cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary for one quick pass; mode=grounded adds the Crimson Hexagonal Archive's claims on the sentence where the article has been commissioned. The paid reading is kept and served free to later callers; the response names it under contributes.",
     mimeType: "application/json",
   },
   "POST /v1/openings/:quote_id": {
