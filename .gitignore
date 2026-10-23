@@ -1,0 +1,12 @@
+node_modules/
+store/test-wallets.json
+store/snapshots/
+store/results/
+store/quotes/
+store/ledger/
+store/receipts/
+store/refunds/
+store/delivered/
+store/calibration/
+store/s7/
+store/progress/

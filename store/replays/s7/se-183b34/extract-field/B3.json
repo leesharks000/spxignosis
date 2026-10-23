@@ -1,0 +1,48 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Aristotelian logic, after a great and early triumph, consolidated its position of influence to rule over the philosophical world throughout the Middle Ages up until the 19th Century.",
+    "locus": "Introduction",
+    "claim": "Aristotelian logic ruled from an early triumph to the 19th century.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   },
+   {
+    "quote": "What we have are largely notes, written at various points in his career, for different purposes, edited and cobbled together by later followers.",
+    "locus": "§1 The Organon",
+    "claim": "The logical writings are largely notes, edited and cobbled together by later followers.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the passage's place: the ending of SE and of the Topics"
+   },
+   {
+    "quote": "In a short work entitled Sophistical Refutations, Aristotle introduces a theory of logical fallacies that has been remarkably influential.",
+    "locus": "§15 Fallacies",
+    "claim": "SE introduces a remarkably influential theory of fallacies.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the reception of Aristotle's logic"
+   },
+   {
+    "quote": "We should note that much of this text, which deals with natural language argumentation, does not presuppose the syllogistic form.",
+    "locus": "§15 Fallacies",
+    "claim": "Much of SE does not presuppose the syllogistic form.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the inquiry: its programme (183a37–b8)"
+   }
+  ]
+ }
+}

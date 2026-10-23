@@ -1,0 +1,57 @@
+__NOTOC__ 
+<languages/>
+{{shortcut|WD:N|protected=yes}}{{protected|pagename=Wikidata:Notability}}
+{{Policy}}
+{{Fmbox|text=<translate><!--T:1-->
+Note that the guidelines below are intentionally left a bit vague. In case of disagreement over the notability of an item, you can launch a [[<tvar name="deletion">Wikidata:Requests for deletions</tvar>|request for deletion]]. The final decision is always up to the community.</translate>}}
+{{Fmbox|text=<translate>
+If you are unsure whether the entity meets the notability policy, you can ask for advice at [[<tvar name="rfni">Wikidata:Requests for new items</tvar>]].</translate>
+}}
+{{Fmbox|text=
+A discussion is ongoing about changing this policy: [[Wikidata:Requests for comment/Notability policy reform]]
+}}
+
+<translate><!--T:2-->
+Wikidata in its first phases has two main goals: '''to centralize interlanguage links''' across Wikimedia projects and '''to serve as a general knowledge base''' for the world at large. An item is acceptable if and only if it fulfills at least one of these two goals; that is, '''if it meets at least one of the three criteria below''':</translate>
+
+# {{anchor|1}} <translate><!--T:11--> It contains '''at least one valid [[<tvar name="sitelink">Special:MyLanguage/Help:Sitelinks</tvar>|sitelink]]''' to a page on Wikipedia, Wikivoyage, Wikisource, Wikiquote, Wikinews, Wikibooks, Wikidata, Wikispecies, Wikiversity, or Wikimedia Commons.</translate>
+## <translate><!--T:18--> To be valid, a link must '''not''' be a talk page, page in MediaWiki namespace, special page, file, translations page, page in User or Draft namespace, page used by LiquidThreads (i.e. page in Thread and Summary namespace), page used by Structured Discussions (i.e., page in Topic namespace), subpage of Portal namespace, or any page that is intended for [[<tvar name="templatestyles">mw:Special:MyLanguage/Extension:TemplateStyles</tvar>|TemplateStyles]] (i.e. page names that end with ".css").<tvar name="ref1"><ref name="rfc-non-article1" /><ref name="rfc-non-article2" /><ref name="rfc-files" /><ref name="drafts" /><ref name="styles" /></tvar> Note that a single Wikimedia page cannot have more than one sitelink in Wikidata. It is permitted for a sitelink to point to a redirect (although the software intentionally makes this difficult),<!-- general guidelines here, we do not care about technical details--><tvar name="ref2"><ref name="rfc-redir" /><ref name="redirect"/></tvar> but such a link will not count towards establishing notability.</translate>
+## <translate><!--T:21--> If a link is a template, the item must contain '''at least two''' such sitelinks, and any of them must not be one of /doc, /XML, /meta, /sandbox, /testcases or /TemplateData subpages. Items for non-subpages can be created with only one sitelink, but shouldn't be created in great numbers.</translate>
+## <translate><!--T:22--> If a link is a subpage of a module, it must not be a /doc page.</translate><ref name="rfc-interwiki"/>
+## <translate><!--T:19--> Category items with a sitelink only to Wikimedia Commons are not permitted, unless either a) there is a corresponding main item which has a sitelink to a Commons gallery or b) the item is used in a Commons-related statement, such as {{P|2033}}.</translate>
+## <translate><!--T:20--> On Wikisource, items for mainspace pages, Author pages, Translation pages, and Portal pages are valid, along with items for namespaces that exist on other Wikimedia sites (Category, Project...). Pages in the Index and Page namespaces are not considered valid. Subpages of mainspace pages (for example, individual chapters) are not considered valid unless they are written by separate authors, could be considered stand-alone works, or have been translated separately.</translate><ref><translate><!--T:43--> Items for individual chapters can still be considered notable per point 3 if they are used in other items.</translate></ref><ref name="rfc-wikisource"/><ref name="wikisource2">Discussion: [[Wikidata:Project_chat/Archive/2026/04#Creating Wikidata items for every chapter of a book|Creating Wikidata items for every chapter of a book]]</ref>
+## <translate><!--T:23--> On Wikinews, pages in the Comments namespace are not considered valid.</translate>
+## <translate><!--T:25--> On Wikidata, pages in namespace for structured data (currently includes items, properties, lexemes, EntitySchemas) are not allowed as target sitelink.</translate>
+## <translate><!--T:27--> On Wiktionary, items for citation pages are not allowed. Main namespace is also [[<tvar name="1">Special:MyLanguage/Wikidata:Wiktionary/Sitelinks</tvar>|excluded]] because interlanguage links are automatically provided by [[<tvar name="cognate">mw:Special:MyLanguage/Extension:Cognate</tvar>|Cognate]].</translate>
+## <translate><!--T:29--> The status of pages in Meta-Wiki, MediaWiki.org, Wikimania and other supported special Wikimedia sites is undetermined. They should be discussed in a case-by-case basis.</translate>
+# {{anchor|2}} <translate><!--T:12--> It refers to an instance of a '''clearly identifiable conceptual or material entity''' that can be described using '''serious and publicly available references'''.</translate>
+# {{anchor|3}} <translate><!--T:13--> It fulfills a '''structural need''', for example: it is needed to make statements made in other items more useful.</translate>
+
+<translate>
+== Alternatives == <!--T:30-->
+
+<!--T:31-->
+If the data you're trying to add falls outside of these notability guidelines, your data unfortunately won’t be accepted on Wikidata. But, our sibling projects, Wikibase Cloud and Wikibase Suite could be a good home for your data. Go to [<tvar name="1">https://wikiba.se</tvar> wikiba.se] to learn more about the options.
+
+== See also == <!--T:3-->
+</translate>
+* <translate><!--T:14--> <tvar name="1">{{Ll|Wikidata:Notability/Exclusion criteria}}</tvar>, a list of Wikimedia pages that are not considered automatically acceptable in Wikidata.</translate>
+* <translate><!--T:26--> <tvar name="1">{{Ll|Wikidata:Notability/Items considered notable}}</tvar>, a list of items that have been considered acceptable, as exceptions to the general guidelines above.</translate>
+* {{Ll|Wikidata:Lexicographical data/Notability}}
+<translate>
+
+== References == <!--T:24-->
+</translate>
+<references>
+<ref name="rfc-non-article1"><translate><!--T:35--> Request for comment: [[<tvar name="inclusion">Wikidata:Requests for comment/Inclusion of non-article pages</tvar>|Inclusion of non-article pages]]</translate></ref>
+<ref name="rfc-non-article2"><translate><!--T:36--> Request for comment: [[<tvar name="inclusion2">Wikidata:Requests for comment/Inclusion of non-article pages 2</tvar>|Inclusion of non-article pages 2]]</translate></ref>
+<ref name="rfc-files"><translate><!--T:37--> Request for comment: [[<tvar name="exclusion">Wikidata:Requests for comment/Exclusion of pages in the file namespace</tvar>|Exclusion of pages in the file namespace]]</translate></ref>
+<ref name="drafts"><translate><!--T:38--> Drafts are excluded per [[<tvar name="draft">Wikidata:Project chat/Archive/2013/12#Draft name space</tvar>|Draft name space]] and [[<tvar name="draft2">Wikidata:Project chat/Archive/2014/05#What do do with Wikipedia:Draft articles</tvar>|What do do with Wikipedia:Draft articles]].</translate></ref>
+<ref name="styles"><translate><!--T:39--> [[<tvar name="style">Wikidata_talk:Notability/Archive_5#Styles_pages</tvar>|Consensus to exclude TemplateStyles related subpages]]</translate></ref>
+<ref name="rfc-redir"><translate><!--T:40--> [[<tvar name="redirect">Wikidata:Requests for comment/Allow the creation of links to redirects in Wikidata</tvar>|Wikidata:Requests for comment/Allow the creation of links to redirects in Wikidata]] (2017-18) confirming older [[<tvar name="move_redirect">Wikidata:Requests for comment/A need for a resolution regarding article moves and redirects#new_Proposal_zero</tvar>|Wikidata:Requests for comment/A need for a resolution regarding article moves and redirects#new Proposal zero]] (2013).</translate></ref>
+<ref name="redirect"><translate><!--T:28--> [[<tvar name="1">Wikidata:Sitelinks to redirects</tvar>|Sitelink to redirect]] should carry a [[<tvar name="2">Special:MyLanguage/Help:Badges</tvar>|sitelink badge]] that indicates the redirect status of the target page on the client wiki.</translate> <translate><!--T:32--> Such a sitelink can be added to an Item if and only if a redirect badge is added in the same edit.</translate> <translate><!--T:33--> If available, a template corresponding to {{Q|116644654}} should also be added to the redirect page, to show that the Wikidata sitelink is intentional, and not eg the unintended left-over effect of a Wikipedia article merge that should also have been reflected on Wikidata.</translate> <translate><!--T:34--> Sitelinks to redirects should typically not be created unless (a) there is a substantial section about the subject on the target page of the redirect, reflecting all or most of the information in the Wikidata item; and (b) there is good reason not to merge the two corresponding Wikidata items.</translate></ref>
+<ref name="rfc-interwiki"><translate><!--T:42--> Request for comment: [[<tvar name="subpage">Wikidata:Requests for comment/Interwiki links for subpages</tvar>|Interwiki links for subpages]]</translate></ref>
+<ref name="rfc-wikisource"><translate><!--T:41--> Discussion: [[<tvar name="wikisource">Wikidata talk:Wikisource#Notability, and other preparations for Wikisource deployment</tvar>|Notability, and other preparations for Wikisource deployment]]</translate></ref>
+</references>
+{{Policies and Guidelines}}
+{{Translation categories}}

@@ -1,0 +1,18 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "the reader supplies the qualifier that makes the claim comfortable — *nothing* becomes *nothing systematic* — and does so even with the description of the reflex in view (#1574, *The Particle*; capture of 2026-09-06, condition WARNED).",
+    "locus": "§ (the reflex this packet will meet)",
+    "claim": "The reader supplies the comfortable qualifier, even with the reflex described.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the reception measured"
+   }
+  ]
+ }
+}

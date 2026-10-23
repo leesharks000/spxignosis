@@ -1,0 +1,38 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Read literally this is not modesty about the syllogistic and not a priority dispute. There was nothing before **because he had not yet written it**.",
+    "locus": "S1",
+    "claim": "Read literally: nothing before, because he had not yet written it.",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "is a premise of the method stated about the method.",
+    "locus": "Round (f), §VIII",
+    "claim": "οὐδὲν παντελῶς ὑπῆρχεν is a premise of the method stated about the method.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the verb ὑπάρχειν"
+   },
+   {
+    "quote": "says nothing existed before **because the operation's range had not been seen** — and the one who saw it is the one claiming it.",
+    "locus": "M40, re-read",
+    "claim": "Discovery reading: nothing existed before because the operation's range had not been seen.",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   }
+  ]
+ }
+}

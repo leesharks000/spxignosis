@@ -1,0 +1,28 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "develops the Particle's open placement into the thesis that the chapter dissolves Socrates as predecessor, and argues the degree-reading is not attested before the modern period",
+    "locus": "§ (Nothing Before Us: SE 34 and the deleted particle)",
+    "claim": "The prediction index: #1603 develops #1574's open placement into the dissolution of Socrates as predecessor.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "Ross and Dorion for Nothing Before Us",
+    "locus": "§ (sources owed)",
+    "claim": "Owed before final form: Ross and Dorion for #1603.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the text's open checks"
+   }
+  ]
+ }
+}

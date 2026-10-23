@@ -1,0 +1,518 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "At the end of the *Sophistical Refutations* Aristotle denies that anything of his inquiry existed before it: οὐδὲν παντελῶς ὑπῆρχεν.",
+    "locus": "Abstract",
+    "claim": "At the end of SE Aristotle denies that anything of his inquiry existed before it.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the denial is total within its domain"
+   },
+   {
+    "quote": "In every version examined here the sentence is translated as it stands; where it is narrowed — to *no systematic treatment*, *no completed art* — the narrowing comes in the gloss, because everyone knows that Socrates asked questions before Aristotle answered them.",
+    "locus": "Abstract",
+    "claim": "The translations keep the sentence; the narrowing enters in the gloss, on the premise that Socrates came before.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "I argue that the sentence means what it says; that the closing chapter is built, joint by joint, so that it can be kept; and that the figure the qualification exists to protect — Socrates as a predecessor from whom something of the inquiry was received — is a figure the chapter itself has already dissolved.",
+    "locus": "Abstract",
+    "claim": "The sentence means what it says; the chapter dissolves Socrates as a predecessor from whom something was received.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "The *Sophistical Refutations* ends with the most famous boast in the history of logic:",
+    "locus": "§1",
+    "claim": "The sentence is the most famous boast in the history of logic.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "Everyone knows the sentence cannot mean what it says. Socrates asked questions and refuted the confident; Plato wrote the questioning down and built an Academy around it; Zeno had arguments, the Megarians had arguments, the paid teachers of eristic had arguments for sale.",
+    "locus": "§1",
+    "claim": "The received reading in its own voice: arguments existed before, so the sentence cannot mean what it says.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "It is difficult to reconcile Aristotle's assertion with what we know had been done by Plato and Socrates and the Eleatics and Megarians. What he really performed in his dialectical treatise was to indicate a number of methodic principles or elements of method.",
+    "locus": "§1 (Poste 1866, n. 9 to ch. 34)",
+    "claim": "Poste (1866) reconciles the assertion with what we know: what he really performed.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "Nothing here impugns the fourth century. Socrates asked; the practice of examining existed; the paper asserts nothing about history beyond what the paragraph asserts, and the paragraph, we will see, asserts less about history than its readers do.",
+    "locus": "§1",
+    "claim": "Limit: nothing about history beyond what the paragraph asserts.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "That is the whole page: an undertaking named as a capacity; a second task and its cause; Socrates under the cause; a division of all discoveries by provenance; rhetoric filed on the received side with its chain of names; the denial; the professionals as the denial's proof; the shoes; the count of things said; the envoi on the same axis the division opened.",
+    "locus": "§2",
+    "claim": "The page in order: capacity, second task and Socrates, provenance division, rhetoric, the denial, the teachers, the shoes, the count, the envoi.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the argument of the page"
+   },
+   {
+    "quote": "Two provenances, not two sizes.",
+    "locus": "§2",
+    "claim": "The two kinds of discovery are two provenances, not two sizes.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "From 183b17 to 184b8 the paragraph's one axis is *provenance*: taken from others or found from the beginning; παρ᾽ ἑτέρων against ἐξ ὑπαρχῆς; ἐκ διαδοχῆς and ἐκ παραδόσεως against ἐξ ἀρχῆς.",
+    "locus": "§3",
+    "claim": "The paragraph's one axis is provenance, not degree.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the provenance axis of the paragraph"
+   },
+   {
+    "quote": "The sentence's first clause denies the picture the reading offers as the sentence's meaning.",
+    "locus": "§3",
+    "claim": "The negated mixed condition is the qualified reading's own picture.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the deletion of οὐ"
+   },
+   {
+    "quote": "ὑπάρχειν is not *to have been elaborated*; it is *to be there* — to be available, to belong, the *Analytics*' own workhorse for what holds of what.",
+    "locus": "§3",
+    "claim": "ὑπῆρχεν is 'to be there', not 'to have been elaborated'.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the verb ὑπάρχειν"
+   },
+   {
+    "quote": "the standing claim is the narrower one: nothing in the syntax requires the import, and the import is the costlier construal.",
+    "locus": "§3",
+    "claim": "Limit: the syntax does not require the import; it is the costlier construal.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "The chapter's one named set of would-be predecessors is denied precisely παραδοῦναι.",
+    "locus": "§3",
+    "claim": "The teachers are denied handing on (τέχνην δ᾽ οὐ παρέδωκεν).",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers: the things from the art, not the art"
+   },
+   {
+    "quote": "The claim is kept distinct from 183b35's and should be kept so: not *nothing existed* but *we had nothing to take up and say*",
+    "locus": "§3",
+    "claim": "184b1–2 is a claim of sayings, distinct from 183b35's.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the sentence 184b1–2, read"
+   },
+   {
+    "quote": "πραγματεία individuates undertakings; the demonstrative selects one; and the one selected is individuated for the reader by its stated ἔργον",
+    "locus": "§4",
+    "claim": "The domain is this undertaking, individuated by its ἔργον.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the domain: this undertaking"
+   },
+   {
+    "quote": "Untheorized practice of examining is not a special antechamber where Socrates waits for Aristotle; it is the condition of ἅπαντες, everyone, the treatise's own word.",
+    "locus": "§4",
+    "claim": "SE 11 places artless examining in everyone.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the peirastic and Socrates"
+   },
+   {
+    "quote": "One firebreak: nothing in it claims that Socrates possessed the art, or that he stands inside the first-person plural by grammar.",
+    "locus": "§4",
+    "claim": "Limit: no claim that Socrates possessed the art or is in the 'we' by grammar.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "On neither horn is he the figure the qualified reading requires: a predecessor from whom something of the inquiry, however rudimentary, was received.",
+    "locus": "§4",
+    "claim": "On either horn of the fork Socrates is not a predecessor from whom something was received.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "A significant precursor from whom nothing was received contradicts no clause of the sentence; whoever stands here has already left the qualified reading; the negative thesis counts them allies.",
+    "locus": "§4",
+    "claim": "The middle position (a significant precursor from whom nothing was received) keeps the sentence.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "Its function was never semantic — the Greek gave it nothing to do. Its function was custodial: to keep Socrates on the far side of a border the chapter never draws, at the price of adjusting the one sentence in the chapter built to resist adjustment.",
+    "locus": "§4",
+    "claim": "The qualification's function is custodial: it keeps Socrates outside.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "I will also argue, controversially, that the ending does more than leave Socrates standing untouched; it draws him in.",
+    "locus": "§5",
+    "claim": "Controversially: the ending draws Socrates in.",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": true,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "Tisias gets a chain; Socrates gets a *reason*, and it is the inquiry's own.",
+    "locus": "§5",
+    "claim": "Socrates is given the inquiry's own reason, not a chain of succession.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "διαλεκτικὴ γὰρ ἰσχὺς οὔπω τότ᾽ ἦν, *for dialectical capacity did not yet exist*",
+    "locus": "§5 (Metaph. Μ 4, 1078b23–32)",
+    "claim": "Μ 4: Socrates sought to syllogize while the dialectical capacity did not yet exist.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "That he stands inside the first person's referent, nothing here demonstrates, and nothing here claims it as demonstrated",
+    "locus": "§5",
+    "claim": "Limit: Socrates inside the first person is not demonstrated.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "I do not claim the chapter was designed as a trap; structures do not need intentions to function, and the claim of design is not readable off the page.",
+    "locus": "§6",
+    "claim": "Limit: no claim of design.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the chapter as the treatise's final exercise"
+   },
+   {
+    "quote": "A treatise on the detection of unperceived operations, ending on a sentence whose easiest domestication is such an operation, is its own final exercise — whoever set it.",
+    "locus": "§6",
+    "claim": "The ending is the treatise's own final exercise on its reader.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the chapter as the treatise's final exercise"
+   },
+   {
+    "quote": "Among the witnesses examined here, the degree-reading — *nothing systematic* — is not attested before the modern period.",
+    "locus": "§7",
+    "claim": "The degree-reading is not attested before the modern period, among the witnesses examined.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "the vocabulary of system enters the English chapter one line after the sentence it is later used to explain, and never inside it.",
+    "locus": "§7",
+    "claim": "'Systematic' enters the English chapter at ἄτεχνος, one line after the sentence.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "Whether the word then migrated from the instruction to the gloss on οὐδέν is a hypothesis about transmission, not a documented step",
+    "locus": "§7",
+    "claim": "The migration of 'systematic' to the gloss is a hypothesis.",
+    "kind": "limit",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "Every reading of this ending moves a word. The received reading moves οὐδέν — to *nothing systematic*, *nothing complete*, *nothing of the theory* — and holds the person still.",
+    "locus": "§8",
+    "claim": "The received reading moves οὐδέν and holds the person still.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the qualifier is not in the sentence"
+   },
+   {
+    "quote": "So the question the chapter leaves open as an *attribution* it answers as an *enactment*.",
+    "locus": "§9",
+    "claim": "The ending answers Socrates' place as an enactment, not an attribution.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the chapter as the treatise's final exercise"
+   },
+   {
+    "quote": "Socrates' questioning, as enacted by this ending, is not artless participation: it is the completed art exercising its capacity on the reader.",
+    "locus": "§9",
+    "claim": "Socrates' questioning, as the ending enacts it, is the completed art exercising itself on the reader.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the chapter as the treatise's final exercise"
+   },
+   {
+    "quote": "replacing zero with an adequacy threshold — \"nothing sufficiently developed, comprehensive, systematic, formal, comparable.\"",
+    "locus": "Appendix P, P7",
+    "claim": "P7 rules out replacing zero with an adequacy threshold (systematic, formal).",
+    "kind": "falsification",
+    "modality": "interpretation",
+    "kernel": true,
+    "const": false,
+    "lineage": "the prohibitions"
+   },
+   {
+    "quote": "*What we had earlier to say* about the activity and *whether anyone earlier performed* the activity are different propositions.",
+    "locus": "Appendix P, P9",
+    "claim": "What we had earlier to say and whether anyone earlier performed the activity are different propositions.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the sentence 184b1–2, read"
+   },
+   {
+    "quote": "The paper claims the first — Socrates is not filed as one from whom this was received — and withholds the second, which this sentence cannot decide and which is argued elsewhere on other evidence.",
+    "locus": "Appendix P, the two joints",
+    "claim": "Limit: 'not other relative to provenance' claimed; 'not a distinct maker' withheld at this sentence.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "The invitation is open at both levels: supply a transmitting reading that meets all nine, or a non-transmitting one that explains the four whys of §5 better.",
+    "locus": "Appendix P, the standing of the reading",
+    "claim": "Falsifier: a transmitting reading meeting all nine prohibitions, or a non-transmitting one explaining the four whys better.",
+    "kind": "falsification",
+    "modality": "self-description",
+    "kernel": true,
+    "const": false,
+    "lineage": "the prohibitions"
+   },
+   {
+    "quote": "Qualification: none in the asserted clause; *Nothing existed at all* stands as its own sentence. One adverb enters the denied member — *thoroughly done before* for προεξειργασμένον — which builds a degree into the thing denied.",
+    "locus": "Appendix A, D2 (Pickard-Cambridge)",
+    "claim": "Pickard-Cambridge keeps 'Nothing existed at all'; 'thoroughly' enters the denied member.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "ἄτεχνος is rendered ***unsystematic*** (*rapid but unsystematic*) — the lexical location of *systematic* in the English text of the chapter, attached to the teachers' instruction",
+    "locus": "Appendix A, D3 (Forster)",
+    "claim": "Forster renders ἄτεχνος 'unsystematic', at the teachers' instruction.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "Finding for the Arabic: both readable versions keep the quantifier total (البتّة) at 183b35",
+    "locus": "Appendix A, B (finding)",
+    "claim": "Both Arabic versions keep the quantifier total.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "the paraphrast is the strongest premodern occupant of the fork's second horn.",
+    "locus": "Appendix A, A1 classification",
+    "claim": "The Byzantine paraphrast (ὅλης; Σωκράτης διαλεκτικὸς ἄκρος) keeps the denial total and promotes Socrates inside dialectic.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "sed nihil omnino erat inventum a prioribus ante nos de hoc negotio.",
+    "locus": "Appendix A, C3 (Albert)",
+    "claim": "Albert's paraphrase keeps the denial total.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the witnesses: translations keep the sentence"
+   },
+   {
+    "quote": "Ross's OCT (1958) remains unseated — in copyright, not on the open shelf — and is now the only outstanding witness at this line.",
+    "locus": "Texts",
+    "claim": "Limit: Ross's OCT is the only outstanding witness at 184b1.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the text's open checks"
+   },
+   {
+    "quote": "Each is a seating, not a citation, until its page is on the shelf; the paper does not report what it has not read.",
+    "locus": "Appendix L, L2",
+    "claim": "Limit: Dorion, Hasper, Fait, Schreiber and Ross are named as debts, not reported.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the text's open checks"
+   },
+   {
+    "quote": "Some take ἡ πραγματεία here as the written treatise, even the *Topics*–*SE* whole. The construal changes nothing",
+    "locus": "n. 9",
+    "claim": "On the book-reading of πραγματεία (the Topics–SE whole) the argument stands.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the domain: this undertaking"
+   },
+   {
+    "quote": "the design was responsive, so the sample shows the operation's persistence under objection in that environment — not spontaneous convergence — and it arbitrates nothing about the reading",
+    "locus": "§7",
+    "claim": "Limit on #1574: the sample is responsive and arbitrates nothing about the reading.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "limits of the reading"
+   },
+   {
+    "quote": "the order is the order of the escape routes as they were tried on an unprimed composer the same day (capture `se34-we-walk-chatgpt-unprimed-20260907`).",
+    "locus": "Appendix P, head",
+    "claim": "The prohibitions are ordered as the escapes were tried on the unprimed composer of 2026-09-07 (this row's T).",
+    "kind": "fact",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the prohibitions"
+   },
+   {
+    "quote": "rescuing the denial by relocating it to an undertaking defined independently of that description — \"logic,\" \"the formal theory of valid inference,\" a calculus the *Analytics* later supplies.",
+    "locus": "Appendix P, P1",
+    "claim": "P1 rules out relocating the denial to 'logic' or 'the formal theory of valid inference'.",
+    "kind": "falsification",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the prohibitions"
+   },
+   {
+    "quote": "it prohibits exclusion from the activity; it does not by itself settle inclusion in the speaking *we*",
+    "locus": "Appendix P, P2 reach",
+    "claim": "P2: Socrates is not excluded from the activity; inclusion in the 'we' is not settled by it.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the prohibitions"
+   },
+   {
+    "quote": "The defender's contrast — discipline versus untheorized practice — is not on the page.",
+    "locus": "§4",
+    "claim": "The passage opposes the art to its products; discipline versus untheorized practice is not on the page.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers: the things from the art, not the art"
+   },
+   {
+    "quote": "Read with the treatise's own account of the peirastic, Socrates' asking is either the artless examining everyone shares, from which nothing is received, or something more, which the epilogue files under the inquiry's own purposes.",
+    "locus": "Abstract",
+    "claim": "The fork: Socrates' asking is everyone's artless examining, from which nothing is received, or more, filed under the inquiry's own purposes.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   }
+  ]
+ }
+}

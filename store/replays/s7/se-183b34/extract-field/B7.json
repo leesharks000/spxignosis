@@ -1,0 +1,108 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Our programme was, then, to discover some faculty of reasoning about any theme put before us from the most generally accepted premisses that there are. For that is the essential task of the art of discussion (dialectic) and of examination (peirastic).",
+    "locus": "SE 34, 183a37–b3 (part 34)",
+    "claim": "The inquiry undertook to find a faculty of reasoning from the most generally accepted premisses: the task of dialectic and of peirastic.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the inquiry: its programme (183a37–b8)"
+   },
+   {
+    "quote": "The reason of this we have explained; for this, too, was why Socrates used to ask questions and not to answer them; for he used to confess that he did not know.",
+    "locus": "SE 34, 183b6–8",
+    "claim": "Socrates is named in the statement of the inquiry's second task: he asked and did not answer, confessing he did not know.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates in the epilogue (183b6–8)"
+   },
+   {
+    "quote": "For in the case of all discoveries the results of previous labours that have been handed down from others have been advanced bit by bit by those who have taken them on, whereas the original discoveries generally make advance that is small at first though much more useful than the development which later springs out of them.",
+    "locus": "SE 34, 183b17–22",
+    "claim": "Discoveries are of two kinds: those handed down from others and advanced bit by bit, and original discoveries, small at first.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the two kinds of discovery (183b17–33)"
+   },
+   {
+    "quote": "Tisias coming next after the first founders, then Thrasymachus after Tisias, and Theodorus next to him, while several people have made their several contributions to it: and therefore it is not to be wondered at that the art has attained considerable dimensions.",
+    "locus": "SE 34, 183b29–33",
+    "claim": "Rhetoric grew by succession (Tisias, Thrasymachus, Theodorus) and many contributions.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the two kinds of discovery (183b17–33)"
+   },
+   {
+    "quote": "Of this inquiry, on the other hand, it was not the case that part of the work had been thoroughly done before, while part had not. Nothing existed at all.",
+    "locus": "SE 34, 183b34–36",
+    "claim": "Of this inquiry it was not the case that part had been thoroughly done before and part not; nothing existed at all.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the sentence 183b34–36, rendered"
+   },
+   {
+    "quote": "For the training given by the paid professors of contentious arguments was like the treatment of the matter by Gorgias.",
+    "locus": "SE 34, 183b36–184a1",
+    "claim": "The paid professors of contentious arguments trained like Gorgias.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers and the shoes (183b36–184a8)"
+   },
+   {
+    "quote": "And therefore the teaching they gave their pupils was ready but rough. For they used to suppose that they trained people by imparting to them not the art but its products,",
+    "locus": "SE 34, 184a1–4",
+    "claim": "Their teaching was ready but rough: they imparted not the art but its products.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers and the shoes (183b36–184a8)"
+   },
+   {
+    "quote": "for he has helped him to meet his need, but has not imparted an art to him.",
+    "locus": "SE 34, 184a7–8",
+    "claim": "The giver of shoes helps the need but imparts no art.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the paid teachers and the shoes (183b36–184a8)"
+   },
+   {
+    "quote": "Moreover, on the subject of Rhetoric there exists much that has been said long ago, whereas on the subject of reasoning we had nothing else of an earlier date to speak of at all, but were kept at work for a long time in experimental researches.",
+    "locus": "SE 34, 184b1–3",
+    "claim": "Of rhetoric much had been said long ago; on reasoning we had nothing else of an earlier date to speak of at all, but worked long in experimental researches.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": true,
+    "const": false,
+    "lineage": "the sentence 184b1–2, rendered"
+   },
+   {
+    "quote": "there must remain for all of you, or for our students, the task of extending us your pardon for the shortcomings of the inquiry, and for the discoveries thereof your warm thanks.",
+    "locus": "SE 34, 184b3–8",
+    "claim": "The hearers are asked for pardon for shortcomings and thanks for discoveries.",
+    "kind": "translation",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the envoi (184b3–8)"
+   }
+  ]
+ }
+}

@@ -1,0 +1,58 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "On this reading the claim is about a systematic art, not about the practice, and nothing is left open.",
+    "locus": "§I.3",
+    "claim": "The conventional reading at full strength: a systematic art, not the practice.",
+    "kind": "attribution",
+    "modality": "attributed",
+    "kernel": false,
+    "const": false,
+    "lineage": "the received reading stated"
+   },
+   {
+    "quote": "is a request that the audience adjudicate a claim of first finding.",
+    "locus": "§I.10",
+    "claim": "The envoi's pardon and gratitude ask the hearers to adjudicate a claim of first finding.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the envoi"
+   },
+   {
+    "quote": "The epilogue's is: division belongs inside the method; nothing belonged to the method before it; and the term that joins them is absent.",
+    "locus": "§I.14",
+    "claim": "The epilogue leaves a socket: the joining term is absent.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "THE FILLING IS OFFERED AND NOT ESTABLISHED. AND THE OTHER FILLING IS AVAILABLE AND IS THE RECEIVED ONE.",
+    "locus": "§I.19",
+    "claim": "Limit: the same-maker filling is offered, not established.",
+    "kind": "limit",
+    "modality": "self-description",
+    "kernel": false,
+    "const": false,
+    "lineage": "the maker-count question at the sentence"
+   },
+   {
+    "quote": "1,182 occurrences of the stem in the *Prior Analytics* alone.",
+    "locus": "§IX.4 (17)",
+    "claim": "ὑπάρχ- occurs 1,182 times in the Prior Analytics.",
+    "kind": "measure",
+    "modality": "documented",
+    "kernel": false,
+    "const": false,
+    "lineage": "the verb ὑπάρχειν"
+   }
+  ]
+ }
+}

@@ -1,0 +1,38 @@
+{
+ "recorded": "assembled from /non row se-183b34 (Claude (subagent), 2026-10-20; first reading, 2026-10-20) for the calibration round trip",
+ "model": "replay",
+ "out": {
+  "claims": [
+   {
+    "quote": "Aristotle files Socratic operations inside the ἀρχή of his art — definition as the starting point of syllogisms (Μ 4), induction as one of two dialectical species (*Top.* I 12), peirastic as a part of dialectic practicable by the non-knower (SE 8, 11), interrogation as the paradigm technique (*Rhet.* III 18) — and keeps the art itself οὔπω.",
+    "locus": "§ (the transition's far end)",
+    "claim": "Aristotle files Socratic operations inside the beginning of his art and keeps the art 'not yet'.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "Socrates inside the inquiry"
+   },
+   {
+    "quote": "the consolidating position that speaks as *we* and classifies (SE 34: προειλόμεθα εὑρεῖν δύναμιν … περὶ τοῦ προβληθέντος)",
+    "locus": "§ (three modes as functions)",
+    "claim": "The 'we' of SE 34 is the consolidating position that classifies.",
+    "kind": "interpretation",
+    "modality": "hypothesis",
+    "kernel": false,
+    "const": false,
+    "lineage": "the we"
+   },
+   {
+    "quote": "the epilogue's *we* (SE 34: an undertaking that sets tasks, works them, and reports)",
+    "locus": "§ (the one structural relation)",
+    "claim": "The epilogue's 'we' is an undertaking that sets tasks, works them and reports.",
+    "kind": "interpretation",
+    "modality": "interpretation",
+    "kernel": false,
+    "const": false,
+    "lineage": "the we"
+   }
+  ]
+ }
+}
