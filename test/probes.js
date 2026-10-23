@@ -59,7 +59,18 @@ t("reconcile: identical readings agree", reconcile(r, structuredClone(r)).status
     { W5: [{ kind: "footnote", url: "k", text_sha256: "k", text: "In Chapter 4, sophistical refutations are divided into two groups; thirteen kinds in all." }, { kind: "footnote", url: "z", text_sha256: "z", text: "Bees and honey production in alpine meadows." }] });
   t("article sources: an uncited sentence receives the article's sources that bear on it, marked elsewhere in the article", sources.W1.length === 1 && sources.W1[0].url === "k" && sources.W1[0].located === "elsewhere in the article");
   t("article sources: a cited sentence keeps its own sources first, marked at the sentence", sources.W5[0].located === "at the sentence" && sources.W5.filter((x) => x.located === "at the sentence").length === 2);
-  t("instructions: the S3 rules of v1.1 are in the reader's instructions", READER_PROTOCOL === "gnosis-S3/0.5" && ["innocent reading", "never by itself supports fidelity", "species put for its genus", "answered-in-source-name", "elsewhere in the article", "primary-text adequacy"].every((k) => INSTRUCTIONS.includes(k)));
+  // 2026-10-23: sentences in cents, the archive on commission only.
+  {
+    const { POLICY: PO, priceClaim: pc, estimateClaim: ec } = await import("../src/cost.js");
+    const { ADMITS: AD } = await import("../src/run.js");
+    const { SECOND } = await import("../src/reader.js");
+    t("tiers: the archive is consulted on commission only, never at an opening", !AD.has("opening") && AD.has("commission") && AD.has("portable"));
+    t("price: a sentence opening is listed at five cents, raised only where the estimate times the sentence margin passes it; a ledgered one is a cent", pc("opening", 0.02, false) === 0.05 && pc("opening", 0.034, false) === 0.06 && pc("opening", 0, true) === 0.01);
+    t("price: a preliminary reading is listed at a cent", pc("check", ec("claude-haiku-5-5", 7195, 1200, 0), false) === 0.01);
+    t("price: a sentence with long sources is raised above its list price, at the sentence margin", pc("opening", 0.06, false) === Math.ceil(0.06 * PO.sentence_margin * 100) / 100);
+    t("reader: the second pass returns the reconciled fields only", /attributization/.test(SECOND) && /retained_authority/.test(SECOND) && !/five_part/.test(SECOND));
+  }
+  t("instructions: the S3 rules of v1.1 are in the reader's instructions", READER_PROTOCOL === "gnosis-S3/0.6" && ["innocent reading", "never by itself supports fidelity", "species put for its genus", "answered-in-source-name", "elsewhere in the article", "primary-text adequacy"].every((k) => INSTRUCTIONS.includes(k)));
 }
 
 // 2. ledger: a replay reading and a live reading never share a key.

@@ -5,7 +5,8 @@
 // the sentence on it, recovers the sources the sentence cites, and reads it against them. The default is an opening:
 // S3's two readings on the middle model, its declared checks, a disagreement returned as contested. A preliminary
 // reading (one pass on the small model) is offered under its own name and keyed apart; it is never presented as an
-// opening. A reading already in the claim ledger is returned free, at its disclosed state: the revision, the hashes of
+// opening. The sentence is read against its own sources and the article's; the archive is never consulted here, and
+// the price is in cents (operator, 2026-10-23). A reading already in the claim ledger is returned free, at its disclosed state: the revision, the hashes of
 // the sources it read, and when it was made. New work is quoted, paid, and then ledgered and public.
 import { pinRevision } from "./pin.js";
 import { segment } from "./segment.js";
@@ -99,7 +100,7 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   const key = claimKey(c, srcs, M.model, reader);
   const ledgered = load(`ledger/claims/${key}.json`);
   const tokens = estimateTokens(JSON.stringify(inputFor(c, srcs, pinned))) + 2500;
-  const est = estimateClaim(M.model, tokens) * (M.passes === 1 ? 0.5 : 1);
+  const est = M.passes === 1 ? estimateClaim(M.model, tokens, 1200, 0) : estimateClaim(M.model, tokens);
   const price = ledgered ? 0 : priceClaim(M.tier, est, false);
   const prepared = { ...base, state: ledgered ? "recorded" : "quoted", sentence: { id: c.id, section: c.section, text: c.text, match: found.match }, ledger_key: key,
     sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, located: s.located, label: s.edition || s.citation || s.url, url: s.final_url || s.url, availability: s.availability, text_sha256: s.text_sha256 || null })),

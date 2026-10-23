@@ -9,7 +9,7 @@ S="${1:?usage: test-all.sh FRESH_STORE_DIR}"
 mkdir -p "$S" && for f in store/replays store/policies store/seed-*.html; do [ -e "$f" ] && cp -r "$f" "$S"/; done; true
 for d in snapshots calibration; do [ -d "store/$d" ] && cp -r "store/$d" "$S"/ || true; done
 export GNOSIS_STORE="$S" GNOSIS_READER=replay
-for t in check opening portable; do
+for t in check opening commission portable; do
   node scripts/run-replay.js 1361634710 $t | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);console.log(d.tier,d.result,"reused="+d.reused,"max="+d.max_price_usd,"charge="+d.billing?.charge_usd,"completed="+d.summary.completed,"non="+(d.non?d.non.row+(d.non.composed?" composed":" not composed"):"-"),"portable="+!!d.portable,d.entries.join(" "))})'
 done
 node scripts/stand-in.js portable > /dev/null

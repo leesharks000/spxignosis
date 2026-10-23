@@ -1,6 +1,7 @@
 // The opening job: S0–S9 for one pinned revision. S3 reads each sentence against the sources it cites (T against L_F(B));
-// at the opening and portable tiers S7–S8 consult the archive by its own procedure and compose the entity's /non row,
-// which is public; the portable tier packages the row's knowledge object.
+// at the commission and portable tiers S7–S8 consult the archive by its own procedure and compose the entity's /non
+// row, which is public; the portable tier packages the row's knowledge object. An opening reads the article's sentences
+// against their sources and never consults the archive (operator, 2026-10-23).
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { pinRevision } from "./pin.js";
@@ -24,15 +25,16 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.10.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.11.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
 export const TIERS = {
   check: { reader_model: "claude-haiku-5-5", steps: "S0–S3, S6 integrity" },
   ledger: { reader_model: "claude-sonnet-5-5", steps: "S0–S6" },
-  opening: { reader_model: "claude-sonnet-5-5", steps: "S0–S9: the article opened sentence by sentence, and the entity's /non row composed with the archive admitted (public)" },
-  portable: { reader_model: "claude-sonnet-5-5", steps: "the opening, and the entity's knowledge object as a portable package" },
+  opening: { reader_model: "claude-sonnet-5-5", steps: "S0–S6: the article opened sentence by sentence against its cited sources; the archive is not consulted" },
+  commission: { reader_model: "claude-sonnet-5-5", steps: "S0–S9: the opening, and the entity's /non row composed with the archive admitted (public)" },
+  portable: { reader_model: "claude-sonnet-5-5", steps: "the commission, and the entity's knowledge object as a portable package" },
 };
 
 function policyState() {
@@ -50,7 +52,8 @@ export function claimKey(claim, srcs, model, reader) {
 }
 
 // Tiers that consult the archive and compose the entity's /non row.
-export const ADMITS = new Set(["opening", "portable"]);
+// The archive is consulted on commission only (operator, 2026-10-23).
+export const ADMITS = new Set(["commission", "portable"]);
 
 
 export async function prepare(oldid, only) {
@@ -204,9 +207,9 @@ const specWithCapture = (spec, capture) => (capture ? { ...spec, address: captur
 // and the sources the caller names, with no T; the article Wikipedia's policies would write is constructed only when
 // the caller asks for it as a comparison (compare: "encyclopedia"). With no commission named, a composition found or
 // supplied is opened, and otherwise the object is constructed.
-export async function quoteEntity(spec, { tier = "opening" } = {}) {
+export async function quoteEntity(spec, { tier = "commission" } = {}) {
   if (!spec?.name) throw new Error("object.name is required");
-  if (!ADMITS.has(tier)) throw new Error("an object without an article is commissioned at the opening or portable tier");
+  if (!ADMITS.has(tier)) throw new Error("an object without an article is commissioned at the commission or portable tier");
   if (spec.kind && !["entity", "operator"].includes(spec.kind)) throw new Error("object.kind is entity or operator");
   if (spec.kind === "operator" && !(spec.strings || []).length) throw new Error("an operator needs its strings: the phrases in which it is performed and in which entities speak it");
   if (spec.commission && !["open", "construct"].includes(spec.commission)) throw new Error("commission is open or construct");
@@ -296,7 +299,8 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     else verdict = { status: "withheld" };
     if (!fromLedger && verdict.status !== "withheld") save(`ledger/claims/${key}.json`, { key, claim: c.id, oldid: pinned.oldid, model, created: new Date().toISOString(), passes: r.passes.map((p) => ({ model: p.model, reading: p.reading })) });
     // A contested claim carries both readings; no single paraphrase stands for it.
-    const lead = verdict.status === "contested" ? null : valid[0]?.reading;
+    // The full account comes from the first pass; the second returns only the reconciled fields.
+    const lead = verdict.status === "contested" ? null : (valid.find((v) => v.reading?.five_part) || valid[0])?.reading;
     if (verdict.status !== "withheld") { completed++; charge += priceOf[c.id] || 0; }
     entries.push({
       id: c.id, section: c.section, sentence: c.text, status: verdict.status, from_ledger: fromLedger || undefined,
