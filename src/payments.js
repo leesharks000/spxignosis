@@ -65,7 +65,9 @@ export async function checkoutFor(q, { base }) {
     metadata: { quote_id: q.quote_id },
     success_url: `${base}/v1/quotes/${q.quote_id}/status?session={CHECKOUT_SESSION_ID}`,
     cancel_url: `${base}/v1/quotes/${q.quote_id}/status`,
-    expires_at: Math.floor(Math.min(Date.parse(q.expires), Date.now() + 23 * 3600e3) / 1000),
+    // Stripe keeps a Checkout Session open 30 minutes to 24 hours; a quote holds 15 minutes. The session opens for
+    // 31 minutes and the quote's price holds for a payment made in it (2026-10-24: Stripe refused the quote's own expiry).
+    expires_at: Math.floor((Date.now() + 31 * 60e3) / 1000),
   });
   return { checkout_url: s.url, session: s.id, amount_usd: amount };
 }
