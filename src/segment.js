@@ -9,7 +9,10 @@ function splitSentences(text) {
   // Conservative splitter: ends at . ! ? followed by space + capital/quote, skipping common abbreviations.
   const abbr = /\b(?:c|ca|cf|e\.g|i\.e|vol|ed|eds|trans|Soph|Ref|Rhet|Top|Metaph|Ph|ff|pp|p|St|Mr|Dr)\.$/i;
   const out = []; let buf = "";
-  const parts = text.split(/(?<=[.!?]["”’)]?)\s+(?=["“(]?[A-Z0-9Α-Ω])/);
+  // A sentence may end in footnote markers (" ⟦cite_note-…⟧", set in by segment() below); the boundary falls after
+  // them. Without this the split was skipped wherever a cited sentence ended, and the markers were stripped later,
+  // so a cited lead paragraph became one claim (2026-10-24: Mycelium, oldid 1380610751, W1 held three sentences).
+  const parts = text.split(/(?<=[.!?]["”’)]?(?:\s*⟦[^⟧]+⟧)*)\s+(?=["“(]?[A-Z0-9Α-Ω])/);
   for (const p of parts) {
     buf = buf ? `${buf} ${p}` : p;
     if (!abbr.test(buf.trim())) { out.push(buf.trim()); buf = ""; }
