@@ -167,7 +167,12 @@ app.get("/v1/sentence", async (req, res, next) => {
   } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }); }
 });
 
-if (!PAY_TO) app.use(/^\/v1\/(sentence|openings)/, (_req, res) => res.status(503).json({ error: "payments are not configured on this deployment yet; quotes are free at POST /v1/quote" }));
+// Unpaid deployment: a sentence already found and priced says so, with its price, before the 503 (2026-10-24).
+if (!PAY_TO) app.use(/^\/v1\/(sentence|openings)/, (req, res) => {
+  const p = req.sentence;
+  res.status(503).json({ error: "payments are not configured on this deployment yet; quotes are free at POST /v1/quote",
+    ...(p ? { state: "found", sentence: p.sentence, request_id: p.request_id, est_cost_usd: p.est_cost_usd, price_usd: p.price_usd, expires: p.expires } : {}) });
+});
 const resourceServer = !PAY_TO ? null : new x402ResourceServer(new HTTPFacilitatorClient(await facilitatorConfig())).register(NETWORK, new ExactEvmScheme());
 // A settled x402 payment is recorded in Stripe as a PaymentIntent, keyed by its transaction, before the route's receipt.
 resourceServer?.onAfterSettle(async (ctx) => {

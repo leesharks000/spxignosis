@@ -26,7 +26,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.12.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.12.2", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -130,7 +130,9 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
     claims_ledgered: lines.filter((l) => l.ledgered).length,
     lines, s7: s7 || undefined, package_price_usd: package_price || undefined,
     estimated_cost_usd: Math.round(est_cost * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
-    pricing: { table: PRICE_TABLE.version, margin: POLICY.margin, rule: "price per claim = max(floor, estimated cost × margin); the archive's consultation and the /non row priced as one line, max(floor, estimated cost × margin), from the traversal it would run; work already in the ledger at the ledgered rates; the charge is for completed work only" },
+    pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
+      rule: "price per claim = max(floor_per_claim, estimated cost × sentence_margin), rounded up to the cent; the archive's consultation and the /non row priced as one line, max(floor, estimated cost × margin), from the traversal it would run; work already in the ledger at the ledgered rates; the charge is for completed work only",
+      lines_at_floor: lines.filter((l) => !l.ledgered && l.price_usd === POLICY.floor_per_claim[tier]).length },
     execution_contract: {
       sources: `the sources each sentence cites (footnotes and classical pointers), fetched once and hashed; and, for every sentence, at most ${ARTICLE_SOURCES} of the sources the article cites elsewhere that bear on it, marked "elsewhere in the article" (S3 rule 1); an uncited sentence is read against those alone`,
       sent_to_reader: "the passages of each source that bear on the claim (classical chapters whole), with a code-computed structure summary; quotations are checked against the full text",
@@ -252,7 +254,8 @@ export async function quoteEntity(spec, { tier = "commission" } = {}) {
     reader_model: TIERS[tier].reader_model, lines: [], s7, construction: !compare ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
     sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
     estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
-    pricing: { table: PRICE_TABLE.version, margin: POLICY.margin, rule: "the construction, each constructed sentence's check, and the archive's consultation with the row, each at max(floor, estimated cost × margin); the charge is for completed work only" },
+    pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
+      rule: "each constructed sentence's check at max(floor_per_claim, estimated cost × sentence_margin); the construction and the archive's consultation with the row each at max(floor, estimated cost × margin); the charge is for completed work only" },
     execution_contract: {
       sources: "the sources the caller supplies, fetched once and hashed (the disclosed field B); notability is not applied",
       encyclopedia: wikipedia.exists ? `the encyclopedia holds an article at this title (${wikipedia.url}); the entity is opened as given here, and the article can be opened by its revision id` : "the encyclopedia holds no article at this title (observed at the quote); the absence is recorded in the row",
