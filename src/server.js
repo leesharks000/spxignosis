@@ -65,6 +65,7 @@ const INDEX = {
     "POST /v1/openings/{quote_id}/checkout": "for people: a Stripe Checkout link for the quote's maximum (at least $0.50); the work runs when the payment completes, and what it did not use is refunded",
     "GET /v1/quotes/{quote_id}/status": "where a quote stands: quoted, paid and running, delivered; its receipt and any refund",
     "GET /v1/results/{result_id}/publication": "the /non row's publication, observed now: composed, checked, landed, public",
+    "GET /v1/results/{result_id}/landing": "the /non row's landing tree: the manifest, each file at …/landing/{path}, for the operator's landing",
     "GET /v1/openings/{quote_id}/progress": "the stage a running opening has reached",
     "GET /v1/receipts/{quote_id}": "the settlement receipt (transaction, payer, amount) and any refund owed or sent",
     "GET /v1/results/{result_id}/composition": "the usable result",
@@ -288,6 +289,21 @@ app.get("/v1/results/:id/publication", async (req, res) => {
   const s7 = await load(`results/${req.params.id}/s7.json`);
   if (!s7) return res.status(404).json({ error: "no /non row for this result" });
   res.json(await publicationState(s7));
+});
+// The landing tree of a result's /non row, for the archive's landing tool (scripts/land_non_row.py --result): the manifest,
+// then each file it names, as kept in the store. Landing stays the operator's act (2026-10-24).
+app.get("/v1/results/:id/landing", async (req, res) => {
+  const s7 = await load(`results/${req.params.id}/s7.json`);
+  if (!s7?.manifest) return res.status(404).json({ error: "no /non row for this result" });
+  res.json(s7.manifest);
+});
+app.get("/v1/results/:id/landing/*path", async (req, res) => {
+  const s7 = await load(`results/${req.params.id}/s7.json`);
+  const path = [].concat(req.params.path || []).join("/");
+  if (!s7?.manifest?.files?.some((f) => f.path === path)) return res.status(404).json({ error: "not a file of this landing" });
+  const body = await load(`s7/${s7.row_key}/runs/${s7.manifest.key}/landing/${path}`, false);
+  if (body == null) return res.status(404).json({ error: "the file is not in this service's store" });
+  res.type(path.endsWith(".json") ? "application/json" : "text/plain").send(body);
 });
 app.get("/v1/results/:id/composition", file("composition.json", "application/json"));
 app.get("/v1/results/:id/evidence", file("evidence.json", "application/json"));

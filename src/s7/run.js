@@ -10,7 +10,9 @@ import { passLog, mode, S7_PROTOCOL, MODELS } from "./model.js";
 import { depMeta } from "./archive.js";
 import { buildRow, writeLanding } from "./row.js";
 import { blogPass, blogIndexSha } from "./blog.js";
-import { sha256 } from "../util.js";
+import { sha256, save, load, STORE } from "../util.js";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // The /non row is reusable when its whole input matches: T, every field source by hash, the entity's strings, the
 // archive release (commit, registry, citation graph, traversal script, blog index), the S7 protocol, models and mode.
@@ -64,6 +66,17 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
     budget: { budget_usd: Number.isFinite(log.budget_usd) ? log.budget_usd : null, shared_with_construction: !!shared && start > 0, exhausted: log.exhausted(),
       failed_calls: log.calls.slice(start).filter((c) => c.how.startsWith("failed")).length, not_run: log.calls.slice(start).filter((c) => c.how.startsWith("not run")).length } };
   const row = buildRow(run);
+  // One tree per execution key, never overwritten (row.js): a later run under the same key keeps the tree already kept,
+  // whose manifest earlier results name. Its bytes can differ only in what the run itself measures (its seconds), so
+  // rewriting it would leave those results naming hashes their files no longer have (found 2026-10-24).
+  const keptAt = `s7/${input.row}/runs/${key}/landing`;
+  const prior = await load(`${keptAt}/landing/manifest.json`);
+  if (prior) {
+    return { row, landing: { dir: join(STORE, keptAt), files: prior.files.map((f) => f.path), manifest: prior, kept: true }, run };
+  }
   const landing = writeLanding(run, row);
+  // The landing tree is kept in the service's store (Blob where configured), so the operator can fetch it from any
+  // instance (GET /v1/results/{id}/landing) and the service can ground sentences from it (2026-10-24).
+  for (const f of [...landing.files, "landing/manifest.json"]) await save(`${keptAt}/${f}`, readFileSync(join(landing.dir, f), "utf8"));
   return { row, landing, run };
 }

@@ -19,9 +19,15 @@ export function archiveOn(a, ledger) {
     url: byA[id].dep ? `https://www.alexanarch.org/s/records/${byA[id].dep}/` : byA[id].record?.url })) };
 }
 
-export function readLanding(landing, rowKey) {
-  const rd = (rel) => (landing && existsSync(join(landing, rel)) ? JSON.parse(readFileSync(join(landing, rel), "utf8")) : null);
-  return { row: rd(`${V2}/rows/${rowKey}.json`), ledger: rd(`${V2}/ledgers/${rowKey}/ledger-archive.json`) || [] };
+// The landing tree as this instance wrote it, or, on another instance, as the store keeps it (2026-10-24).
+export async function readLanding(s7, rowKey) {
+  const dir = typeof s7 === "string" ? s7 : s7?.landing;
+  const key = typeof s7 === "string" ? null : s7?.manifest?.key;
+  const rd = async (rel) => {
+    if (dir && existsSync(join(dir, rel))) return JSON.parse(readFileSync(join(dir, rel), "utf8"));
+    return key ? await load(`s7/${rowKey}/runs/${key}/landing/${rel}`) : null;
+  };
+  return { row: await rd(`${V2}/rows/${rowKey}.json`), ledger: (await rd(`${V2}/ledgers/${rowKey}/ledger-archive.json`)) || [] };
 }
 
 // The newest complete commissioned row for this entity whose T holds the sentence, with the sentence's alignment.
@@ -32,7 +38,7 @@ export async function groundingFor(rowKey, text, currentRelease = null) {
   for (const f of (await list(rel)).filter((x) => x.endsWith(".json"))) {
     const s7 = await load(`${rel}/${f}`);
     if (!s7?.complete || !s7.landing) continue;
-    const { row, ledger } = readLanding(s7.landing, rowKey);
+    const { row, ledger } = await readLanding(s7, rowKey);
     // The row keeps T's sentences as "W3 the sentence" (row.js); an object form is read as well.
     const claim = (row?.objects?.T?.claims || []).map((c) => (typeof c === "string" ? { id: c.split(" ")[0], text: c.slice(c.indexOf(" ") + 1) } : c)).find((c) => norm(c.text) === t);
     if (!claim) continue;

@@ -61,18 +61,41 @@ export function locate(claims, text) {
   return { claim: null, closest: scored.slice(0, 3).filter((x) => x.s > 0.2).map((x) => ({ id: x.c.id, section: x.c.section, text: x.c.text, overlap: Math.round(x.s * 100) / 100 })) };
 }
 
-// Where /non already holds the sentence: a field claim of some row quoting it.
-let NON_INDEX = null;
-export function nonEntriesFor(text) {
-  if (!NON_INDEX) {
-    NON_INDEX = [];
-    const d = join(NON, "ledgers");
-    if (existsSync(d)) for (const row of readdirSync(d)) {
+// Where /non already holds the sentence: a field claim of some row quoting it. Read from the archive checkout where the
+// service has one; otherwise from the archive's published index of every field claim, alexanarch.org/non/claims.json,
+// fetched over HTTPS and kept an hour (2026-10-24: the deployment has no checkout, and named no /non row). What was
+// read, and its hash, is returned with every sentence (non_index).
+export const NON_CLAIMS_URL = process.env.GNOSIS_NON_CLAIMS || "https://www.alexanarch.org/non/claims.json";
+let NON_INDEX = null, NON_SRC = null, NON_AT = 0;
+async function nonIndex() {
+  if (NON_INDEX && (NON_SRC?.kind === "checkout" || Date.now() - NON_AT < 3600e3)) return NON_INDEX;
+  const d = join(NON, "ledgers"), idx = [];
+  if (existsSync(d)) {
+    for (const row of readdirSync(d)) {
       const f = join(d, row, "field.json");
       if (!existsSync(f)) continue;
-      try { for (const [id, c] of Object.entries(JSON.parse(readFileSync(f, "utf8")).field_claims || {})) if (c.quote) NON_INDEX.push({ row, id, q: norm(c.quote) }); } catch {}
+      try { for (const [id, c] of Object.entries(JSON.parse(readFileSync(f, "utf8")).field_claims || {})) if (c.quote) idx.push({ row, id, q: norm(c.quote) }); } catch {}
+    }
+    NON_SRC = { kind: "checkout", path: NON };
+  } else {
+    try {
+      const r = await fetch(NON_CLAIMS_URL, { headers: { "User-Agent": "SPXI-gnosis (https://gnosis.spxi.dev)" }, signal: AbortSignal.timeout(10000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const body = await r.text();
+      for (const c of JSON.parse(body).claims || []) if (c.quote) idx.push({ row: c.row, id: c.id, q: norm(c.quote) });
+      NON_SRC = { kind: "https", url: NON_CLAIMS_URL, sha256: sha256(body), fetched: new Date().toISOString(), claims: idx.length };
+    } catch (e) {
+      NON_SRC = { kind: "unreachable", url: NON_CLAIMS_URL, error: String(e.message || e).slice(0, 120) };
+      NON_INDEX = idx; NON_AT = Date.now() - 3300e3; // retried in five minutes
+      return NON_INDEX;
     }
   }
+  NON_INDEX = idx; NON_AT = Date.now();
+  return NON_INDEX;
+}
+export const nonSource = () => NON_SRC;
+export async function nonEntriesFor(text) {
+  const NON_INDEX = await nonIndex();
   const t = norm(text);
   if (t.length < 25) return [];
   return NON_INDEX.filter((x) => x.q.includes(t) || (t.includes(x.q) && x.q.length >= 25)).map((x) => ({ row: x.row, field_claim: x.id, url: `https://www.alexanarch.org/non/${x.row}/` }));
@@ -99,7 +122,8 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   const base = { request_id: rid, mode, mode_label: MODES[mode].label, page: { title: pinned.title, oldid: pinned.oldid, url: pinned.url, html_sha256: pinned.html_sha256 } };
   if (!found.claim) return { ...base, state: "not found", status: 404, note: "the sentence is not on this revision of the page", closest: found.closest };
   const c = found.claim;
-  const non = nonEntriesFor(c.text);
+  const non = await nonEntriesFor(c.text);
+  base.non_index = nonSource();
   // S3 rule 1: the sentence travels with its own sources and the ones the article cites elsewhere that bear on it.
   const sources = withArticleSources([c], await resolveSources(claims.filter((x) => x.cited)));
   const srcs = sources[c.id];

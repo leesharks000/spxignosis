@@ -26,7 +26,7 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.12.2", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.13.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -456,7 +456,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
     if (s7.composed) s7.charge_usd = s7.from_ledger ? POLICY.ledgered_s7 : Math.min(q.s7.price_usd, Math.ceil(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin) * 100) / 100);
     charge += s7.charge_usd || 0;
     // Each sentence of the article, with what the archive's claims do to it (the ontology pass's alignment).
-    const { row, ledger } = readLanding(s7.landing, input.row);
+    const { row, ledger } = await readLanding(s7, input.row);
     for (const a of row?.ontology?.t_alignment || []) {
       const e = entries.find((x) => x.id === a.t);
       if (e) e.archive = archiveOn(a, ledger);

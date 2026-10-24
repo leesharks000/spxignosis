@@ -340,7 +340,7 @@ else {
   t("sentence: a preliminary reading is keyed apart from an opening and is one pass", claimKey(c0, s0, "m", makeReader("anthropic", "m", { passes: 1 })) !== claimKey(c0, s0, "m", makeReader("anthropic", "m")) && MODES.preliminary.passes === 1 && MODES.opening.passes === 2);
   const fl = JSON.parse(readFileSync(`${NON}/ledgers/se-183b34/field.json`, "utf8")).field_claims;
   const anyQ = Object.values(fl).find((c) => c.quote && c.quote.length > 60).quote;
-  t("sentence: where /non already holds the sentence, the entry is named", nonEntriesFor(anyQ).some((x) => x.row === "se-183b34"));
+  t("sentence: where /non already holds the sentence, the entry is named", (await nonEntriesFor(anyQ)).some((x) => x.row === "se-183b34"));
 }
 
 // 8. the execution budget and a failed call.
