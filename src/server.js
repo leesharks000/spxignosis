@@ -12,6 +12,7 @@ import { publicationState } from "./s7/publish.js";
 import { accounts } from "./accounts.js";
 import { lookupName } from "./lookup.js";
 import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
+import { frontPage, orderPage, apiPage } from "./front.js";
 import { load, save, list, BLOB, sha256 } from "./util.js";
 import { kept, undeliveredRefund } from "./cost.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
@@ -268,80 +269,28 @@ ${ops}
 `;
 }
 // Agents and scripts get the service description as JSON; a browser gets the same description as a page.
-app.get("/", (req, res) => {
-  const index = { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK} (USDC; facilitator ${facilitatorName()})` : mainnet ? `not ready: no receiving address yet${DEPOSIT.error ? " (Stripe declined to create one: crypto not yet approved, or the key lacks the permission)" : ""}; the x402 routes answer 503` : "not configured yet: the x402 routes answer 503" },
+// The deployment's description, for agents (JSON at /), for people (the front page) and on the API page.
+function serviceIndex() {
+  return { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK} (USDC; facilitator ${facilitatorName()})` : mainnet ? `not ready: no receiving address yet${DEPOSIT.error ? " (Stripe declined to create one: crypto not yet approved, or the key lacks the permission)" : ""}; the x402 routes answer 503` : "not configured yet: the x402 routes answer 503" },
     // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
     reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
     worker_start: DISPATCH.token ? "on request" : "GitHub's schedule only (no dispatch token set)",
     landing_start: LANDING.token ? `on delivery of a paid row (${LANDING.repo}, ${LANDING.workflow})` : "the archive's schedule, or by hand (no token set)",
     storage: BLOB ? "private Vercel Blob, with this instance's /tmp in front" : process.env.VERCEL ? "local only (/tmp, not shared between instances): connect a Blob store" : "local folder" };
+}
+app.get("/", (req, res) => {
+  const index = serviceIndex();
   if (!req.accepts(["application/json", "text/html"]) || req.accepts(["application/json", "text/html"]) === "application/json") return res.json(index);
   res.type("html").send(frontPage(index));
 });
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-function frontPage(index) {
-  const ops = Object.entries(index.operations).map(([k, v]) => `<dt><code>${esc(k)}</code></dt><dd>${esc(v)}</dd>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SPXI-gnΩsis</title><meta name="description" content="Fund the counterinfrastructure. SPXI-gnΩsis opens existing compositions against their sources and constructs sourced knowledge objects, for entities and operators; every commissioned row lands public in the Negative of the Negative (alexanarch.org/non).">
-<meta name="spxi:instrument" content="0.17 The opening (a pinned Wikipedia revision, read sentence by sentence) — SPXI method inventory, https://www.spxi.dev/methods/#m-0-17">
-<link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>
-:root{--bg:#fefcf3;--ink:#14161b;--red:#a3141b;--muted:#5b5d63;--rule:#e4e0d2}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121317;--ink:#ece9df;--red:#d4454b;--muted:#a4a39c;--rule:#2a2b31}}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 Georgia,"Iowan Old Style",serif}
-main{max-width:760px;margin:0 auto;padding:24px 16px 64px}
-.mark{display:block;width:100%;max-width:560px;height:auto;margin:8px auto 4px;border-radius:4px}
-
-h1{font-weight:normal;font-size:1.2rem;letter-spacing:.02em;text-align:center;margin:0 0 28px;color:var(--muted)}
-h2{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border-top:1px solid var(--rule);padding-top:20px;margin-top:32px}
-dt{margin-top:14px;overflow-wrap:anywhere}dd{margin:4px 0 0 0;color:var(--muted);overflow-wrap:anywhere}code{font:14px/1.4 ui-monospace,Menlo,monospace;color:var(--ink)}
-a{color:var(--red)}p{margin:10px 0}.small{font-size:.9rem;color:var(--muted)}
-.call h1{font-size:1.65rem;line-height:1.25;color:var(--ink);letter-spacing:0;margin:8px 0 18px}
-.epigram{margin:0 0 22px;padding:0 0 0 14px;border-left:3px solid var(--red);font-style:italic}.epigram .cite{font-style:normal;font-size:.85rem;color:var(--muted)}
-.acts dt{font-weight:bold;color:var(--ink);margin-top:14px}.acts dd{color:var(--ink)}
-.specimen{border-collapse:collapse;width:100%;font-size:.95rem}.specimen th{text-align:left;vertical-align:top;padding:6px 12px 6px 0;color:var(--red);font-weight:normal;border-top:1px solid var(--rule)}.specimen td{padding:6px 0;border-top:1px solid var(--rule);overflow-wrap:anywhere}
-.spxi-instrument{font:13px/1.5 ui-monospace,Menlo,monospace;margin:0 0 20px;padding:.45em .7em;border-left:3px solid #8a5a00;background:rgba(138,90,0,.07)}
-</style></head><body><main>
-<img class="mark" src="/spxi-gnosis.png" alt="SPXI-gnΩsis: an Omega with a red vertical line through its centre" width="1774" height="887">
-<section class="call">
-<h1>Fund the counterinfrastructure.<br>Rebuild the foundations of the world.</h1>
-<blockquote class="epigram"><p>Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I am making all things new.”</p><p class="cite">after <a href="https://www.alexanarch.org/s/records/71/">The Gospel of Antioch</a>, saying 11, and Revelation 21:5, its order inverted</p></blockquote>
-<p>The world is being rebuilt inside the systems that answer our questions. They settle names, distribute authority, carry some sources forward and leave others outside, and what they say becomes the ground the next answer stands on.</p>
-<p>Those foundations can be opened. The sources can be read again. The operation hidden inside a settled description can be recovered, and knowledge can be built where the institutions leave an absence.</p>
-<p>SPXI-gnΩsis makes that work commissionable. Your request pays for one reading or one construction, and what it pays for lands in <a href="https://www.alexanarch.org/non/">/non</a>, public, for everyone after you.</p>
-</section>
-<p class="spxi-instrument"><strong>SPXI instrument</strong> · method <a href="https://www.spxi.dev/methods/#m-0-17">0.17</a>, level 0 (Measurement): the opening of a pinned Wikipedia revision; also method <a href="https://www.spxi.dev/methods/#m-0-16">0.16</a>, the Negative of the Negative. An instrument of <a href="https://www.spxi.dev/">SPXI</a>, the Semantic Packet for eXchange &amp; Indexing; the whole practice is itemized at <a href="https://www.spxi.dev/methods/">spxi.dev/methods</a>.</p>
-<h2 id="work">Open a composition. Construct a knowledge object.</h2>
-<p>Paid reading and construction, for agents and people.</p>
-<dl class="acts">
-<dt>Open</dt><dd>Name a Wikipedia revision, or send a captured AI composition. Each sentence is kept verbatim and read twice against the sources it cites, and you receive what it keeps, changes, introduces or omits, with the evidence.</dd>
-<dt>Construct</dt><dd>Name an entity or an operator, with its sources if you have them. A commission composes its knowledge object: definitions, relations, operations, limits and provenance, every sentence naming the claims it states and every claim its quote. Wikipedia notability is not a condition.</dd>
-<dt>Inspect</dt><dd>Source snapshots and their hashes, every quotation located by code in the stored source, both readings, disagreements kept as contested, unresolved findings marked unresolved.</dd>
-<dt>Order</dt><dd>A quote is free and states its maximum. The reading and the construction are separate deliverables, charged as each delivers; what the work does not use is refunded. Delivery to you and publication in /non are tracked as separate states: delivered, composed, checked, landed, public.</dd>
-</dl>
-<p class="small">Typical prices, 2026-10-25, from measured model cost: a sentence 2¢ checked, 22¢ opened, free or 1¢ where already read; a commission of a short article, a few dollars. Card through Stripe Checkout; agents per request over x402 (USDC on Base), or through MCP at <code>POST /mcp</code>; <code>GET /v1/non?name=</code> finds an entry free.</p>
-<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · card ${esc(index.payments.card)} · agents ${esc(index.payments.agents)} · reader ${esc(index.reader)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
-<h2 id="specimen">Specimen: Sophistical Refutations, 25 October 2026</h2>
-<table class="specimen"><tbody>
-<tr><th>input</th><td>the article “Sophistical Refutations”, revision <a href="https://en.wikipedia.org/w/index.php?title=Sophistical_Refutations&amp;oldid=1361634710">1361634710</a>, 8 sentences; a commission, act open</td></tr>
-<tr><th>opening</th><td>8 sentences served from the ledger; sentence W2 (“the first work to treat the subject of deductive reasoning”) returned contested: both readings find Aristotle’s count converted into the work’s rank, and differ on support</td></tr>
-<tr><th>reading</th><td>the archive traversed at D, R and O, admitted deposits read twice, both ledgers extracted, the ontology read twice; the readings disagreed on ρ, and ρ = constructs was taken</td></tr>
-<tr><th>construction</th><td>a knowledge object of 47 sentences in the witness case, the Greek of SE 183b34–36 carried whole; composed and audited in 4 minutes 35 seconds</td></tr>
-<tr><th>states</th><td>delivered · composed · checked · landed · public</td></tr>
-<tr><th>inspect</th><td><a href="https://www.alexanarch.org/non/sophistical-refutations/">the row</a> · <a href="/v1/results/R-d744378a9776dfdb/composition">composition</a> · <a href="/v1/results/R-d744378a9776dfdb/evidence">evidence</a> · <a href="/v1/results/R-d744378a9776dfdb/publication">publication, observed now</a> · <a href="/v1/results/R-d744378a9776dfdb/landing">landing tree</a></td></tr>
-</tbody></table>
-<h2 id="non">The Negative of the Negative</h2>
-<p>A commission composes the entity's row in <a href="https://www.alexanarch.org/non/">/non</a>: public knowledge of the entity composed three ways, as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms, ontology included (EA-NEGONT-02 v0.9, <a href="https://www.alexanarch.org/s/records/1690/">#1690</a>). The row is public under CC BY 4.0 and lands in the archive by itself, verified against its manifest; each entry has its page, its data and an AXN in the family NON.</p>
-<p class="small"><a href="https://www.alexanarch.org/non/">the entries</a> · <a href="https://www.alexanarch.org/non/index.json">contents as data</a> · <a href="https://www.alexanarch.org/non/claims.json">every field claim quoted</a> · <a href="https://www.alexanarch.org/non/about/">status, method and procedure</a></p>
-<h2>Prices</h2>
-<p>From measured cost, never subsidized: a quote is free and lists the maximum; the charge is for completed work only, and what the work did not use is refunded. A sentence is 2¢ checked and 22¢ opened (1¢ or less where the reading is already in the ledger). A commission adds the archive's consultation in two stages, each priced from the traversal it would run at three times its estimated cost and charged when it delivers, at three times its measured cost, never above its line: the reading (at least $0.75), whose deliverable is its dossier of readings, ledgers and both ontology readings, and the construction (at least $0.25), whose deliverable is the row. A stage that does not deliver is refunded; an order not delivered within a day is refunded in full. Card payments run through Stripe Checkout.</p>
-<h2>Operations</h2><dl>${ops}</dl>
-<h2>Publication</h2><p>${esc(index.publication)}</p><p class="small">${esc(index.notice)}</p>
-<p class="small">Protocol home: <a href="https://spxi.dev">spxi.dev</a> · archive: <a href="https://www.alexanarch.org">alexanarch.org</a> · source: <a href="https://github.com/leesharks000/spxignosis">github.com/leesharks000/spxignosis</a> (PolyForm Shield 1.0.0)</p>
-</main></body></html>`;
-}
-
+// An order's page (2026-10-25): its quote, the card payment, its progress and its result, read from the status route.
+// The card checkout returns here.
+app.get("/order/:quote_id", (req, res) => {
+  if (!/^Q-[0-9a-f]{8,32}$/.test(req.params.quote_id)) return res.status(404).type("html").send(orderPage(serviceIndex(), "unknown"));
+  res.type("html").send(orderPage(serviceIndex(), req.params.quote_id));
+});
+// The API reference and the deployment's configuration, for people; agents read the same at GET / as JSON.
+app.get("/api", (req, res) => res.type("html").send(apiPage(serviceIndex())));
 // Free quotes are limited where they start the archive worker (2026-10-25): QUOTE_PER_HOUR from one address and
 // QUOTE_ALL_PER_HOUR from everyone in an hour, so a flood of free quotes cannot hold the worker from paid orders. A quote
 // answered at once (an opening) is not limited.

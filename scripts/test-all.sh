@@ -30,8 +30,17 @@ SP=$!; sleep 3
 code=$(curl -s -o /dev/null -w "%{http_code}" -XPOST localhost:4431/v1/openings/Q-doesnotexist)
 land=$(curl -s localhost:4431/v1/landable)
 ev=$(curl -s localhost:4431/v1/results/$(cat "$S/last-portable")/evidence; curl -s localhost:4431/v1/results/$(cat "$S/last-portable")/composition)
+front=$(curl -s -H "Accept: text/html" localhost:4431/); asjson=$(curl -s -H "Accept: application/json" localhost:4431/ | head -c 200)
+ordr=$(curl -s -o /dev/null -w "%{http_code}" localhost:4431/order/Q-0123456789abcdef); badord=$(curl -s -o /dev/null -w "%{http_code}" "localhost:4431/order/x%3Cscript%3E"); apip=$(curl -s localhost:4431/api)
 kill $SP 2>/dev/null || true
 echo "$ev" | grep -qE '"(charge_usd|margin_usd)"' && { echo "FAIL billing: a result record serves a charge or margin"; exit 1; } || echo "ok   billing: a result's evidence and composition are served with no charge and no margin"
 [ -s "$S/billing/$(cat "$S/last-portable").json" ] && echo "ok   billing: the charge is kept privately beside the result" || { echo "FAIL billing: no private billing record"; exit 1; }
 echo "$land" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);const one=d.landable.find(l=>l.result_id==="R-landtest00000001"),two=d.landable.find(l=>l.result_id==="R-landtest00000002");const reused=d.landable.find(l=>l.result_id===process.argv[1]),unpaid=d.landable.find(l=>l.result_id==="R-landtest00000003");if(!one||two?.row_sha256!=="bb"||reused||unpaid){console.log("FAIL landable: "+JSON.stringify(d.landable));process.exit(1)}console.log("ok   landable: composed rows are listed for the archive with their row hash, from the list and from the result pointer; a row reused from the ledger is not, and a row its order did not pay for is not")})' "$(cat "$S/last-portable")"
 [ "$code" = "404" ] && echo "ok   server: an unknown quote is refused with 404 before any payment challenge" || { echo "FAIL server: unknown quote answered $code"; exit 1; }
+# The front door (2026-10-25): a person gets the request forms; an agent asking for JSON gets the description; an order has
+# its page and the card checkout returns to it; the operations inventory and the deployment's configuration are on /api.
+echo "$front" | grep -q 'id="p-construct"' && echo "$front" | grep -q 'Get a free quote' && ! echo "$front" | grep -q '/tmp' && echo "ok   pages: the front page carries the request forms and no deployment internals" || { echo "FAIL pages: front page"; exit 1; }
+echo "$asjson" | grep -q '"service"' && echo "ok   pages: GET / still answers JSON to an agent" || { echo "FAIL pages: GET / JSON"; exit 1; }
+[ "$ordr" = "200" ] && [ "$badord" = "404" ] && echo "ok   pages: an order has its page, and a malformed id is refused" || { echo "FAIL pages: order $ordr / $badord"; exit 1; }
+echo "$apip" | grep -q 'GET /v1/quotes/{quote_id}/status' && echo "ok   pages: /api lists the operations" || { echo "FAIL pages: /api"; exit 1; }
+grep -q 'success_url: `${base}/order/' src/payments.js && echo "ok   pages: the card checkout returns to the order page" || { echo "FAIL pages: checkout return"; exit 1; }

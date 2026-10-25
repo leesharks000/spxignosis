@@ -102,8 +102,8 @@ export async function checkoutFor(q, { base }) {
       description: (amount <= CARD_MINIMUM_USD && q.max_price_usd < CARD_MINIMUM_USD ? `Quote ${q.quote_id}. A card charge is at least $${CARD_MINIMUM_USD.toFixed(2)}, and an order at that minimum keeps it whole. The /non row it composes is public under CC BY 4.0.` : `Quote ${q.quote_id}. Charged for the work done, and never less than what it cost (model and payment fee); the rest is refunded. The /non row it composes is public under CC BY 4.0.`).slice(0, 500) } } }],
     payment_intent_data: { metadata: { quote_id: q.quote_id, service: "SPXI-gnosis", channel: "card" } },
     metadata: { quote_id: q.quote_id },
-    success_url: `${base}/v1/quotes/${q.quote_id}/status?session={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${base}/v1/quotes/${q.quote_id}/status`,
+    success_url: `${base}/order/${q.quote_id}?paid=1&session={CHECKOUT_SESSION_ID}`, // the order page (2026-10-25: a person who paid was sent to raw JSON)
+    cancel_url: `${base}/order/${q.quote_id}`,
     // Stripe keeps a Checkout Session open 30 minutes to 24 hours; a quote holds 15 minutes. The session opens for
     // 31 minutes and the quote's price holds for a payment made in it (2026-10-24: Stripe refused the quote's own expiry).
     expires_at: Math.floor((Date.now() + 31 * 60e3) / 1000),
