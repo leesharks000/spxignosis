@@ -53,7 +53,9 @@ async function cardWork(q, s, id, prior) {
   } catch (e) {
     // Nothing delivered: the whole payment goes back.
     const refund = await refundUnused(s.payment_intent, paid, `quote ${id} could not complete: ${String(e.message || e).slice(0, 200)}`).catch((x) => ({ error: String(x.message || x) }));
-    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: paid, refund, reason: String(e.message || e), at: new Date().toISOString() });
+    // the run that failed is named, where there was one: its composition carries each failed call with its error
+    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: paid, refund, reason: String(e.message || e), at: new Date().toISOString(),
+      ...(e.result_id ? { result_id: e.result_id, composition: `/v1/results/${e.result_id}/composition`, evidence: `/v1/results/${e.result_id}/evidence` } : {}) });
   }
 }
 app.use(express.json({ limit: "64kb" }));
