@@ -47,12 +47,16 @@ async function live({ system, shared, task, model, maxTokens = 8000 }) {
 // A part of the budget can be held for later stages (2026-10-25): while it is held, the earlier passes may not spend
 // into it, so the investigation cannot consume what the composition and its audit need to finish.
 export function passLog({ budget_usd = Infinity } = {}) {
+  let ceiling = budget_usd;
   const calls = [];
   const spent = () => calls.reduce((n, c) => n + (c.cost_usd || 0), 0);
   let held = 0;
   return {
-    calls, budget_usd,
+    calls, get budget_usd() { return ceiling; },
     hold(usd) { held = Math.max(0, usd || 0); },
+    // The construction may spend up to what the buyer paid for the archive's work (2026-10-25: "it should deliver when
+    // possible"); the allowance stops the reading, never a paid construction.
+    raise(usd) { if (usd > ceiling) ceiling = usd; },
     held() { return held; },
     exhausted() { return calls.some((c) => c.how === "not run: execution budget exhausted"); },
     async run({ row, stage, id, system, shared, task, model, maxTokens = 8000 }) {
@@ -63,19 +67,25 @@ export function passLog({ budget_usd = Infinity } = {}) {
         return r ? r.out : null;
       }
       const reserve = callCost(model, { input_tokens: estimateTokens(`${system || ""}${shared || ""}${task || ""}`), output_tokens: maxTokens }) || 0;
-      if (spent() + reserve > budget_usd - held) { calls.push({ stage, id, how: "not run: execution budget exhausted", model, usage: null, cost_usd: 0, reserve_usd: Math.round(reserve * 1e4) / 1e4, ...(held ? { held_for_construction_usd: Math.round(held * 1e4) / 1e4 } : {}) }); return null; }
-      let text, usage;
-      try { ({ text, usage } = await live({ system, shared, task, model, maxTokens })); }
-      catch (e) { calls.push({ stage, id, how: `failed: ${String(e.message || e).slice(0, 200)}`, model, usage: null, cost_usd: 0 }); return null; }
-      const cost_usd = callCost(model, usage) || 0;
-      try {
-        const out = parseJSON(text);
-        calls.push({ stage, id, how: `live:${model}`, model, usage, cost_usd, sampling: "model defaults" });
-        return out;
-      } catch (e) {
-        calls.push({ stage, id, how: "failed: the reply did not parse as JSON (its usage is billed)", model, usage, cost_usd });
-        return null;
+      if (spent() + reserve > ceiling - held) { calls.push({ stage, id, how: "not run: execution budget exhausted", model, usage: null, cost_usd: 0, reserve_usd: Math.round(reserve * 1e4) / 1e4, ...(held ? { held_for_construction_usd: Math.round(held * 1e4) / 1e4 } : {}) }); return null; }
+      // A call that fails, or whose reply does not parse, is made once more at twice the output limit: most replies
+      // that do not parse were cut off at the limit (2026-10-25: one hop batch of the second commission of Sophistical
+      // Refutations). Both attempts are recorded; only a pass that fails twice is a hole in the run.
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const limit = attempt === 1 ? maxTokens : Math.min(maxTokens * 2, 32000);
+        let text, usage;
+        try { ({ text, usage } = await live({ system, shared, task, model, maxTokens: limit })); }
+        catch (e) { calls.push({ stage, id, how: `${attempt === 1 ? "retried" : "failed"}: ${String(e.message || e).slice(0, 200)}`, model, usage: null, cost_usd: 0, attempt }); continue; }
+        const cost_usd = callCost(model, usage) || 0;
+        try {
+          const out = parseJSON(text);
+          calls.push({ stage, id, how: `live:${model}`, model, usage, cost_usd, sampling: "model defaults", ...(attempt > 1 ? { attempt, max_tokens: limit } : {}) });
+          return out;
+        } catch (e) {
+          calls.push({ stage, id, how: attempt === 1 ? "retried: the reply did not parse as JSON (its usage is billed)" : "failed: the reply did not parse as JSON (its usage is billed)", model, usage, cost_usd, attempt });
+        }
       }
+      return null;
     },
     cost() { return Math.round(calls.reduce((n, c) => n + (c.cost_usd || 0), 0) * 1e5) / 1e5; },
   };

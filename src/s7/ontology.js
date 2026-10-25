@@ -58,7 +58,12 @@ export async function readOntology(log, input, fieldClaims, archiveLedger, depTi
 // Checks, recorded as breaches; and the received column, supplied by code.
 export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
   const [p1, p2] = passes;
-  if (!p1 && !p2) return { status: "unread", breaches: [{ check: "ontology", detail: "no ontology reading returned" }] };
+  // Neither reading returned, each tried twice: the row is still composed, in the equal-terms case, which admits the
+  // archive's claims beside the field's with no translation, and the default is a breach (2026-10-25: deliver when
+  // possible).
+  if (!p1 && !p2) return { status: "defaulted", composition: "equal", case: { value: "equal", statement: "no ontology reading returned after two attempts each; the equal-terms case by default", by_default: true },
+    rho: { value: null, statement: "not read" }, E_F: null, E_A: null, translation: [], t_alignment: [],
+    breaches: [{ check: "ontology", detail: "no ontology reading returned after two attempts each; composed in the equal-terms case by default, with no translation table" }] };
   const breaches = [];
   const ids = new Set([...F, ...A]);
   const differ = p1 && p2 && (p1.rho?.value !== p2.rho?.value || p1.case?.value !== p2.case?.value);
@@ -72,7 +77,7 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
   // tables (revises before extends), and its ρ and case are set by the ruling, its own kept in ontology.contested.
   // (Built 2026-10-25 first as "take the reading that gives constructs", which left revises against extends
   // withheld; the second live commission of Sophistical Refutations fell in that gap.)
-  let pick = null, rule = null, set = false;
+  let pick = null, rule = null, set = false, setCase = null;
   const RANK = { constructs: 3, revises: 2, extends: 1 };
   if (differ) {
     if (p1.rho?.value !== p2.rho?.value) {
@@ -81,12 +86,16 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
       else { pick = (RANK[p2.rho?.value] || 0) > (RANK[p1.rho?.value] || 0) ? p2 : p1; set = true;
         rule = `the readings disagree on ρ (${p1.rho?.value}; ${p2.rho?.value}); ρ is constructs and the case witness, by the ruling of 2026-10-25 ("if the readings disagree go constructs"), with the tables of the reading of ρ = ${pick.rho?.value}`; }
     } else {
+      // Same ρ, different case: the case that follows ρ (§1.2a). Where neither reading gives it, the first reading is
+      // taken and its case is set to the one ρ entails; where ρ entails none, the witness case.
       const follows = [p1, p2].filter((p) => CASE_OF[p.rho?.value] && CASE_OF[p.rho.value] === p.case?.value);
       if (follows.length === 1) { pick = follows[0]; rule = "same ρ, the case that follows it (§1.2a)"; }
+      else { pick = p1; setCase = CASE_OF[p1.rho?.value] || "witness"; rule = `same ρ, the cases differ (${p1.case?.value}; ${p2.case?.value}); the case ρ = ${p1.rho?.value} entails (§1.2a)`; }
     }
   }
   const contested = differ && !pick;
   const o = structuredClone(pick || p1 || p2);
+  if (setCase) o.case = { ...o.case, value: setCase, statement: `${rule}. The reading taken gave ${o.case?.value}: ${o.case?.statement || ""}`, by_rule: true };
   if (set) {
     o.rho = { ...o.rho, value: "constructs", statement: `ρ = constructs by the operator's ruling of 2026-10-25, where the two readings disagreed (${p1.rho?.value}; ${p2.rho?.value}). The reading taken for its tables gave ρ = ${pick.rho?.value}: ${pick.rho?.statement || ""}`, by_ruling: true };
     o.case = { ...o.case, value: "witness", statement: `the witness case, which follows ρ = constructs (§1.2a). The reading taken gave the case ${pick.case?.value}: ${pick.case?.statement || ""}`, by_ruling: true };

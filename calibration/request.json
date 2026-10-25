@@ -1,13 +1,9 @@
 {
  "what": "The first calibration release of the live reading passes (EA-WIKI-OPEN-01 §5.4): the procedure run on the own inputs of /non rows not used in tuning, scored against each row stage by stage.",
- "authorized": "Lee Sharks, 2026-10-25 (\"lets proceed thru\"), on the proposal of three or four held-out rows at about $15-30",
+ "authorized": "Lee Sharks, 2026-10-25 (\"lets proceed thru\"); scaled to one row, the cheapest held out (estimate $5.62, bounded at $8.43), on his note of the same day that funds are low",
  "rows": [
-  "anne-carson",
-  "literary-heteronym",
-  "the-socratic-problem",
-  "sappho-31",
-  "book-of-revelation"
+  "anne-carson"
  ],
- "order": "by estimated cost, cheapest first, until the cap",
- "cap_usd": 30
+ "order": "one row; further rows on the operator's word",
+ "cap_usd": 9
 }

@@ -349,7 +349,7 @@ else {
   const lb = passLog({ budget_usd: 0 }); const r0 = await lb.run({ row: "x", stage: "s", id: "1", system: "", task: "", model: "claude-haiku-5-5" });
   t("budget: a pass beyond the execution budget is recorded as not run", r0 === null && lb.exhausted());
   const lf = passLog(); const r1 = await lf.run({ row: "x", stage: "s", id: "1", system: "", task: "", model: "claude-haiku-5-5" });
-  t("failure: a failed call is recorded with its error and the run continues", r1 === null && lf.calls[0].how.startsWith("failed:"));
+  t("failure: a failed call is retried once, both attempts recorded, and the run continues", r1 === null && lf.calls.length === 2 && lf.calls[0].how.startsWith("retried:") && lf.calls[1].how.startsWith("failed:"));
   process.env.GNOSIS_READER = prev; if (key) process.env.ANTHROPIC_API_KEY = key;
 }
 

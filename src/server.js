@@ -194,7 +194,6 @@ const INDEX = {
     "GET /v1/non?name=&context=": "free: the /non entry a name answers, or the candidates and what tells them apart, or the construction offered as a free quote",
     "POST /mcp": "the same requests as tools for agents (Model Context Protocol, Streamable HTTP, JSON): find_entry, open_sentence, get_quote, order_status, card_checkout, get_result; payment is taken at the HTTP routes the tools name",
     "GET /v1/calibration": "the latest calibration release of the reading passes: the procedure run live on held-out /non rows and scored against each row by stage (admission, archive claims, field claims, case, ρ), with its cost",
-    "GET /v1/accounts": "the earnings record: every paid order's payment, charge, refund, model cost (failed runs included) and card fee, live and test apart, with totals; no payer is named",
     "GET /v1/receipts/{quote_id}": "the settlement receipt (transaction, payer, amount) and any refund owed or sent",
     "GET /v1/results/{result_id}/composition": "the usable result",
     "GET /v1/results/{result_id}/evidence": "the full evidence record: tuples, spans, hashes, validations, breaches, cost",
@@ -340,9 +339,13 @@ app.get("/v1/openings/:quote_id/progress", async (req, res) => {
   if (!p) return res.status(404).json({ error: "no progress recorded for this quote" });
   res.json(p);
 });
-// The earnings record, computed from the store and kept ten minutes (2026-10-25).
+// The earnings record, computed from the store and kept ten minutes (2026-10-25). It is private (operator, 2026-10-25:
+// "please dont make payments public"): it answers only a request carrying the operator's key, set in the deployment's
+// environment as GNOSIS_OPERATOR_KEY, and is otherwise indistinguishable from a route that does not exist.
 let ACCOUNTS = null;
+const OPERATOR_KEY = process.env.GNOSIS_OPERATOR_KEY || null;
 app.get("/v1/accounts", async (req, res) => {
+  if (!OPERATOR_KEY || req.get("x-gnosis-operator") !== OPERATOR_KEY) return res.status(404).json({ error: "not found" });
   try {
     if (!ACCOUNTS || Date.now() - ACCOUNTS.t > 10 * 60e3) ACCOUNTS = { t: Date.now(), body: await accounts() };
     res.json(ACCOUNTS.body);

@@ -29,7 +29,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -331,6 +331,14 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     const fam = (m) => (/claude/.test(m || "") ? "anthropic" : String(m || "").split(/[-:/]/)[0]);
     if (valid.length === 2) verdict = reconcile({ ...valid[0].reading, __family: fam(valid[0].model) }, { ...valid[1].reading, __family: fam(valid[1].model) });
     else if (valid.length === 1) verdict = { status: reader.passes === 1 ? "preliminary" : "single-valid", support: valid[0].reading.support };
+    // No pass survived its checks, and a pass gave a reading: it is delivered as unverified, its failed checks beside it
+    // (checks record; they do not prevent; 2026-10-25: "it should deliver when possible"). Withheld only where no pass
+    // returned a reading with a support class at all.
+    else if (checked.some((p) => (p.reading?.support || []).length)) {
+      const best = checked.filter((p) => (p.reading?.support || []).length).sort((a, b) => a.validation.breaches.length - b.validation.breaches.length)[0];
+      valid.push(best);
+      verdict = { status: "unverified", support: best.reading.support, checks_failed: [...new Set(best.validation.breaches.map((b) => b.check))] };
+    }
     else verdict = { status: "withheld" };
     if (!fromLedger && verdict.status !== "withheld") await save(`ledger/claims/${key}.json`, { key, claim: c.id, oldid: pinned.oldid, model, created: new Date().toISOString(), passes: r.passes.map((p) => ({ model: p.model, reading: p.reading })) });
     // A contested claim carries both readings; no single paraphrase stands for it.
@@ -457,7 +465,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     // The same state was computed before: the result is served again, and billed against this quote, at the
     // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
     const composition = await load(prior.composition_path), record = await load(prior.composition_path.replace("composition", "evidence"));
-    const done = composition.entries.filter((e) => ["concordant", "concordant across families", "single-valid", "contested"].includes(e.status)).map((e) => e.id);
+    const done = composition.entries.filter((e) => ["concordant", "concordant across families", "single-valid", "contested", "unverified", "preliminary"].includes(e.status)).map((e) => e.id);
     let charge = done.reduce((n, id) => n + (priceOf[id] || 0), 0);
     if (q.s7 && prior.non_row) charge += POLICY.ledgered_s7;
     if (prior.portable_dir) charge += Math.min(q.package_price_usd || 0, POLICY.ledgered_package);
@@ -484,7 +492,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     if (cached?.complete) s7 = { ...cached, from_ledger: true };
     else {
       // One log for the job: the construction's spending and S7's share the budget the quote declared.
-      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, construction_usd: q.s7.stages?.construction?.budget_usd || 0, log: preLog });
+      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, construction_usd: q.s7.stages?.construction?.budget_usd || 0, ceiling_usd: (q.s7.price_usd || 0) + (q.construction?.price_usd || 0), log: preLog });
       s7 = { row_key: input.row, entity: input.entity.slug, non_url: NON_URL(input.entity.slug), landing: out.landing.dir, manifest: out.landing.manifest,
         composed: !!out.row.objects.KO, case: out.row.ontology?.case?.value || null, rho: out.row.ontology?.rho?.value || null, breaches: out.row.breaches.length,
         audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key, provenance: out.row.objects?.T?.provenance || null,

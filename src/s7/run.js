@@ -30,7 +30,7 @@ export function s7Key(input) {
 // share of the budget is held.
 export const readingAt = (row, key) => `s7/${row}/reading/${key}.json`;
 
-export async function runS7(input, { service, onProgress = () => {}, budget_usd, construction_usd = 0, log: shared } = {}) {
+export async function runS7(input, { service, onProgress = () => {}, budget_usd, construction_usd = 0, ceiling_usd = 0, log: shared } = {}) {
   const key = s7Key(input);
   // The job's log, where the caller passes one (the construction and S7 then share one budget); else S7's own.
   const log = shared || passLog({ budget_usd });
@@ -79,7 +79,10 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
   // The ontology is settled from the raw readings each time, so a rule ruled since the checkpoint applies to it.
   const onto = settleOntology(ontoRaw, field.claims, arch.ledger);
   let composition = null, checks = null, aud = null;
-  if (onto.status === "read" || onto.status === "read (single pass)") {
+  // The construction may spend up to what was paid for the archive's work (ceiling_usd), so the allowance cannot stop a
+  // paid construction (2026-10-25).
+  if (ceiling_usd) log.raise(ceiling_usd);
+  if (onto.status === "read" || onto.status === "read (single pass)" || onto.status === "defaulted") {
     onProgress({ stage: "S8", detail: "composition" });
     const fs = Object.fromEntries(input.field.map((b) => [b.id, b.card]));
     composition = await compose(log, input, onto, field.claims, arch.ledger, fs);
