@@ -53,7 +53,7 @@ export function estimateClaim(model, promptTokens, outFirst = 1200, outSecond = 
 // fact-check listed at $0.10 had no paying buyers in its first month (observed 2026-10-23). The archive is consulted
 // only on commission, priced from its traversal at the commission margin.
 export const POLICY = {
-  margin: 3.0, // commissions: S7, the construction, the package
+  margin: 2.0, // commissions: S7, the construction, the package (3.0 until 2026-10-24: "we might need to bring it down to 2x for the commissioned article")
   sentence_margin: 1.5,
   floor_per_claim: { check: 0.01, ledger: 0.05, opening: 0.05, commission: 0.05, portable: 0.05 }, // the list price of a sentence
   ledgered_per_claim: { check: 0.005, ledger: 0.01, opening: 0.01, commission: 0.01, portable: 0.01 }, // a reading already in the ledger
