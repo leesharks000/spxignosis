@@ -189,6 +189,7 @@ const INDEX = {
     "POST /v1/quotes/{quote_id}/resume": "a paid card order whose run stopped (no progress for six minutes, nothing delivered or refunded) is started again",
     "GET /v1/results/{result_id}/landing": "the /non row's landing tree: the manifest, each file at …/landing/{path}, for the operator's landing",
     "GET /v1/openings/{quote_id}/progress": "the stage a running opening has reached",
+    "GET /v1/calibration": "the latest calibration release of the reading passes: the procedure run live on held-out /non rows and scored against each row by stage (admission, archive claims, field claims, case, ρ), with its cost",
     "GET /v1/accounts": "the earnings record: every paid order's payment, charge, refund, model cost (failed runs included) and card fee, live and test apart, with totals; no payer is named",
     "GET /v1/receipts/{quote_id}": "the settlement receipt (transaction, payer, amount) and any refund owed or sent",
     "GET /v1/results/{result_id}/composition": "the usable result",
@@ -342,6 +343,12 @@ app.get("/v1/accounts", async (req, res) => {
     if (!ACCOUNTS || Date.now() - ACCOUNTS.t > 10 * 60e3) ACCOUNTS = { t: Date.now(), body: await accounts() };
     res.json(ACCOUNTS.body);
   } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+});
+// The calibration releases (2026-10-25): the latest, and any release by id.
+app.get("/v1/calibration", async (req, res) => {
+  const latest = await load("calibration/latest.json");
+  if (!latest) return res.status(404).json({ note: "no calibration release has run yet; the request is calibration/request.json in the repository" });
+  res.json({ ...latest, release: await load(latest.summary) });
 });
 app.get("/v1/receipts/:quote_id", async (req, res) => {
   const rc = await receiptOf(req.params.quote_id);

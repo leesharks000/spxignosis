@@ -66,17 +66,31 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
   // constructs"); where both give the same ρ and differ on the case, the reading whose case follows its ρ (§1.2a). The
   // disagreement is recorded, with both readings, and composition proceeds. A disagreement neither rule settles withholds
   // the composition, and the withholding is itself a breach.
-  let pick = null, rule = null;
+  // The ruling is the operator's words, "if the readings disagree go constructs", and it is applied as said: where the
+  // readings differ on ρ, ρ is constructs and the case is the witness case. A reading that gives constructs is taken
+  // whole; where neither does, the reading that grants the archive's ontology the more standing is taken for its
+  // tables (revises before extends), and its ρ and case are set by the ruling, its own kept in ontology.contested.
+  // (Built 2026-10-25 first as "take the reading that gives constructs", which left revises against extends
+  // withheld; the second live commission of Sophistical Refutations fell in that gap.)
+  let pick = null, rule = null, set = false;
+  const RANK = { constructs: 3, revises: 2, extends: 1 };
   if (differ) {
-    const cons = [p1, p2].filter((p) => p.rho?.value === "constructs");
-    if (cons.length === 1) { pick = cons[0]; rule = "where the readings disagree, ρ = constructs (ruled 2026-10-25)"; }
-    else if (p1.rho?.value === p2.rho?.value) {
+    if (p1.rho?.value !== p2.rho?.value) {
+      const cons = [p1, p2].filter((p) => p.rho?.value === "constructs");
+      if (cons.length === 1) { pick = cons[0]; rule = "the readings disagree on ρ; the reading of ρ = constructs is taken (ruled 2026-10-25: \"if the readings disagree go constructs\")"; }
+      else { pick = (RANK[p2.rho?.value] || 0) > (RANK[p1.rho?.value] || 0) ? p2 : p1; set = true;
+        rule = `the readings disagree on ρ (${p1.rho?.value}; ${p2.rho?.value}); ρ is constructs and the case witness, by the ruling of 2026-10-25 ("if the readings disagree go constructs"), with the tables of the reading of ρ = ${pick.rho?.value}`; }
+    } else {
       const follows = [p1, p2].filter((p) => CASE_OF[p.rho?.value] && CASE_OF[p.rho.value] === p.case?.value);
       if (follows.length === 1) { pick = follows[0]; rule = "same ρ, the case that follows it (§1.2a)"; }
     }
   }
   const contested = differ && !pick;
   const o = structuredClone(pick || p1 || p2);
+  if (set) {
+    o.rho = { ...o.rho, value: "constructs", statement: `ρ = constructs by the operator's ruling of 2026-10-25, where the two readings disagreed (${p1.rho?.value}; ${p2.rho?.value}). The reading taken for its tables gave ρ = ${pick.rho?.value}: ${pick.rho?.statement || ""}`, by_ruling: true };
+    o.case = { ...o.case, value: "witness", statement: `the witness case, which follows ρ = constructs (§1.2a). The reading taken gave the case ${pick.case?.value}: ${pick.case?.statement || ""}`, by_ruling: true };
+  }
   if (!RHO.includes(o.rho?.value)) breaches.push({ check: "rho-vocabulary", detail: `ρ = ${o.rho?.value}, a value outside §1.2a's three` });
   if (CASE_OF[o.rho?.value] && CASE_OF[o.rho.value] !== o.case?.value) breaches.push({ check: "case-follows-rho", detail: `ρ = ${o.rho.value} with case ${o.case?.value}` });
   for (const l of o.case?.loci || []) { l.quote_ok = locate(depText(l.dep).text, l.quote) >= 0; if (!l.quote_ok) breaches.push({ check: "case-locus", detail: `#${l.dep} ${l.locus}: quote not found` }); }

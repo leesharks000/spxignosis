@@ -63,10 +63,12 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
     const deps = [...new Set(arch.ledger.map((c) => c.dep ?? `blog:${c.record.url}`))].map(depMeta);
     ontoRaw = await readOntology(log, input, field.claims, arch.ledger, deps);
     log.hold(0);
-    // The checkpoint is written only when the reading is whole: both ontology passes returned, and no pass failed or
-    // was cut by the budget. A reading with a hole in it is run again.
+    // The checkpoint is written once the reading is delivered, which is when both ontology passes returned: a reading
+    // charged as delivered can be reused. A pass that failed or was cut by the budget is kept in it, and every row
+    // composed from it carries the breach (2026-10-25: the second commission of Sophistical Refutations was charged for
+    // its reading, and a stricter rule, no failed pass at all, left the reading unkept for one failed hop batch).
     const readCalls = log.calls.slice(start);
-    const whole = ontoRaw.passes.filter(Boolean).length === 2 && !readCalls.some((c) => c.how.startsWith("failed") || c.how.startsWith("not run"));
+    const whole = ontoRaw.passes.filter(Boolean).length === 2;
     if (whole) {
       cp = { key, row: input.row, at: new Date().toISOString(), cost_usd: Math.round(readCalls.reduce((n, c) => n + (c.cost_usd || 0), 0) * 1e5) / 1e5, calls: readCalls,
         state: { trav, blog, dro, travH, hop, verdicts, arch, field, ontoRaw } };
@@ -100,7 +102,7 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
                          delivered: onto.status !== "unread" },
               construction: { cost_usd: sum(log.calls.slice(mid)), ran: !!composition, delivered: !!composition } },
     budget: { budget_usd: Number.isFinite(log.budget_usd) ? log.budget_usd : null, held_for_construction_usd: construction_usd || 0, shared_with_construction: !!shared && start > 0, exhausted: log.exhausted(),
-      failed_calls: thisRun.filter((c) => c.how.startsWith("failed")).length, not_run: thisRun.filter((c) => c.how.startsWith("not run")).length } };
+      failed_calls: calls.filter((c) => c.how.startsWith("failed")).length, not_run: calls.filter((c) => c.how.startsWith("not run")).length } };
   const row = buildRow(run);
   // One tree per execution key, never overwritten (row.js): a later run under the same key keeps the tree already kept,
   // whose manifest earlier results name. Its bytes can differ only in what the run itself measures (its seconds), so

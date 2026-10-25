@@ -14,6 +14,7 @@ import { appendFileSync } from "node:fs";
 import { load, save, list, BLOB } from "../src/util.js";
 import { quote, quoteEntity } from "../src/run.js";
 import { deliver, HAS_ARCHIVE, WORKER, ORDER_DEADLINE_MS } from "../src/deliver.js";
+import { pendingCalibration, runCalibration } from "../src/calibration.js";
 
 const BASE = (process.env.GNOSIS_BASE_URL || "https://gnosis.spxi.dev").replace(/\/$/, "");
 const STOP = Date.now() + Number(process.env.WORKER_MINUTES || 300) * 60e3;
@@ -27,7 +28,7 @@ async function pending() {
   // An order is pending until it is settled, and a settled order whose refund failed is pending again: the refund
   // owed is an obligation, retried through the service's settle (2026-10-25).
   for (const id of await ids(WORKER.runs)) { const rf = await load(`refunds/${id}.json`); if (!rf || rf.refund_state === "failed") runs.push(id); }
-  return { quotes, runs };
+  return { quotes, runs, calibration: await pendingCalibration() };
 }
 
 async function priceOne(id) {
@@ -71,10 +72,10 @@ async function runOne(id) {
   await settle(id, job);
 }
 
-const { quotes, runs } = await pending();
+const { quotes, runs, calibration } = await pending();
 if (process.argv[2] === "check") {
-  const n = quotes.length + runs.length;
-  console.log(`work=${n} (quotes ${quotes.length}, runs ${runs.length})`);
+  const n = quotes.length + runs.length + (calibration ? 1 : 0);
+  console.log(`work=${n} (quotes ${quotes.length}, runs ${runs.length}${calibration ? `, calibration ${calibration.id}` : ""})`);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `work=${n}\n`);
   process.exit(0);
 }
@@ -82,4 +83,9 @@ if (!HAS_ARCHIVE) { console.error("the archive is not checked out at GNOSIS_ARCH
 if (!BLOB) console.error("warning: no Blob token: the worker reads and writes a local store only");
 for (const id of quotes) await priceOne(id);
 for (const id of runs) { if (Date.now() > STOP) { console.log(`time's up; ${id} and after wait for the next run`); break; } await runOne(id); }
+// A calibration release runs after the orders, in the time that remains (orders come first: they are paid for).
+if (calibration && Date.now() < STOP) {
+  const c = await runCalibration(calibration, { stopAt: STOP });
+  console.log(`calibration ${c.id}: ${c.verdict}; spent $${c.spent_usd}; complete ${c.complete}`);
+}
 console.log(`done: ${quotes.length} quotes, ${runs.length} runs`);
