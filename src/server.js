@@ -10,6 +10,8 @@ import { deliver, HAS_ARCHIVE, WORKER, needsArchive } from "./deliver.js";
 import { randomUUID } from "node:crypto";
 import { publicationState } from "./s7/publish.js";
 import { accounts } from "./accounts.js";
+import { lookupName } from "./lookup.js";
+import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
 import { load, save, BLOB } from "./util.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
 import { stripe, LIVE, x402Config, facilitatorConfig, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
@@ -189,6 +191,8 @@ const INDEX = {
     "POST /v1/quotes/{quote_id}/resume": "a paid card order whose run stopped (no progress for six minutes, nothing delivered or refunded) is started again",
     "GET /v1/results/{result_id}/landing": "the /non row's landing tree: the manifest, each file at …/landing/{path}, for the operator's landing",
     "GET /v1/openings/{quote_id}/progress": "the stage a running opening has reached",
+    "GET /v1/non?name=&context=": "free: the /non entry a name answers, or the candidates and what tells them apart, or the construction offered as a free quote",
+    "POST /mcp": "the same requests as tools for agents (Model Context Protocol, Streamable HTTP, JSON): find_entry, open_sentence, get_quote, order_status, card_checkout, get_result; payment is taken at the HTTP routes the tools name",
     "GET /v1/calibration": "the latest calibration release of the reading passes: the procedure run live on held-out /non rows and scored against each row by stage (admission, archive claims, field claims, case, ρ), with its cost",
     "GET /v1/accounts": "the earnings record: every paid order's payment, charge, refund, model cost (failed runs included) and card fee, live and test apart, with totals; no payer is named",
     "GET /v1/receipts/{quote_id}": "the settlement receipt (transaction, payer, amount) and any refund owed or sent",
@@ -344,6 +348,18 @@ app.get("/v1/accounts", async (req, res) => {
     res.json(ACCOUNTS.body);
   } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
 });
+// The name request: a /non entry by its name, free; candidates; or the construction offered as a free quote.
+app.get("/v1/non", async (req, res) => {
+  try { const r = await lookupName(req.query.name, { context: req.query.context }); res.status(r.status).json(r.body); }
+  catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+});
+// The tools (MCP, Streamable HTTP, stateless): POST a JSON-RPC message; GET answers that no stream is offered.
+app.post("/mcp", async (req, res) => {
+  const out = await handleMcp(req.body, { base: BASE, service: SERVICE });
+  if (!out || (Array.isArray(out) && !out.length)) return res.status(202).end();
+  res.set("MCP-Protocol-Version", MCP_PROTOCOL).json(out);
+});
+app.get("/mcp", (req, res) => res.status(405).set("Allow", "POST").json({ error: "this MCP server answers POST with JSON; it offers no event stream" }));
 // The calibration releases (2026-10-25): the latest, and any release by id.
 app.get("/v1/calibration", async (req, res) => {
   const latest = await load("calibration/latest.json");
