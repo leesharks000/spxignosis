@@ -150,7 +150,7 @@ const INDEX = {
   operations: {
     "POST /v1/quote": "free. body {oldid, tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
-    "POST /v1/openings/{quote_id}": "paid (x402, USDC on Base, settling to the service's Stripe balance). Runs the work for a quote; returns the composition result and the result id. A quote already paid returns its result without a second charge; what the work did not use is refunded.",
+    "POST /v1/openings/{quote_id}": "paid by agents (x402, USDC on Base, settling to the service's Stripe balance; answers 503 until a receiving address is set). Runs the work for a quote; returns the composition result and the result id. A quote already paid returns its result without a second charge; what the work did not use is refunded.",
     "GET /v1/sentence?text=&url=&mode=": "the sentence as you have it and the Wikipedia page it came from: free where it has been read (as recorded); otherwise 402 with the price, then the opening (two readings); mode=preliminary, one quick pass; mode=grounded, the opening with the archive's claims on the sentence from a commissioned /non row (two cents more; where no row holds the sentence, the commission is offered and nothing is charged)",
     "POST /v1/openings/{quote_id}/checkout": "for people: a Stripe Checkout link for the quote's maximum (at least $0.50); the work runs when the payment completes, and what it did not use is refunded",
     "GET /v1/quotes/{quote_id}/status": "where a quote stands: quoted, paid and running, delivered; its receipt and any refund",
@@ -165,12 +165,49 @@ const INDEX = {
     "GET /v1/results/{result_id}/opened.html": "the opened article",
     "GET /v1/results/{result_id}/annotations": "W3C Web Annotations on the pinned revision",
   },
+  non: { name: "The Negative of the Negative (/non)", url: "https://www.alexanarch.org/non/", contents: "https://www.alexanarch.org/non/index.json",
+    claims: "https://www.alexanarch.org/non/claims.json", entry: "https://www.alexanarch.org/non/{entity}/ (as data: …/entity.json)",
+    statement: "Every commission composes the entity's row in /non: public knowledge of the entity composed as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms. The row is written as a landing tree (GET /v1/results/{result_id}/landing) and lands in the archive by the operator's act; a grounded sentence is served from a landed row." },
+  spxi_instrument: { method: "0.17", name: "The opening (a pinned Wikipedia revision, read sentence by sentence)", url: "https://www.spxi.dev/methods/#m-0-17",
+    also: [{ method: "0.16", name: "The Negative of the Negative (/non)", url: "https://www.spxi.dev/methods/#m-0-16" }], inventory: "https://www.spxi.dev/methods/" },
   publication: "Every commission composes the entity's row in the Negative of the Negative (alexanarch.org/non), the opened Wikipedia, and the row is public (CC BY 4.0): a paid commission contributes to the public counter-infrastructure it draws on.",
   notice: "The treatment of an article's entities by composing systems may be recorded and measured.",
 };
+// The description for machine readers, as text (2026-10-25).
+app.get("/llms.txt", (req, res) => res.type("text/plain; charset=utf-8").send(llmsTxt()));
+function llmsTxt() {
+  const ops = Object.entries(INDEX.operations).map(([k, v]) => `- ${k}: ${v}`).join("\n");
+  return `# SPXI-gnΩsis
+
+> Opens pinned Wikipedia revisions sentence by sentence against the sources they cite, and keeps each reading as evidence. A commission also consults the Crimson Hexagonal Archive by its own procedure and composes the entity's row in the Negative of the Negative (https://www.alexanarch.org/non/), which is public under CC BY 4.0.
+
+${SERVICE.name} ${SERVICE.version}, protocol ${SERVICE.protocol}. SPXI method 0.17 (the opening), also 0.16 (the Negative of the Negative): https://www.spxi.dev/methods/#m-0-17
+
+A reader of this file finds the service description as JSON at https://gnosis.spxi.dev/ (Accept: application/json). A quote is free: POST https://gnosis.spxi.dev/v1/quote with {"oldid": <revision id>, "tier": "check" | "opening" | "commission"} or, for an entity the encyclopedia does not hold, {"object": {"name": …}}. Prices come from measured cost: a sentence is 2¢ checked and 22¢ opened; a commission adds the archive's consultation, priced from its traversal. People pay by card (Stripe Checkout); agent payment over x402 is not configured yet.
+
+## The Negative of the Negative
+
+- Entries: https://www.alexanarch.org/non/
+- Contents as data: https://www.alexanarch.org/non/index.json
+- Every field claim quoted, by row: https://www.alexanarch.org/non/claims.json
+- An entry and its data: https://www.alexanarch.org/non/{entity}/ and …/entity.json
+- Specification: EA-NEGONT-02 v0.9, https://www.alexanarch.org/s/records/1690/
+
+## Operations
+
+${ops}
+
+## Elsewhere
+
+- Specification of the opening: EA-WIKI-OPEN-01 v1.1, https://www.alexanarch.org/s/records/1697/
+- Protocol home: https://www.spxi.dev/ (methods: https://www.spxi.dev/methods/)
+- Archive: https://www.alexanarch.org/
+- Source: https://github.com/leesharks000/spxignosis (PolyForm Shield 1.0.0)
+`;
+}
 // Agents and scripts get the service description as JSON; a browser gets the same description as a page.
 app.get("/", (req, res) => {
-  const index = { ...INDEX, payments: PAY_TO ? "configured" : "not configured yet: paid routes answer 503",
+  const index = { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK}` : "not configured yet: the x402 routes answer 503" },
     // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
     reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
     worker_start: DISPATCH.token ? "on request, and every ten minutes" : "every ten minutes (GitHub's schedule; no dispatch token set)",
@@ -182,7 +219,9 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 function frontPage(index) {
   const ops = Object.entries(index.operations).map(([k, v]) => `<dt><code>${esc(k)}</code></dt><dd>${esc(v)}</dd>`).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SPXI-gnΩsis</title><meta name="description" content="Opens pinned Wikipedia revisions sentence by sentence against the sources they cite. Billable to agents over x402 and to people by card.">
+<title>SPXI-gnΩsis</title><meta name="description" content="Opens pinned Wikipedia revisions sentence by sentence against the sources they cite; a commission composes the entity's row in the Negative of the Negative (alexanarch.org/non). Paid by card.">
+<meta name="spxi:instrument" content="0.17 The opening (a pinned Wikipedia revision, read sentence by sentence) — SPXI method inventory, https://www.spxi.dev/methods/#m-0-17">
+<link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
 :root{--bg:#fefcf3;--ink:#14161b;--red:#a3141b;--muted:#5b5d63;--rule:#e4e0d2}
@@ -195,11 +234,18 @@ h1{font-weight:normal;font-size:1.2rem;letter-spacing:.02em;text-align:center;ma
 h2{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);border-top:1px solid var(--rule);padding-top:20px;margin-top:32px}
 dt{margin-top:14px;overflow-wrap:anywhere}dd{margin:4px 0 0 0;color:var(--muted)}code{font:14px/1.4 ui-monospace,Menlo,monospace;color:var(--ink)}
 a{color:var(--red)}p{margin:10px 0}.small{font-size:.9rem;color:var(--muted)}
+.spxi-instrument{font:13px/1.5 ui-monospace,Menlo,monospace;margin:0 0 20px;padding:.45em .7em;border-left:3px solid #8a5a00;background:rgba(138,90,0,.07)}
 </style></head><body><main>
 <img class="mark" src="/spxi-gnosis.png" alt="SPXI-gnΩsis: an Omega with a red vertical line through its centre" width="1774" height="887">
 <h1>opens pinned Wikipedia revisions, sentence by sentence, against the sources they cite</h1>
+<p class="spxi-instrument"><strong>SPXI instrument</strong> · method <a href="https://www.spxi.dev/methods/#m-0-17">0.17</a>, level 0 (Measurement): the opening of a pinned Wikipedia revision; also method <a href="https://www.spxi.dev/methods/#m-0-16">0.16</a>, the Negative of the Negative. An instrument of <a href="https://www.spxi.dev/">SPXI</a>, the Semantic Packet for eXchange &amp; Indexing; the whole practice is itemized at <a href="https://www.spxi.dev/methods/">spxi.dev/methods</a>.</p>
 <p>Each sentence is read against the sources it cites and the sources its article cites elsewhere, under the policy texts it was written against, and the reading is kept as evidence: what the source says, quoted; what the sentence adds or drops; whether an act of the source has been restated as a property of the entity. A sentence costs cents. A commissioned article consults the Crimson Hexagonal Archive and composes the entity's row in the <a href="https://www.alexanarch.org/non/">Negative of the Negative</a>, which is public.</p>
-<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · network ${esc(index.network)} · payments ${esc(index.payments)} · reader ${esc(index.reader)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
+<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · card ${esc(index.payments.card)} · agents ${esc(index.payments.agents)} · reader ${esc(index.reader)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
+<h2 id="non">The Negative of the Negative</h2>
+<p>A commission composes the entity's row in <a href="https://www.alexanarch.org/non/">/non</a>: public knowledge of the entity composed three ways, as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms, ontology included (EA-NEGONT-02 v0.9, <a href="https://www.alexanarch.org/s/records/1690/">#1690</a>). The row is public under CC BY 4.0 and lands in the archive by the operator's act; each entry has its page, its data and an AXN in the family NON.</p>
+<p class="small"><a href="https://www.alexanarch.org/non/">the entries</a> · <a href="https://www.alexanarch.org/non/index.json">contents as data</a> · <a href="https://www.alexanarch.org/non/claims.json">every field claim quoted</a> · <a href="https://www.alexanarch.org/non/about/">status, method and procedure</a></p>
+<h2>Prices</h2>
+<p>From measured cost, never subsidized: a quote is free and lists the maximum; the charge is for completed work only, and what the work did not use is refunded. A sentence is 2¢ checked and 22¢ opened (1¢ or less where the reading is already in the ledger). A commission adds the archive's consultation, priced from the traversal it would run at twice its estimated cost, at least $1.00, and charged at twice its measured cost, never above the quote. Card payments run through Stripe Checkout.</p>
 <h2>Operations</h2><dl>${ops}</dl>
 <h2>Publication</h2><p>${esc(index.publication)}</p><p class="small">${esc(index.notice)}</p>
 <p class="small">Protocol home: <a href="https://spxi.dev">spxi.dev</a> · archive: <a href="https://www.alexanarch.org">alexanarch.org</a> · source: <a href="https://github.com/leesharks000/spxignosis">github.com/leesharks000/spxignosis</a> (PolyForm Shield 1.0.0)</p>

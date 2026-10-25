@@ -78,7 +78,7 @@ export function buildRow(run) {
     row.delta = c.delta; row.kernel = c.kernel || []; row.measure = checks?.measure; row.channel = c.channel || [];
     row.audit = audit ? { rule: "v0.9 §5.3: reverse entailment by two raters; every unit needs a judgment from both", ran: audit.ran, complete: !!audit.complete, units: audit.units, unjudged: audit.missing || [], agreement: audit.agreement, breaches: audit.breaches.length } : null;
   } else {
-    row.objects.note = onto.status === "contested" ? "composition withheld: the two ontology readings differ on the case or ρ; both are carried in ontology.contested" : `composition not run: ontology ${onto.status}`;
+    row.objects.note = onto.status === "contested" ? "composition withheld: the two ontology readings differ and no rule settles which is taken; both are carried in ontology.contested" : `composition not run: ontology ${onto.status}`;
   }
   return row;
 }

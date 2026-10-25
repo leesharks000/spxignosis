@@ -61,8 +61,22 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
   if (!p1 && !p2) return { status: "unread", breaches: [{ check: "ontology", detail: "no ontology reading returned" }] };
   const breaches = [];
   const ids = new Set([...F, ...A]);
-  const contested = p1 && p2 && (p1.rho?.value !== p2.rho?.value || p1.case?.value !== p2.case?.value);
-  const o = structuredClone(p1 || p2);
+  const differ = p1 && p2 && (p1.rho?.value !== p2.rho?.value || p1.case?.value !== p2.case?.value);
+  // Where the two readings differ, the reading of ρ = constructs is taken (ruled 2026-10-25: "if the readings disagree go
+  // constructs"); where both give the same ρ and differ on the case, the reading whose case follows its ρ (§1.2a). The
+  // disagreement is recorded, with both readings, and composition proceeds. A disagreement neither rule settles withholds
+  // the composition, and the withholding is itself a breach.
+  let pick = null, rule = null;
+  if (differ) {
+    const cons = [p1, p2].filter((p) => p.rho?.value === "constructs");
+    if (cons.length === 1) { pick = cons[0]; rule = "where the readings disagree, ρ = constructs (ruled 2026-10-25)"; }
+    else if (p1.rho?.value === p2.rho?.value) {
+      const follows = [p1, p2].filter((p) => CASE_OF[p.rho?.value] && CASE_OF[p.rho.value] === p.case?.value);
+      if (follows.length === 1) { pick = follows[0]; rule = "same ρ, the case that follows it (§1.2a)"; }
+    }
+  }
+  const contested = differ && !pick;
+  const o = structuredClone(pick || p1 || p2);
   if (!RHO.includes(o.rho?.value)) breaches.push({ check: "rho-vocabulary", detail: `ρ = ${o.rho?.value}, a value outside §1.2a's three` });
   if (CASE_OF[o.rho?.value] && CASE_OF[o.rho.value] !== o.case?.value) breaches.push({ check: "case-follows-rho", detail: `ρ = ${o.rho.value} with case ${o.case?.value}` });
   for (const l of o.case?.loci || []) { l.quote_ok = locate(depText(l.dep).text, l.quote) >= 0; if (!l.quote_ok) breaches.push({ check: "case-locus", detail: `#${l.dep} ${l.locus}: quote not found` }); }
@@ -78,8 +92,12 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
     breaches.push({ check: "reversibility", detail: `field claims absent from the translation table: ${missing.join(", ")}; carried as received, untranslated` });
     o.translation = [...(o.translation || []), ...missing.map((id) => ({ field_claims: [id], archive_claims: [], translation: "untranslated: no row was read for this claim; carried as received", receiving_text: null, received: `"${fieldClaims[id].quote}"`, marks: ["added_by_check"] }))];
   }
+  if (differ) breaches.push({ check: "ontology-contested", detail: pick
+      ? `the two readings differ (pass 1: ρ = ${p1.rho?.value}, case ${p1.case?.value}; pass 2: ρ = ${p2.rho?.value}, case ${p2.case?.value}); composed under pass ${pick === p1 ? 1 : 2}: ${rule}`
+      : `the two readings differ (pass 1: ρ = ${p1.rho?.value}, case ${p1.case?.value}; pass 2: ρ = ${p2.rho?.value}, case ${p2.case?.value}) and no rule settles it; the composition is withheld` });
   // One reading where two were asked: the reading is kept and the absent second judgment is a breach.
   const single = !(p1 && p2);
   if (single) breaches.push({ check: "ontology-single-pass", detail: `only pass ${p1 ? 1 : 2} of two returned a reading; ρ and the case rest on one judgment` });
-  return { status: contested ? "contested" : single ? "read (single pass)" : "read", composition: o.case?.value, ...o, contested: contested ? { readings: [p1, p2].map((p) => ({ rho: p.rho, case: p.case })) } : undefined, breaches };
+  return { status: contested ? "contested" : single ? "read (single pass)" : "read", composition: o.case?.value, ...o,
+    contested: differ ? { readings: [p1, p2].map((p) => ({ rho: p.rho, case: p.case })), ...(pick ? { taken: pick === p1 ? 1 : 2, rule } : { taken: null }) } : undefined, breaches };
 }
