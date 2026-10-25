@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.9", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.10", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -215,7 +215,41 @@ async function prepareEntity(spec) {
   } else for (const u of (spec.sources || []).slice(0, 40)) snaps.push(await snapshot(u));
   return { snaps, capture, captures, discernment, supplied };
 }
-const specWithCapture = (spec, capture) => (capture ? { ...spec, address: capture.q, transcript: { text: capture.transcript, surface: capture.surface, date: capture.date, auth: capture.auth,
+// The answer a capture records, without what the registry keeps around it (2026-10-25: the first AI-answer quote read
+// 55 "sentences" from an answer of about fifteen, its source cards, the transcriber's bracketed note, the operator's
+// turn and the surface's disclaimer among them, and priced each): the head note in brackets, the operator's turns
+// ("You said:"), every line that is a source card's site, title or snippet, bare headings, and the closing disclaimer
+// are left out.
+const MARK = /^\s*\[([^\]]{1,40})\](?!\()\s*/;
+const ANSWER_MARKS = /^(answer|composition|ai overview|ai overview slot|ai mode|system)\b/i; // [SYSTEM] marks the reply in the early captures
+// a section of what the surface showed around the answer: skipped until the next answer or turn
+const SECTION_MARKS = /^(sources?|source cards|cards|sources presented|source rail|serp furniture|footer|first organic result|organic results?|no sources cited)\s*$/i; // the whole label: "[Sources: Z, A]" is an item
+const TURN_MARKS = /^(querent|operator)\b/i;
+export function answerText(capture) {
+  const norm = (t) => String(t || "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/(\.\.\.|…)\s*$/, "").replace(/^[*\-•\s]+/, "").replace(/^\d+\s+/, "").trim().toLowerCase();
+  const cards = (capture.cite_list || []).flatMap((c) => [c.site, c.title, c.snip]).map(norm).filter((t) => t.length > 3);
+  // a card line is the card's site, title or snippet, whole or as the surface truncated it, or a numbered "title · site"
+  const isCard = (l) => { const k = norm(l); return !!k && (cards.some((c) => k === c || (k.length >= 20 && c.startsWith(k))) || /^\d+\s+.+\s·\s\S+\.\S+$/.test(l.trim())); };
+  // a heading (a few words, no sentence ending) states no claim to read
+  const isHeading = (l) => { const t = l.trim(); return !/[.!?:;)"”。！？」]$/.test(t) && t.split(/\s+/).length <= 7 && t.length <= 60 && !/^[*\-•]/.test(t); };
+  const chrome = /^\s*(You said:|Query:|AI responses may include mistakes|Sources shown:|These are results for|Search instead for|Showing results for)/i;
+  let inAnswer = true; const out = [];
+  for (const raw of String(capture.transcript || "").replace(/^\s*\[[^\]]*\]\s*(?=\n|$)/, "").split("\n")) {
+    let l = raw; const m = l.match(MARK);
+    if (m) {
+      const k = m[1].trim();
+      if (TURN_MARKS.test(k)) { inAnswer = true; continue; }        // the operator's turn; what follows is answer
+      if (ANSWER_MARKS.test(k)) { inAnswer = true; l = l.slice(m[0].length); }
+      else if (SECTION_MARKS.test(k)) { inAnswer = false; continue; } // sources, cards, system, furniture, footer
+      else continue;                                               // one item (a source card, a chip, an image): its line only
+    }
+    if (/^\s*You said:/i.test(l)) { inAnswer = true; continue; }
+    if (!inAnswer || !l.trim() || chrome.test(l) || isCard(l) || isHeading(l)) continue;
+    out.push(l);
+  }
+  return out.join("\n").trim();
+}
+const specWithCapture = (spec, capture) => (capture ? { ...spec, address: capture.q, transcript: { text: answerText(capture), surface: capture.surface, date: capture.date, auth: capture.auth,
   capture: { slug: capture.slug, entry: capture.entry, obs_id: capture.obs_id, addr_id: capture.addr_id, q: capture.q, cite_list: capture.cite_list } } } : spec);
 
 // Two commissions (operator, 2026-10-21). *open*: a composition already at an address (a capture seated in the

@@ -37,6 +37,16 @@ echo "$ev" | grep -qE '"(charge_usd|margin_usd)"' && { echo "FAIL billing: a res
 [ -s "$S/billing/$(cat "$S/last-portable").json" ] && echo "ok   billing: the charge is kept privately beside the result" || { echo "FAIL billing: no private billing record"; exit 1; }
 echo "$land" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);const one=d.landable.find(l=>l.result_id==="R-landtest00000001"),two=d.landable.find(l=>l.result_id==="R-landtest00000002");const reused=d.landable.find(l=>l.result_id===process.argv[1]),unpaid=d.landable.find(l=>l.result_id==="R-landtest00000003");if(!one||two?.row_sha256!=="bb"||reused||unpaid){console.log("FAIL landable: "+JSON.stringify(d.landable));process.exit(1)}console.log("ok   landable: composed rows are listed for the archive with their row hash, from the list and from the result pointer; a row reused from the ledger is not, and a row its order did not pay for is not")})' "$(cat "$S/last-portable")"
 [ "$code" = "404" ] && echo "ok   server: an unknown quote is refused with 404 before any payment challenge" || { echo "FAIL server: unknown quote answered $code"; exit 1; }
+# A capture's answer (2026-10-25): the transcript without the transcriber's note, the operator's turns, the source cards
+# and the surface's chrome; the first AI-answer quote had priced 55 "sentences" from an answer of 16.
+node --input-type=module -e '
+import { readFileSync } from "fs"; const { answerText } = await import("./src/run.js");
+const F = JSON.parse(readFileSync("test/fixtures/captures-answer.json", "utf8"));
+const split = (t) => t.split(/\n+|(?<=[.!?])\s+(?=[A-Z“"\x27(])/).map((s) => s.trim()).filter((s) => s.length > 2);
+const [g, b, m] = F.map((c) => split(answerText(c)));
+const ok = g.length === 16 && g[0].startsWith("SPXI-gnΩsis is a specific technical service layer") && !g.some((s) => /BetaPro by Global X|AI responses may include|You said/.test(s))
+  && b.length === 1 && b[0].startsWith("\"SPXI (Semantic Packet") && m.length > 5 && !m.some((s) => /^\[|is Lee Sharks a myth\? search/.test(s));
+console.log(ok ? "ok   capture answer: the answer read without its note, turns, cards and chrome (16, 1, " + m.length + " sentences)" : "FAIL capture answer: " + JSON.stringify([g.length, b, m.slice(0, 3)])); if (!ok) process.exit(1);' || exit 1
 # The front door (2026-10-25): a person gets the request forms; an agent asking for JSON gets the description; an order has
 # its page and the card checkout returns to it; the operations inventory and the deployment's configuration are on /api.
 echo "$front" | grep -q 'id="p-construct"' && echo "$front" | grep -q 'Get a free quote' && ! echo "$front" | grep -q '/tmp' && echo "ok   pages: the front page carries the request forms and no deployment internals" || { echo "FAIL pages: front page"; exit 1; }
