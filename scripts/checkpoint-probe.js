@@ -17,6 +17,7 @@ rmSync(join(STORE, "s7", input().row, "runs"), { recursive: true, force: true })
 const b = await runS7(input(), { service: { name: "SPXI-gnΩsis", version: "probe" } });
 t("checkpoint: on another worker, the row's tree is written from the checkpoint", b.landing.files.some((f) => f.endsWith("summary.json")) && b.landing.files.some((f) => f.endsWith("candidates-D.jsonl")));
 t("checkpoint: the second run reads from the first run's checkpoint", !!b.run.stages.reading.from_checkpoint && b.run.stages.reading.cost_usd === 0);
+t("checkpoint: a row composed from a checkpoint records the version that read it and the ontology rules", b.run.stages.reading.service?.version === b.row.composition_gnosis.stages.reading.service?.version && !!b.run.stages.reading.service?.version && !!b.row.composition_gnosis.ontology_rules);
 const fresh = [...new Set(b.run.calls.filter((c) => !c.from_checkpoint).map((c) => c.stage))];
 t(`checkpoint: only construction passes run again (${fresh.join(", ") || "none"})`, fresh.every((s) => ["compose", "delta", "audit"].includes(s)) && a.run.calls.some((c) => !["compose", "delta", "audit"].includes(c.stage)));
 t("checkpoint: the same ontology is settled", JSON.stringify(a.row.ontology?.case) === JSON.stringify(b.row.ontology?.case) && a.row.ontology?.rho?.value === b.row.ontology?.rho?.value);

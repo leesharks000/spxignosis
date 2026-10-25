@@ -1,6 +1,7 @@
 // The /non row, in the shape of the dataset's own rows (datasets/negative-of-the-negative/v2), with its ledgers,
 // traversal, reading and a panel entry, written as a landing tree that mirrors the archive's paths. Third-party field
 // texts are not written into it; their hashes are. A Wikipedia revision's text is written with its licence.
+import { ONTOLOGY_RULES } from "./ontology.js";
 import { mkdirSync, writeFileSync, copyFileSync, readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { STORE, sha256 } from "../util.js";
@@ -60,7 +61,7 @@ export function buildRow(run) {
     breaches,
     ...(run.dro?.works?.length ? { works: { rule: "scanned, not read: the deposits the registry gives as by the entity (or by a name the caller counts as its)", count: run.dro.works.length, deposits: run.dro.works } } : {}),
     ...(run.dro?.division?.scanned ? { division: run.dro.division } : {}),
-    composition_gnosis: { service: run.service, protocol: run.protocol, mode: run.mode, models: run.models, archive_release: release, passes: run.calls, cost_usd: run.cost_usd, seconds: run.seconds, ...(run.stages ? { stages: run.stages } : {}) },
+    composition_gnosis: { service: run.service, ontology_rules: ONTOLOGY_RULES, protocol: run.protocol, mode: run.mode, models: run.models, archive_release: release, passes: run.calls, cost_usd: run.cost_usd, seconds: run.seconds, ...(run.stages ? { stages: run.stages } : {}) },
   };
   if (onto.status === "read" || onto.status === "read (single pass)" || onto.status === "contested" || onto.status === "defaulted") {
     row.ontology = { composition: caseV, case: onto.case, E_F: onto.E_F, E_A: onto.E_A, rho: onto.rho, translation: onto.translation,

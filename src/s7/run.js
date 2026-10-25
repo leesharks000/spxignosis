@@ -99,7 +99,7 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
     const readCalls = log.calls.slice(start);
     const whole = ontoRaw.passes.filter(Boolean).length === 2;
     if (whole) {
-      cp = { key, row: input.row, at: new Date().toISOString(), cost_usd: Math.round(readCalls.reduce((n, c) => n + (c.cost_usd || 0), 0) * 1e5) / 1e5, calls: readCalls,
+      cp = { key, row: input.row, at: new Date().toISOString(), service, cost_usd: Math.round(readCalls.reduce((n, c) => n + (c.cost_usd || 0), 0) * 1e5) / 1e5, calls: readCalls,
         state: { trav, blog, dro, travH, hop, verdicts, arch, field, ontoRaw } };
       try { await save(readingAt(input.row, key), cp); cp = { ...cp, written_now: true }; } catch { cp = null; }
     } else cp = null;
@@ -130,7 +130,8 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
   const calls = fromCheckpoint ? [...cp.calls.map((c) => ({ ...c, from_checkpoint: cp.at })), ...thisRun] : thisRun;
   const run = { key, input, trav, blog, travH, dro, hop, verdicts, arch, field, onto, composition, checks, audit: aud,
     release: archiveRelease(), protocol: S7_PROTOCOL, models: MODELS, mode: mode(), calls, cost_usd: sum(thisRun), seconds: (Date.now() - t0) / 1000, service,
-    stages: { reading: { cost_usd: fromCheckpoint ? 0 : sum(log.calls.slice(start, mid)), from_checkpoint: fromCheckpoint ? cp.at : null, checkpoint: cp ? readingAt(input.row, key) : null,
+    stages: { reading: { cost_usd: fromCheckpoint ? 0 : sum(log.calls.slice(start, mid)), from_checkpoint: fromCheckpoint ? cp.at : null,
+                         service: fromCheckpoint ? (cp.service || "not recorded: the checkpoint was kept before checkpoints recorded the version that read it (0.20.3)") : service, checkpoint: cp ? readingAt(input.row, key) : null,
                          delivered: onto.status !== "unread" },
               construction: { cost_usd: sum(log.calls.slice(mid)), ran: !!composition, delivered: !!composition } },
     budget: { budget_usd: Number.isFinite(log.budget_usd) ? log.budget_usd : null, held_for_construction_usd: construction_usd || 0, shared_with_construction: !!shared && start > 0, exhausted: log.exhausted(),
