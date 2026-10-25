@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.20.7", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.20.8", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -150,7 +150,7 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
       search_scope: ADMITS.has(tier) ? "the sources the article cites (the disclosed field B); and the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4): every deposit text and every blog post the blog–deposit map does not assign to a deposit, scanned for the entity's strings (the article's title and the names its lead gives) at D, R and O; one citation hop from the deposits admitted by reading, screened by string; admission by two reading passes" : "cited sources only at this tier",
       archive_release: s7?.estimate?.release || (s7 ? archiveRelease() : null),
       publication: ADMITS.has(tier) ? `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed: the opening contributes to the opened Wikipedia` : undefined,
-      execution_budget: s7 ? `model spending for the archive's consultation stops at $${s7.budget_usd} (each stage's estimated cost × ${POLICY.s7_contingency}, never above its line)${s7.stages ? `, and $${s7.stages.construction.budget_usd} of it is held for the construction while the reading runs` : ""}; passes beyond it are recorded as not run, and the row is composed from what was read, marked` : undefined,
+      execution_budget: s7 ? (s7.stages ? `model spending on each stage stops at its line (the reading's $${s7.stages.reading.price_usd}, the construction's $${s7.stages.construction.price_usd}), and $${s7.stages.construction.budget_usd} is held for the construction while the reading runs` : `model spending for the archive's consultation stops at $${s7.budget_usd}`) + "; passes beyond it are recorded as not run, and the row is composed from what was read, marked" : undefined,
       deliverables: s7 ? { reading: "the reading dossier: the traversal, the admitted deposits with their readings, the archive and field ledgers with every claim's quote checked, and both ontology readings with the determination of the case and ρ (in the landing tree)", construction: "the knowledge object, its compression and the field-only arm, the delta read against T, and the reverse entailment audit (the /non row)" } : undefined,
       context_rule: "passages first; when a reading pass reports that the passages lack what a judgment needs, the passages are widened and the claim is read again, once",
       retrieval_budget: { max_sources: 100, max_bytes_per_source: 5_000_000 },
@@ -412,7 +412,12 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
   if (!q) throw new Error(`unknown quote ${quoteId}`);
   const t0 = Date.now();
   let pinned, claims, sources, entityInput = null, construction = null;
-  const preLog = passLog({ budget_usd: q.s7?.budget_usd ?? Infinity });
+  // The reading may spend up to its own line, which the buyer paid, while the construction's share is held: a stage is
+  // charged at its measured cost × the margin, never above its line, so spending within the line is always covered
+  // (2026-10-25: the first operator commission's estimate × 1.5 stopped both ontology passes 2¢ short, with $0.72 of
+  // the reading's $1.44 line unspent; "remove unnecessary reasons for it to not deliver").
+  const s7Stages_ = q.s7?.stages;
+  const preLog = passLog({ budget_usd: s7Stages_ ? Math.round((s7Stages_.reading.price_usd + s7Stages_.construction.budget_usd) * 100) / 100 : (q.s7?.budget_usd ?? Infinity) });
   if (q.kind === "entity") {
     // The entity path: the caller's composition as T, or the article constructed under Wikipedia's policies.
     const { snaps } = await prepareEntity(q.entity);

@@ -63,7 +63,7 @@ export const POLICY = {
   floor_s7_reading: 0.75, // the reading: traversal, admission, extraction, the ontology read twice (2026-10-25)
   floor_s7_construction: 0.25, // the construction: the knowledge object, compression, delta, audit
   s7_budget_ratio: 1.5, // the budget of a quote made before 2026-10-25: price / ratio
-  s7_contingency: 1.5, // model spending on a stage stops at its estimated cost × contingency, never above its price: the allowance is set from the work, apart from the margin (2026-10-25)
+  s7_contingency: 1.5, // the construction's share held while the reading runs: its estimated cost × contingency, never above its price (2026-10-25); the reading itself may spend to its line
   ledgered_s7: 0.10, // a /non row already composed for the same input
   grounded_sentence: 0.02, // a sentence served the archive's claims on it from a commissioned row, added to its own price
   portable_package: 0.25, // the knowledge object packaged, charged when the audit marks no unit

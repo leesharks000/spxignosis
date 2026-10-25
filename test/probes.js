@@ -366,4 +366,13 @@ if (rid && existsSync(`${STORE}/results/${rid}/portable/manifest.json`)) {
   const man = JSON.parse(readFileSync(dir + "manifest.json", "utf8"));
   t("portable: every manifest hash matches its file", Object.entries(man.files).every(([n, h]) => createHash("sha256").update(readFileSync(dir + n)).digest("hex") === h));
 }
+
+// 2026-10-25: the first operator commission composed its row and was refunded in full as undelivered.
+{
+  const { deliveredWork } = await import("../src/deliver.js");
+  t("delivery: a composed row with no sentences is delivered work", deliveredWork({ composition: { summary: { completed: 0 }, non: { composed: true } } }));
+  t("delivery: a delivered reading with no row is delivered work", deliveredWork({ composition: { summary: { completed: 0 }, non: { composed: false, stages: { reading: { delivered: true } } } } }));
+  t("delivery: nothing completed, read or composed is not", !deliveredWork({ composition: { summary: { completed: 0 }, non: { composed: false } } }));
+}
+
 process.exit(fail ? 1 : 0);

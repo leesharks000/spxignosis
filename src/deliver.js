@@ -18,11 +18,15 @@ export const WORKER = {
 export const ORDER_DEADLINE_MS = Number(process.env.GNOSIS_ORDER_HOURS || 24) * 3600e3;
 export const needsArchive = (q) => !!(q?.s7 || q?.kind === "entity");
 
+// Whether a run delivered work: a completed claim, a composed row, or a delivered reading of the archive.
+export const deliveredWork = (r) => { const non = r?.composition?.non; return (r?.composition?.summary?.completed || 0) > 0 || !!non?.composed || !!non?.stages?.reading?.delivered; };
 export async function deliver(q, { deadline } = {}) {
   const r = await runOpening(q.quote_id, { deadline, onProgress: (p) => { save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }).catch((e) => console.error("progress write:", e.message)); } });
   // Completion follows the commissioned operation: a composed row is delivered work even where T needed no S3 check, and
   // so is a completed reading of the archive (its dossier) where the construction did not deliver (2026-10-25).
-  if (r.composition.summary.completed === 0 && !r.non?.composed && !r.non?.stages?.reading?.delivered)
+  // The row is in the composition (r.composition.non); r carries no non of its own (2026-10-25: every commission with no
+  // article, entity or operator, read as undelivered and was refunded in full, its row composed).
+  if (!deliveredWork(r))
     throw Object.assign(new Error("no claim could be completed, no reading of the archive delivered and no row composed"), { result_id: r.result_id });
   const out = { result_id: r.result_id, reused: r.reused, summary: r.composition.summary, billing: r.record?.billing, composition: r.composition, portable: r.portable_dir ? `/v1/results/${r.result_id}/portable/manifest.json` : null };
   await save(`delivered/${q.quote_id}.json`, out);
