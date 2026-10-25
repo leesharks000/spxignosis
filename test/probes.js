@@ -273,7 +273,13 @@ else {
   const { divide } = await import("../src/s7/about.js");
   const realFetch = globalThis.fetch, prevKey = process.env.ANTHROPIC_API_KEY, prevR = process.env.GNOSIS_READER;
   const bodies = [];
-  globalThis.fetch = async (url, opts) => { bodies.push(JSON.parse(opts.body)); return { ok: true, status: 200, json: async () => ({ content: [{ type: "text", text: "not json at all" }], usage: { input_tokens: 20000, output_tokens: 4000 } }) }; };
+  // The archive passes stream (2026-10-25): the stand-in API answers as a Messages stream.
+  const sse = (text, usage) => [{ type: "message_start", message: { usage: { input_tokens: usage.input_tokens, output_tokens: 1 } } }, { type: "content_block_delta", delta: { type: "text_delta", text } },
+    { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: usage.output_tokens } }].map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join("");
+  globalThis.fetch = async (url, opts) => { bodies.push(JSON.parse(opts.body)); const s = sse("not json at all", { input_tokens: 20000, output_tokens: 4000 });
+    const b = JSON.parse(opts.body);
+    return b.stream ? { ok: true, status: 200, body: (async function* () { yield new TextEncoder().encode(s); })() }
+      : { ok: true, status: 200, json: async () => ({ content: [{ type: "text", text: "not json at all" }], usage: { input_tokens: 20000, output_tokens: 4000 } }) }; };
   process.env.ANTHROPIC_API_KEY = "test"; process.env.GNOSIS_READER = "anthropic";
   const l1 = pl(); const o1 = await l1.run({ row: "x", stage: "s", id: "1", system: "sys", task: "t", model: "claude-sonnet-5-5", maxTokens: 4000 });
   t("model: no sampling parameter is sent (Sonnet 5.5 rejects non-default values; Haiku 5.5 asks they be omitted)", bodies.every((b) => !("temperature" in b) && !("top_p" in b) && !("top_k" in b)));

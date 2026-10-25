@@ -7,7 +7,8 @@ import { STORE, sha256 } from "../util.js";
 
 const V2 = "datasets/negative-of-the-negative/v2";
 const words = (t) => (t || "").match(/[A-Za-z0-9'’-]+/g)?.length || 0;
-const numbered = (ko) => ko && { ...ko, sentences: (ko.sentences || []).map((s, i) => ({ n: i + 1, para: s.para ?? 0, text: s.text, claims: s.claims || [] })) };
+// A part the composition did not return is an empty object with no sentences, so a partial reply builds a row (2026-10-25).
+const numbered = (ko) => ({ ...(ko || {}), sentences: ((ko && ko.sentences) || []).map((s, i) => ({ n: i + 1, para: s.para ?? 0, text: s.text, claims: s.claims || [] })) });
 
 // Every T is marked as what it is (operator, 2026-10-21: "it is fine to construct novel entities as long as they are
 // marked as such"). Falsification is a mismarking; the class says who produced T and what was observed.

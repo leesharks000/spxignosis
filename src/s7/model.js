@@ -30,12 +30,36 @@ async function live({ system, shared, task, model, maxTokens = 8000 }) {
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
     // Up-front thinking is off for the S7 passes as for the readings (reader.js thinkingFor, 2026-10-24).
-    body: JSON.stringify({ model, max_tokens: maxTokens, ...(thinkingFor(model) ? { thinking: thinkingFor(model) } : {}),
+    // Streamed (2026-10-25): a long pass (the composition writes up to 32,000 tokens, five to nine minutes) answered
+    // whole would arrive after the HTTP client's five-minute wait for a response, and fail on both attempts.
+    body: JSON.stringify({ model, max_tokens: maxTokens, stream: true, ...(thinkingFor(model) ? { thinking: thinkingFor(model) } : {}),
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }], messages: [{ role: "user", content }] }),
   });
-  const j = await res.json();
-  if (!res.ok) throw new Error(`S7 pass HTTP ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
-  return { text: j.content.map((c) => c.text || "").join(""), usage: j.usage };
+  if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(`S7 pass HTTP ${res.status}: ${JSON.stringify(j).slice(0, 300)}`); }
+  return readStream(res.body);
+}
+
+// The Messages API stream: text from content_block_delta events; usage from message_start and message_delta.
+export async function readStream(body) {
+  const dec = new TextDecoder();
+  let buf = "", text = "", usage = {}, stop = null;
+  const take = (line) => {
+    if (!line.startsWith("data:")) return;
+    const d = line.slice(5).trim();
+    if (!d) return;
+    let ev; try { ev = JSON.parse(d); } catch { return; }
+    if (ev.type === "message_start") usage = { ...ev.message?.usage };
+    else if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") text += ev.delta.text;
+    else if (ev.type === "message_delta") { usage = { ...usage, ...ev.usage }; stop = ev.delta?.stop_reason || stop; }
+    else if (ev.type === "error") throw new Error(`S7 pass stream error: ${JSON.stringify(ev.error).slice(0, 300)}`);
+  };
+  for await (const chunk of body) {
+    buf += dec.decode(chunk, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) { take(buf.slice(0, i).replace(/\r$/, "")); buf = buf.slice(i + 1); }
+  }
+  if (buf) take(buf);
+  return { text, usage, stop_reason: stop };
 }
 
 // A ledger of every pass the run made: stage, id, how, model, usage, cost. The run carries an execution budget. Before
