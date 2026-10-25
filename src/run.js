@@ -304,7 +304,10 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
       try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; if (runCache) await save(`${runCache}/${key}.json`, { ...r2, expanded: true }); } } catch (e) { err = String(e.message || e); billFailed(e); }
     }
     if (!r) { (E[idx] = { id: c.id, section: c.section, sentence: c.text, status: "unread", note: err || "no reading available for this claim" }); return; }
-    if (!fromLedger && !fromRun) for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
+    // A reading this order made in an earlier invocation (fromRun) is this order's spend and is counted again here, so
+    // the cost of an order run across invocations is its whole cost (2026-10-24: test order 6 reported only the last
+    // invocation's). A ledgered reading made for another order is not.
+    if (!fromLedger) for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
     // The passages each pass was shown, so a quotation from outside them is recorded (validate.js).
     const shownInput = r.input || inputFor(c, srcs, pinned, expanded ? { size: 3000, keep: 8 } : undefined);
     const shown = Object.fromEntries(shownInput.sources.map((x) => [x.id, x.passages.map((q) => q.text).join(" \n ")]));
