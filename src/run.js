@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.7", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.8", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -60,6 +60,7 @@ export function claimKey(claim, srcs, model, reader) {
 // Tiers that consult the archive and compose the entity's /non row.
 // The archive is consulted on commission only (operator, 2026-10-23).
 export const ADMITS = new Set(["commission", "portable"]);
+export const T_SENTENCE_LIMIT = 150;
 
 
 export async function prepare(oldid, only) {
@@ -245,7 +246,10 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
   const compare = spec.commission === "construct" && spec.compare === "encyclopedia";
   const construct = compare ? callCost(S7_MODELS.reading, { input_tokens: srcTok + 2500, output_tokens: 6000 }) : 0;
   // S3 reads each sentence of T against its sources: a capture's or a supplied composition's sentences against its cards.
-  const nSent = spec.transcript?.text ? (input.field.some((b) => b.text) ? Math.min(30, input.T.claims.length) : 0) : compare ? Math.min(30, input.field.filter((b) => b.text).length * 3) : 0;
+  // An AI answer is read whole up to T_SENTENCE_LIMIT sentences, each priced in the quote (2026-10-25: it read the first
+  // 30, while the page said "each sentence"); the quote states how many the answer holds and which are left out.
+  const tTotal = spec.transcript?.text ? input.T.claims.length : 0;
+  const nSent = spec.transcript?.text ? (input.field.some((b) => b.text) ? Math.min(T_SENTENCE_LIMIT, tTotal) : 0) : compare ? Math.min(30, input.field.filter((b) => b.text).length * 3) : 0;
   const perSentEst = estimateClaim(TIERS[tier].reader_model, Math.min(9000, Math.ceil(srcTok / Math.max(1, input.field.length))) + 2500);
   const sentence_price = priceClaim(tier, perSentEst, false);
   const stages = s7Stages(e);
@@ -264,9 +268,10 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
       : capture ? { kind: captures.picked ? "capture named by the caller, seated in the registry" : "capture (the closed-ontology article)", primary: { slug: capture.slug, q: capture.q, surface: capture.surface, date: capture.date, obs_id: capture.obs_id }, bare_address_observations: captures.bare, related_captures: captures.related.length }
       : compare ? { kind: "construction, with the article Wikipedia's content policies would write constructed as a comparison (notability not applied)" } : { kind: "construction: the object composed with no T" },
     commission: spec.commission, object_kind: spec.kind || "entity", sources: snaps.map((s) => ({ url: s.url, final_url: s.final_url, text_sha256: s.text_sha256, availability: s.availability })),
-    tier, tier_steps: spec.transcript?.text ? `S3 on each sentence of T against its cards (at most 30), S7–S9${spec.transcript.supplied ? "; the supplied composition was discerned at the quote, and its row is held from landing until the registry seats it" : ""}` : compare ? "S0′ (the comparison article, under Wikipedia's content policies, notability not applied), S3 on each of its sentences, S7–S8" : "S7–S8: the object composed from the archive and the named sources, with no T",
+    tier, tier_steps: spec.transcript?.text ? `S3 on each sentence of T against its cards (at most ${T_SENTENCE_LIMIT}), S7–S9${spec.transcript.supplied ? "; the supplied composition was discerned at the quote, and its row is held from landing until the registry seats it" : ""}` : compare ? "S0′ (the comparison article, under Wikipedia's content policies, notability not applied), S3 on each of its sentences, S7–S8" : "S7–S8: the object composed from the archive and the named sources, with no T",
     reader_model: TIERS[tier].reader_model, lines: [], s7, construction: !compare ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
     sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
+    ...(tTotal ? { t_sentences: { total: tTotal, read: nSent, excluded: tTotal - nSent, note: nSent === tTotal ? "every sentence of the answer is read" : nSent ? `the first ${nSent} of ${tTotal} sentences are read, and the rest are not` : "no card of the answer could be fetched, so its sentences are not read against them; the object is composed" } } : {}),
     estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USD (card, Stripe Checkout); agents pay the same amount in USDC once x402 is configured",
     pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
       rule: "each constructed sentence's check at max(floor_per_claim, estimated cost × sentence_margin); the construction and the archive's consultation with the row each at max(floor, estimated cost × margin); the charge is for completed work only" },
@@ -431,7 +436,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
       // T's sentences are read against the cards T engages, as an article's sentences are read against their citations.
       const fetched = snaps.filter((s) => s.text && s.retrieved);
       const cardSrc = fetched.map((s) => ({ kind: "card", url: s.url, final_url: s.final_url || s.url, citation: s.title, text: s.text, text_sha256: s.text_sha256, availability: s.availability }));
-      claims = entityInput.T.claims.slice(0, 30).map((c) => ({ ...c, section: "T", cited: cardSrc.length > 0, footnotes: [], pointers: [], text_sha256: sha256(c.text) }));
+      claims = entityInput.T.claims.slice(0, T_SENTENCE_LIMIT).map((c) => ({ ...c, section: "T", cited: cardSrc.length > 0, footnotes: [], pointers: [], text_sha256: sha256(c.text) }));
       sources = Object.fromEntries(claims.map((c) => [c.id, cardSrc]));
       const dn = q.entity.transcript.discernment;
       if (q.entity.transcript.supplied) entityInput.T = { ...entityInput.T, supplied: true, discernment: dn,

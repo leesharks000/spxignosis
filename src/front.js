@@ -56,6 +56,7 @@ code,.mono{font-family:var(--mono);font-size:.86em;overflow-wrap:anywhere}
 .tabs button{appearance:none;border:0;background:none;font:600 .95rem var(--sans);color:var(--muted);padding:10px 10px 9px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red)}
 .pane[hidden]{display:none}
+@media (max-width:520px){.tabs .long{display:none}.tabs button{flex:1}}
 label{display:block;font-weight:600;font-size:.9rem;margin:12px 0 5px}
 label .opt{font-weight:normal;color:var(--muted)}
 input[type=text],input[type=url],textarea{width:100%;font:16px/1.4 var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--rule-2);border-radius:6px;padding:10px 11px}
@@ -162,9 +163,9 @@ export function frontPage(index) {
 </div>
 <div class="req" id="request">
 <div class="tabs" role="tablist">
-<button role="tab" aria-selected="true" aria-controls="p-open" id="t-open">Open a composition</button>
-<button role="tab" aria-selected="false" aria-controls="p-construct" id="t-construct">Construct an object</button>
-<button role="tab" aria-selected="false" aria-controls="p-read" id="t-read">Read what exists</button>
+<button role="tab" aria-selected="true" aria-controls="p-open" id="t-open">Open<span class="long"> a composition</span></button>
+<button role="tab" aria-selected="false" aria-controls="p-construct" id="t-construct">Construct<span class="long"> an object</span></button>
+<button role="tab" aria-selected="false" aria-controls="p-read" id="t-read">Read<span class="long"> what exists</span></button>
 </div>
 
 <form class="pane" id="p-open" role="tabpanel" aria-labelledby="t-open" novalidate>
@@ -174,13 +175,16 @@ export function frontPage(index) {
 <label>Scope</label>
 <div class="choice">
 <label><input type="radio" name="tier" value="check"><span><b>Checked</b> · two passes on the small model · typically 2¢ a sentence</span></label>
-<label><input type="radio" name="tier" value="opening" checked><span><b>Opened</b> · two independent readings on the middle model · typically 22¢ a sentence</span></label>
+<label><input type="radio" name="tier" value="opening" checked><span><b>Opened</b> · two separately generated readings on the middle model · typically 22¢ a sentence</span></label>
 <label><input type="radio" name="tier" value="commission"><span><b>Commissioned</b> · opened, then the archive consulted and the article's subject composed as a row in /non · a few dollars for a short article</span></label>
 </div>
-<details><summary>Open an AI answer instead</summary>
-<p class="hint">An AI answer seated in the <a href="https://www.alexanarch.org/captures/">Capture Registry</a> is opened by the name it answers about: each of its sentences read against the cards it showed, then the object composed in /non.</p>
+<details id="o-ai"><summary>Open an AI answer instead</summary>
+<p class="hint">An AI answer seated in the <a href="https://www.alexanarch.org/captures/">Capture Registry</a> is opened by the name it answers about. This is always a commission: each of its sentences (up to 150) is read against the sources the answer showed, and the object is then composed in /non. The scope above does not apply. The quote names the answer it selected (engine, date, exact query, capture page) before you pay.</p>
 <label for="o-capture">Name the answer is about <span class="opt">(leave the article empty)</span></label>
 <input type="text" id="o-capture" name="capture" placeholder="SPXI-gnΩsis" autocomplete="off">
+<label for="o-slug">A particular capture <span class="opt">(optional: its address in the registry)</span></label>
+<input type="text" id="o-slug" name="slug" placeholder="what-is-spxi-gnosis-aio-20261025" autocomplete="off">
+<p class="hint">Where several answers are seated for one name, the address chooses which is opened. Find it on the capture’s page.</p>
 </details>
 <button class="btn" type="submit">Get a free quote</button>
 <div class="out" aria-live="polite"></div>
@@ -188,20 +192,20 @@ export function frontPage(index) {
 
 <form class="pane" id="p-construct" role="tabpanel" aria-labelledby="t-construct" hidden novalidate>
 <div class="seg" role="radiogroup" aria-label="Kind of object"><label><input type="radio" name="kind" value="entity" checked>Entity</label><label><input type="radio" name="kind" value="operator">Operator</label></div>
-<p class="hint" id="c-kindhint">A person, a work, a concept, an institution: anything that can be named.</p>
+<p class="hint" id="c-kindhint">An <b>entity</b> is something named: a person, a work, an institution, a concept.</p>
 <label for="c-name">Name</label>
 <input type="text" id="c-name" name="name" placeholder="Attributization" autocomplete="off">
 <label for="c-desc">Short description <span class="opt">(optional for an entity)</span></label>
 <textarea id="c-desc" name="description" placeholder="the conversion of an act a source performs into a property of the entity a sentence describes"></textarea>
 <div id="c-strings-wrap" hidden>
-<label for="c-strings">Its strings</label>
+<label for="c-strings">Phrases to search for</label>
 <input type="text" id="c-strings" name="strings" placeholder="attributization, attributized, attributizes" autocomplete="off">
-<p class="hint">The phrases in which the operation is performed, separated by commas. The name is a label; it is not added to these automatically.</p>
+<p class="hint">The phrases in which the operation is performed, separated by commas (the operator’s <i>strings</i>). The archive is searched for them; the name is a label and is not added to them automatically.</p>
 </div>
 <details><summary>Add sources</summary>
 <label for="c-sources">Sources <span class="opt">(one link per line)</span></label>
 <textarea id="c-sources" name="sources" placeholder="https://…"></textarea>
-<p class="hint">Fetched once and hashed, and read beside the archive. Without them the object is composed from the archive and the field it finds.</p>
+<p class="hint">Fetched once and hashed, and read beside the archive as the object’s field. Without them the object is composed from the archive alone.</p>
 </details>
 <button class="btn" type="submit">Get a free quote</button>
 <div class="out" aria-live="polite"></div>
@@ -248,7 +252,7 @@ export function frontPage(index) {
 <p class="lab">The object's first sentence</p>
 <blockquote class="quote src">Attributization is an operator, the operation the entity form conceals, defined in deposit #1696 as “the act a text performs and the encyclopedic sentence states as an attribute of an entity, in which the operator speaks with the entity's voice.”<span class="gloss">cites claim OA1696-02, quoted from #1696 and located in its text</span></blockquote>
 <p class="lab">What was built</p>
-<p class="finding">A knowledge object of <b>22 sentences</b>, citing <b>32</b> of the 178 claims extracted from the <b>9</b> deposits the archive admitted. The field holds no account of the operator, and the object says so.</p>
+<p class="finding">A knowledge object of <b>22 sentences</b>, citing <b>32</b> of the 178 claims extracted from the <b>9</b> deposits the archive admitted. No field sources were supplied with this commission, so the object rests on the archive’s own papers, and says so.</p>
 <div class="states"><span class="st done">Composed</span><span class="st audit">Audited · 29 findings recorded</span><span class="st public">Public</span></div>
 <details><summary>How it was made</summary>
 <dl class="kv">
@@ -290,7 +294,7 @@ export function frontPage(index) {
 <ol class="measure" style="padding-left:1.2em;margin:0">
 <li><b>Request.</b> Name the article or the object.</li>
 <li><b>Quote.</b> Free: each deliverable, its line, the maximum, and what will be public. A commission is priced by the archive worker in a few minutes.</li>
-<li><b>Payment.</b> By card, or by an agent over x402. The maximum is held when you pay.</li>
+<li><b>Payment.</b> By card, or by an agent over x402. The maximum is charged upfront; the unused balance is refunded under the terms below.</li>
 <li><b>Progress.</b> The order's page shows the stage it has reached.</li>
 <li><b>Result.</b> The reading or the object, with its evidence, disagreements, audit findings, and the state of its publication.</li>
 </ol>
@@ -354,7 +358,7 @@ const FRONT_JS = `
   function show(id){tabs.forEach(function(t){var on=t.id===id;t.setAttribute('aria-selected',on);$('#'+t.getAttribute('aria-controls')).hidden=!on});}
   tabs.forEach(function(t){t.addEventListener('click',function(){show(t.id)})});
   // operator fields
-  $$('input[name=kind]').forEach(function(r){r.addEventListener('change',function(){var op=$('input[name=kind]:checked').value==='operator';$('#c-strings-wrap').hidden=!op;$('#c-kindhint').textContent=op?'An operation an entity form conceals, composed as its own object: it needs the phrases in which it is performed.':'A person, a work, a concept, an institution: anything that can be named.'})});
+  $$('input[name=kind]').forEach(function(r){r.addEventListener('change',function(){var op=$('input[name=kind]:checked').value==='operator';$('#c-strings-wrap').hidden=!op;$('#c-kindhint').innerHTML=op?'An <b>operator</b> is an operation made inspectable as its own object: what it does, where it is performed, which entities it speaks through. It needs the phrases in which it is performed.':'An <b>entity</b> is something named: a person, a work, an institution, a concept.'})});
   function say(form,html,err){var o=$('.out',form);o.innerHTML=err?'<p class="err">'+html+'</p>':html}
   function busy(form,on,label){var b=$('button[type=submit]',form);b.disabled=on;if(label)b.textContent=label}
   function post(body){return fetch('/v1/quote',{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('the service answered '+r.status));return j})})}
@@ -362,7 +366,7 @@ const FRONT_JS = `
   $('#p-open').addEventListener('submit',function(e){e.preventDefault();var f=e.target,a=$('#o-article').value,c=$('#o-capture').value.trim(),tier=$('input[name=tier]:checked',f).value;
     if(!a.trim()&&!c){say(f,'Name a Wikipedia article, or an AI answer by the name it is about.',1);return}
     busy(f,true,'Quoting…');say(f,'');
-    var go=a.trim()?post({article:a.trim(),tier:tier}):post({commission:'open',object:{kind:'entity',name:c}});
+    var go=a.trim()?post({article:a.trim(),tier:tier}):post({commission:'open',object:(function(){var o={kind:'entity',name:c},sl=$('#o-slug').value.trim();if(sl)o.capture=sl;return o})()});
     go.then(toOrder).catch(function(x){busy(f,false,'Get a free quote');say(f,esc(x.message),1)})});
   $('#p-construct').addEventListener('submit',function(e){e.preventDefault();var f=e.target,kind=$('input[name=kind]:checked',f).value,name=$('#c-name').value.trim(),desc=$('#c-desc').value.trim();
     var strings=$('#c-strings').value.split(',').map(function(s){return s.trim()}).filter(Boolean), sources=$('#c-sources').value.split(/\\s+/).filter(function(s){return /^https?:\\/\\//.test(s)});
@@ -406,14 +410,17 @@ const ORDER_JS = `
     if(q.kind!=='entity'){
       d.push((q.claims_total||0)+' sentences of “'+esc(q.article.title)+'”, revision '+esc(q.article.oldid)+(q.claims_ledgered?', '+q.claims_ledgered+' already read and served from the ledger':'')+'; each with its reading against the sources it cites, quoted passages and hashes, and any disagreement kept as contested');
       pub='The readings are kept and served to later callers (CC BY 4.0). No /non row is composed at this scope.';
-    } else if(act==='open'){ d.push('the AI answer seated for “'+esc(title)+'”, each sentence read against the cards it showed'); }
+    } else if(act==='open'){
+      var ts=q.t_sentences; d.push('the AI answer above, '+(ts?(ts.read===ts.total?'all '+ts.total+' of its sentences':ts.read?'the first '+ts.read+' of its '+ts.total+' sentences ('+ts.excluded+' not read)':'its sentences not read against its sources, which could not be fetched'):'its sentences')+' read against the sources it showed'); }
     if(s7&&s7.stages){
       d.push('<b>The reading</b> ('+usd(s7.stages.reading.price_usd)+' at most): the traversal, the admitted deposits with their readings, the ledgers with every quote checked, and the ontology read twice');
       d.push('<b>The construction</b> ('+usd(s7.stages.construction.price_usd)+' at most): the knowledge object, every sentence naming its claims, with its audit');
       pub='The row is composed in /non and lands public under CC BY 4.0'+(s7.non_url?' at <a href="'+esc(s7.non_url)+'">'+esc(s7.non_url)+'</a>':'')+'.';
     }
     var label=q.kind==='entity'?(act==='construct'?'Construct':'Open')+' '+(q.object_kind||'entity')+': '+title:(tier==='check'?'Check':tier==='commission'?'Commission':'Open')+': '+title;
-    return {title:label,deliver:d,publish:pub};
+    var cap=null, src=q.T_source;
+    if(src&&src.primary&&src.primary.slug){var c=src.primary;cap='<div class="card" style="background:var(--bg)"><p class="lab" style="margin-top:0">The answer this order opens</p><dl class="kv"><dt>engine</dt><dd>'+esc(c.surface)+'</dd><dt>date</dt><dd>'+esc(c.date)+'</dd><dt>query</dt><dd>“'+esc(c.q)+'”</dd><dt>capture</dt><dd><a href="https://www.alexanarch.org/captures/'+esc(c.slug)+'/">'+esc(c.slug)+'</a></dd></dl>'+(src.related_captures?'<p class="fine">'+src.related_captures+' other capture'+(src.related_captures===1?' is':'s are')+' seated for this name. If this is not the answer you meant, request again with its address.</p>':'')+'</div>'}
+    return {title:label,deliver:d,publish:pub,cap:cap};
   }
   function load(){
     fetch('/v1/quotes/'+encodeURIComponent(QUOTE_ID)+'/status',{headers:{accept:'application/json'}}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
@@ -428,8 +435,8 @@ const ORDER_JS = `
         step(paidReturn?2:1);
         $('#o-sub').textContent=left>0?'Quoted. The quote holds for '+left+' more minute'+(left===1?'':'s')+'.':'This quote has expired; request it again.';
         b.innerHTML='<div class="card"><p class="lab" style="margin-top:0">At most</p><p class="big">'+usd(j.max_price_usd)+'</p>'+(under?'<p class="fine">By card the charge is $0.50, the card minimum, and an order at that minimum keeps it.</p>':'<p class="fine">Charged for what is delivered, never above this; the rest is refunded, and an order that delivers nothing is refunded in full.</p>')+
-          '<p class="lab">You receive</p>'+list+'<p class="lab">Public</p><p>'+w.publish+'</p>'+
-          (left>0?'<button class="btn" id="pay">Pay by card'+(under?' ($0.50)':'')+'</button> <span class="fine" style="margin-left:8px">Agents: <code>POST /v1/openings/'+esc(QUOTE_ID)+'</code> over x402</span><div class="out" id="pay-out"></div>':'<p><a href="/#commission">Request a new quote</a></p>')+
+          (w.cap||'')+'<p class="lab">You receive</p>'+list+'<p class="lab">Public</p><p>'+w.publish+'</p>'+
+          (left>0?'<button class="btn" id="pay">Pay by card'+(under?' ($0.50)':'')+'</button><p class="fine" style="margin-top:10px">Agents pay the same quote over x402 at <code>POST /v1/openings/'+esc(QUOTE_ID)+'</code>.</p><div class="out" id="pay-out"></div>':'<p><a href="/#commission">Request a new quote</a></p>')+
           '<details><summary>The quote as data</summary><pre>'+esc(JSON.stringify(q,null,1)).slice(0,20000)+'</pre></details></div>';
         var p=$('#pay'); if(p) p.addEventListener('click',function(){p.disabled=true;p.textContent='Opening the checkout…';fetch('/v1/openings/'+encodeURIComponent(QUOTE_ID)+'/checkout',{method:'POST',headers:{accept:'application/json'}}).then(function(r){return r.json()}).then(function(c){if(c.url)location.href=c.url;else{p.disabled=false;p.textContent='Pay by card';$('#pay-out').innerHTML='<p class="err">'+esc(c.error||'the checkout could not be opened')+'</p>'}}).catch(function(e){p.disabled=false;p.textContent='Pay by card';$('#pay-out').innerHTML='<p class="err">'+esc(e.message)+'</p>'})});
         if(paidReturn) again(5000);
