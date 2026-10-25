@@ -12,6 +12,8 @@ The reading step (S3) follows EA-WIKI-OPEN-01 v1.1 ([#1697](https://www.alexanar
 
 The commission's archive step (S7–S8) follows EA-NEGONT-02 v0.9 ([#1690](https://www.alexanarch.org/s/records/1690/)): the archive traversed at D, R and O with one citation hop, admission by two independent readings, the archive and field ledgers extracted, the ontology read twice, then the knowledge object, its compression and the field-only arm composed, the delta read against T, and a reverse entailment audit. Where the two ontology readings disagree, the reading of ρ = constructs is taken (ruled 2026-10-25), and the disagreement is recorded with both readings; a disagreement no rule settles withholds the composition, and the withholding is recorded as a breach. The row is written as a landing tree; the archive's landing workflow (`.github/workflows/land-non-rows.yml` there) reads `GET /v1/landable` and lands each row it has not landed by `scripts/land_non_row.py`, verified against its manifest, with no one's tap. A row whose T the caller attests is held until its capture is seated.
 
+The service's readings (each result's composition, evidence record, opened article and annotations) are licensed CC BY 4.0, ruled 2026-10-25, as are the /non rows; verbatim Wikipedia sentences within them remain CC BY-SA 4.0. A reading is kept and served free to any later caller of the same sentence at the same state.
+
 ## Tiers and prices
 
 Prices come from measured cost and are never subsidized: a quote lists the maximum, the charge is for completed work only, and what the work did not use is refunded.

@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.4", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.5", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -545,7 +545,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
   const composition = {
     result_id, service: SERVICE, tier: q.tier, article: q.article,
     ...(entityInput ? { entity: { name: entityInput.entity.name, wikipedia: q.wikipedia, T: entityInput.T.kind, construction: entityInput.T.construction || null } } : {}),
-    licence_note: "Wikipedia sentences are CC BY-SA 4.0, attributed to the revision URL; the service's account is licensed to the caller under the service terms.",
+    licence: "CC BY 4.0", licence_note: "Ruled 2026-10-25: the service's readings (this composition, the evidence record, the opened article and its annotations) are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), attributed to SPXI-gnΩsis and the result id; verbatim Wikipedia sentences within them remain CC BY-SA 4.0, attributed to the revision URL.",
     notice: "The treatment of this article's entities by composing systems may be recorded and measured.",
     non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, complete: !!s7.complete, coverage: s7.coverage || null, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,
       stages: s7.stages ? Object.fromEntries(Object.entries(s7.stages).map(([k, v]) => [k, { delivered: !!v.delivered, ...(v.from_checkpoint ? { from_checkpoint: v.from_checkpoint } : {}) }])) : undefined,

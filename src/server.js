@@ -563,6 +563,7 @@ function contributesSentence(p) {
   const q = new URLSearchParams({ text: p.sentence?.text || "", url: p.page?.url || "", mode: p.mode });
   return { artifact: "sentence reading", mode: p.mode, revision: p.page?.oldid, ledger_key: p.ledger_key,
     reuse: "served free, as recorded, to any later caller of this sentence at this revision", request: `/v1/sentence?${q}`,
+    licence: "CC BY 4.0 (the reading); the Wikipedia sentence remains CC BY-SA 4.0",
     non: p.non?.length ? p.non : undefined };
 }
 function contributesOpening(out) {

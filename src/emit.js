@@ -26,12 +26,13 @@ blockquote{margin:1.4rem 0 .4rem;padding-left:.9rem;border-left:3px solid var(--
 ${comp.non ? `<p class="meta">The entity's /non row: <a href="${esc(comp.non.entity_page)}">${esc(comp.non.entity_page)}</a> · ${comp.non.composed ? `${esc(comp.non.case)} case, ρ = ${esc(comp.non.rho)}` : "not composed in this run"}.</p>` : ""}
 <p class="meta">Wikipedia revision <a href="${esc(comp.article.url)}">${esc(comp.article.oldid)}</a> (CC BY-SA 4.0). Each sentence is kept verbatim and followed by its reading: the innocent reading first, then what its sources say (its own, and those the article cites elsewhere, marked). ${esc(comp.service.name)} ${esc(comp.service.version)} · result ${esc(comp.result_id)}. ${esc(comp.notice)}</p>
 ${rows}
+<p class="meta">The readings on this page are licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, attributed to SPXI-gnΩsis and result ${esc(comp.result_id)}; the Wikipedia sentences remain CC BY-SA 4.0, attributed to the revision.</p>
 </body></html>`;
 }
 
 export function annotations(comp) {
   return {
-    "@context": "http://www.w3.org/ns/anno.jsonld", type: "AnnotationCollection", label: `${comp.service.name} opening of ${comp.article.title}`,
+    "@context": "http://www.w3.org/ns/anno.jsonld", type: "AnnotationCollection", label: `${comp.service.name} opening of ${comp.article.title}`, rights: "https://creativecommons.org/licenses/by/4.0/",
     first: { type: "AnnotationPage", items: comp.entries.filter((e) => e.what_the_source_says).map((e) => ({
       type: "Annotation", motivation: "assessing", id: `urn:gnosis:${comp.result_id}:${e.id}`,
       body: { type: "TextualBody", format: "text/plain", value: `${e.what_the_source_says}${e.changes.length ? " Changes: " + e.changes.join("; ") : ""}` },
