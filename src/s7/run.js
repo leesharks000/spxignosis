@@ -10,17 +10,46 @@ import { passLog, mode, S7_PROTOCOL, MODELS } from "./model.js";
 import { depMeta } from "./archive.js";
 import { buildRow, writeLanding } from "./row.js";
 import { blogPass, blogIndexSha } from "./blog.js";
-import { sha256, save, load, STORE } from "../util.js";
+import { sha256, save, load, list, STORE } from "../util.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // The /non row is reusable when its whole input matches: T, every field source by hash, the entity's strings, the
 // archive release (commit, registry, citation graph, traversal script, blog index), the S7 protocol, models and mode.
-export function s7Key(input) {
+// The archive is identified by the hashes of the files the procedure reads (the registry, which carries every
+// deposit's text hash; the citation graph; the traversal script; the blog index), and no longer by its commit, which
+// moves with every commit, a counter snapshot among them, and made every kept reading and row look stale (2026-10-25:
+// the archive gained two commits touching only view counts, and the kept reading of Sophistical Refutations was missed).
+const readFiles = (rel) => ({ registry_sha256: rel.registry_sha256, citation_graph_sha256: rel.citation_graph_sha256, traverse_script_sha256: rel.traverse_script_sha256 });
+export function s7Key(input, { legacyRelease = null } = {}) {
   // Everything the row is computed from: T, B, the strings, the names whose works count as the entity's, the division's
-  // rule, the archive's release, the protocol, models and mode.
+  // rule, the archive's read files, the protocol, models and mode.
   return sha256(JSON.stringify({ T: input.T.sha256, field: input.field.map((b) => [b.id, b.text_sha256 || b.availability]), aliases: input.aliases, works_by: input.works_by || [], about: ABOUT_RULE,
-    release: archiveRelease(), blog: blogIndexSha(), protocol: S7_PROTOCOL, models: MODELS, mode: mode() }));
+    release: legacyRelease || readFiles(archiveRelease()), blog: blogIndexSha(), protocol: S7_PROTOCOL, models: MODELS, mode: mode() }));
+}
+// Keys a reading or row was kept under before the archive was identified by its files: for each kept row of this entity
+// whose release shows the same read files as now, its key recomputed with that release (commit included) and accepted
+// only when it reproduces the key the row was kept under, so nothing is matched that was computed from other inputs.
+export async function priorKeys(input) {
+  const now = readFiles(archiveRelease()), out = [];
+  for (const dir of ["by-key", "partial"]) {
+    const names = await list(`s7/${input.row}/${dir}`).catch(() => []);
+    for (const f of names.filter((n) => n.endsWith(".json"))) {
+      const rec = await load(`s7/${input.row}/${dir}/${f}`).catch(() => null);
+      const rel = rec?.release;
+      if (!rel || !rec.key || JSON.stringify(readFiles(rel)) !== JSON.stringify(now)) continue;
+      const k = s7Key(input, { legacyRelease: rel });
+      if (k === rec.key && !out.includes(k)) out.push(k);
+    }
+  }
+  return out;
+}
+// The kept reading for this input: under its key, or under a prior key that reproduces (priorKeys).
+export async function keptReading(input, key = s7Key(input)) {
+  const cp = await load(readingAt(input.row, key));
+  if (cp) return cp;
+  for (const k of await priorKeys(input)) { const c = await load(readingAt(input.row, k)); if (c) return c; }
+  return null;
 }
 
 // Two stages, each its own deliverable (2026-10-25): the reading (traversal, admission, extraction, the ontology read
@@ -36,7 +65,7 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
   const log = shared || passLog({ budget_usd });
   const start = log.calls.length;
   const t0 = Date.now();
-  let cp = await load(readingAt(input.row, key));
+  let cp = await keptReading(input, key);
   let trav, blog, dro, travH, hop, verdicts, arch, field, ontoRaw;
   if (cp) {
     onProgress({ stage: "S7", detail: "the reading, from its checkpoint" });

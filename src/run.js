@@ -15,7 +15,7 @@ import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construc
 import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
 import { snapshot } from "./resolve.js";
 import { politeFetch, SEED } from "./util.js";
-import { runS7, s7Key, readingAt } from "./s7/run.js";
+import { runS7, s7Key, readingAt, keptReading } from "./s7/run.js";
 import { ONTOLOGY_RULES } from "./s7/ontology.js";
 import { estimateS7 } from "./s7/estimate.js";
 import { archiveOn, readLanding } from "./grounding.js";
@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.5", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.6", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -122,7 +122,7 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
     else {
       // Two stages, priced apart (2026-10-25); the execution budget is each stage's price divided by the budget ratio,
       // so a run that costs more than estimated still clears its cost at the price it was quoted.
-      s7.stages = s7Stages(e, { readingLedgered: !!(await load(readingAt(input.row, key))) });
+      s7.stages = s7Stages(e, { readingLedgered: !!(await keptReading(input, key)) });
       s7.est_cost_usd = Math.round((s7.stages.reading.est_cost_usd + s7.stages.construction.est_cost_usd) * 1e4) / 1e4;
       s7.price_usd = Math.round((s7.stages.reading.price_usd + s7.stages.construction.price_usd) * 100) / 100;
     }
