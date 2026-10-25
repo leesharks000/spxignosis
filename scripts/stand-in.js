@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { quote } from "../src/run.js";
 import { fromNonRow } from "../src/s7/input.js";
 import { runS7 } from "../src/s7/run.js";
+import { ONTOLOGY_RULES } from "../src/s7/ontology.js";
 import { STORE, save } from "../src/util.js";
 
 process.env.GNOSIS_READER = "replay";
@@ -18,5 +19,5 @@ cpSync(join(src.landing.dir, V2, "ledgers/se-183b34"), join(to, V2, "ledgers", q
 const row = { ...src.row, row: q.s7.row, stand_in: "the se-183b34 re-run, laid here for testing the composed path; not a reading of this entity" };
 writeFileSync(join(to, V2, "rows", `${q.s7.row}.json`), JSON.stringify(row, null, 1));
 await save(`s7/${q.s7.row}/by-key/${q.s7.key}.json`, { row_key: q.s7.row, entity: q.s7.row, non_url: q.s7.non_url, landing: to, composed: true, case: row.ontology.case.value, rho: row.ontology.rho.value,
-  breaches: row.breaches.length, audit: { ran: false, breaches: [] }, cost_usd: 0, mode: "replay", stand_in: row.stand_in, complete: true, coverage: { stand_in: "a test fixture standing for a complete ledgered row" } });
+  breaches: row.breaches.length, audit: { ran: false, breaches: [] }, cost_usd: 0, mode: "replay", stand_in: row.stand_in, complete: true, ontology_rules: ONTOLOGY_RULES, coverage: { stand_in: "a test fixture standing for a complete ledgered row" } });
 console.log(JSON.stringify({ laid: q.s7.row, key: q.s7.key }));

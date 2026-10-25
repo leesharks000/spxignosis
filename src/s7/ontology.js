@@ -9,6 +9,9 @@ import { compactLedger } from "./lineage.js";
 import { forKind } from "./object.js";
 
 export const RHO = ["extends", "constructs", "revises"];
+// The rules by which two ontology readings are settled, by version. A row ledgered under earlier rules is composed again
+// from its kept reading (the reading's passes are not repeated); its earlier tree stays under its key.
+export const ONTOLOGY_RULES = "2026-10-25c: disagreements settle by the constructs ruling; the case follows ρ";
 const CASE_OF = { extends: "equal", constructs: "witness", revises: "witness" };
 
 export const ONTOLOGY_INSTRUCTIONS = `The ontology pass reads two claim ledgers for one entity, the field's and the archive's, and states the two entities, the relation between them, and the case that governs composition, under EA-NEGONT-02 v0.9 (#1690). It returns JSON only.
@@ -95,6 +98,10 @@ export function settleOntology({ passes, F, A }, fieldClaims, archiveLedger) {
   }
   const contested = differ && !pick;
   const o = structuredClone(pick || p1 || p2);
+  // Where a disagreement was settled, the case is the one ρ entails (§1.2a), whatever case the reading taken gave
+  // (2026-10-25: the third commission of Sophistical Refutations took a reading of ρ = constructs that gave the equal
+  // case, and was composed in it).
+  if (pick && !set && !setCase && CASE_OF[o.rho?.value] && o.case?.value !== CASE_OF[o.rho.value]) setCase = CASE_OF[o.rho.value];
   if (setCase) o.case = { ...o.case, value: setCase, statement: `${rule}. The reading taken gave ${o.case?.value}: ${o.case?.statement || ""}`, by_rule: true };
   if (set) {
     o.rho = { ...o.rho, value: "constructs", statement: `ρ = constructs by the operator's ruling of 2026-10-25, where the two readings disagreed (${p1.rho?.value}; ${p2.rho?.value}). The reading taken for its tables gave ρ = ${pick.rho?.value}: ${pick.rho?.statement || ""}`, by_ruling: true };

@@ -1,6 +1,6 @@
 {
   "name": "spxi-gnosis",
-  "version": "0.19.3",
+  "version": "0.19.4",
   "description": "SPXI-gnΩsis: opens pinned Wikipedia revisions; billable to agents over x402",
   "scripts": {
     "start": "node src/server.js",

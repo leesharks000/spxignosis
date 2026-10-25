@@ -16,6 +16,7 @@ import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
 import { snapshot } from "./resolve.js";
 import { politeFetch, SEED } from "./util.js";
 import { runS7, s7Key, readingAt } from "./s7/run.js";
+import { ONTOLOGY_RULES } from "./s7/ontology.js";
 import { estimateS7 } from "./s7/estimate.js";
 import { archiveOn, readLanding } from "./grounding.js";
 import { publicationState } from "./s7/publish.js";
@@ -29,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.3", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.4", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -113,7 +114,8 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
   if (ADMITS.has(tier)) {
     const input = fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
-    const ledgered = !!(await load(`s7/${input.row}/by-key/${key}.json`))?.complete;
+    const prior = await load(`s7/${input.row}/by-key/${key}.json`);
+    const ledgered = !!prior?.complete && prior.ontology_rules === ONTOLOGY_RULES;
     const e = ledgered ? null : await estimateS7(input);
     s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e };
     if (ledgered) Object.assign(s7, { est_cost_usd: 0, price_usd: POLICY.ledgered_s7 });
@@ -450,7 +452,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
   const state = {
     article: { oldid: pinned.oldid, html_sha256: pinned.html_sha256 || null, T: entityInput ? entityInput.T.sha256 : undefined }, claims: claims.map((c) => c.id),
     sources: Object.fromEntries(Object.entries(sources).map(([k, v]) => [k, v.map((s) => s.text_sha256 || s.availability)])),
-    policies: policyState(), s7: q.s7?.key || (entityInput && q.s7 ? s7Key(entityInput) : null), protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
+    policies: policyState(), s7: q.s7?.key || (entityInput && q.s7 ? s7Key(entityInput) : null), ontology_rules: q.s7 ? ONTOLOGY_RULES : undefined, protocol: READER_PROTOCOL, reader: reader.id, reader_mode: reader.mode, calibration: CALIBRATION, service: SERVICE.version, tier: q.tier,
   };
   const execution_key = sha256(JSON.stringify(state));
   const prior = await load(`results/by-state/${execution_key}.json`);
@@ -489,7 +491,9 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     const input = entityInput || fromWikipedia(pinned, claims, sources);
     const key = s7Key(input);
     const cached = await load(`s7/${input.row}/by-key/${key}.json`);
-    if (cached?.complete) s7 = { ...cached, from_ledger: true };
+    // A ledgered row is reused only when it was settled under the current ontology rules; otherwise it is composed
+    // again, its reading taken from the checkpoint.
+    if (cached?.complete && cached.ontology_rules === ONTOLOGY_RULES) s7 = { ...cached, from_ledger: true };
     else {
       // One log for the job: the construction's spending and S7's share the budget the quote declared.
       const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, construction_usd: q.s7.stages?.construction?.budget_usd || 0, ceiling_usd: (q.s7.price_usd || 0) + (q.construction?.price_usd || 0), log: preLog });
@@ -506,7 +510,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
       s7.coverage = { composed: s7.composed, budget_exhausted: !!out.run.budget.exhausted, failed_passes: failed, passes_not_run: notRun, audit_complete: !!out.run.audit?.complete };
       s7.complete = s7.composed && !s7.coverage.budget_exhausted && !failed && !notRun && s7.coverage.audit_complete;
       // The release and the time are kept with the row, so a grounded sentence served from it can disclose both.
-      s7.release = out.run.release || null; s7.created = new Date().toISOString();
+      s7.release = out.run.release || null; s7.created = new Date().toISOString(); s7.ontology_rules = ONTOLOGY_RULES;
       await save(`s7/${input.row}/${s7.complete ? "by-key" : "partial"}/${key}.json`, s7);
     }
     // The quoted S7 line is an upper bound (every candidate deposit costed as admitted); the charge is the measured cost
