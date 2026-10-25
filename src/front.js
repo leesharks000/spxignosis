@@ -36,6 +36,7 @@ code,.mono{font-family:var(--mono);font-size:.86em;overflow-wrap:anywhere}
 .brand span{font-family:var(--serif);font-size:1.22rem;letter-spacing:.01em}
 .mast nav{display:flex;gap:4px 16px;flex-wrap:wrap;font-size:.9rem}
 .mast nav a{text-decoration:none;color:var(--muted)}.mast nav a:hover{color:var(--red)}
+.mast nav a.ext::after{content:" ↗";font-size:.8em;opacity:.7}
 /* hero */
 .hero{padding:44px 0 12px}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:48px;align-items:start}
@@ -147,7 +148,7 @@ footer a{color:var(--muted)}
 `;
 
 const MAST = `<header class="mast"><div class="wrap"><a class="brand" href="/"><img src="/omega-512.png" alt="" width="36" height="36"><span>SPXI-gnΩsis</span></a>
-<nav aria-label="Sections"><a href="/#commission">Commission</a><a href="/#examples">Examples</a><a href="/#commons">Public commons</a><a href="/#agents">Agents</a></nav></div></header>`;
+<nav aria-label="Sections"><a href="/#commission">Commission</a><a href="/#examples">Examples</a><a class="ext" href="https://www.alexanarch.org/non/" title="the Negative of the Negative: every row, free to read">/non</a><a class="ext" href="https://www.alexanarch.org/captures/" title="the Capture Registry: what the answering systems composed, dated">Captures</a><a href="/#agents">Agents</a></nav></div></header>`;
 
 const FOOT = (index) => `<footer><div class="wrap">
 <p class="spxi-instrument"><strong>SPXI instrument</strong> · method <a href="https://www.spxi.dev/methods/#m-0-17">0.17</a>, level 0 (Measurement): the opening of a pinned Wikipedia revision; also method <a href="https://www.spxi.dev/methods/#m-0-16">0.16</a>, the Negative of the Negative. An instrument of <a href="https://www.spxi.dev/">SPXI</a>, the Semantic Packet for eXchange &amp; Indexing; the whole practice is itemized at <a href="https://www.spxi.dev/methods/">spxi.dev/methods</a>.</p>
