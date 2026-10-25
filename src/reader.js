@@ -1,6 +1,7 @@
 // S3. The reading passes. A reader takes one claim and its resolved sources and returns a reading as JSON.
 // Two adapters: "anthropic" (live; needs ANTHROPIC_API_KEY) and "replay" (recorded readings, for tests).
 import { load } from "./util.js";
+import { SUPPORT, SUPPORT_SOURCE, MEASURES, ATTR, AUTHORITY, INVITATION } from "./validate.js";
 import { windows, structure } from "./window.js";
 
 export const READER_PROTOCOL = "gnosis-S3/0.6"; // 0.6: the second pass returns the reconciled fields only
@@ -65,7 +66,9 @@ export function normalizeReading(r) {
     ...(r.paraphrase?.scope_changes || []).map((x) => ({ sentence_says: x, source_says: null, kind: "scope", measure: "source fidelity", lambda: null })),
     ...(r.paraphrase?.introduced || []).map((x) => ({ sentence_says: x, source_says: null, kind: "idea introduced", measure: "source fidelity", lambda: null })),
   ];
-  return { ...r, attributization: { ...a, value, converted: value === "yes" || value === "partial" }, retained_authority: ra, paraphrase: { ...(r.paraphrase || {}), deltas } };
+  // An enforced enum may come back in another case (the API's note on structured outputs): labels are compared in lower case.
+  const lc = (xs) => (Array.isArray(xs) ? xs.map((x) => (typeof x === "string" ? x.toLowerCase() : x)) : xs);
+  return { ...r, support: lc(r.support), support_source: lc(r.support_source), attributization: { ...a, value, converted: value === "yes" || value === "partial" }, retained_authority: ra, paraphrase: { ...(r.paraphrase || {}), deltas } };
 }
 
 // What the reader receives: for each source, the passages that bear on the claim (classical chapters whole),
@@ -106,17 +109,43 @@ export function thinkingFor(model) {
   return null;
 }
 
+// The reading's form, enforced by the API (structured outputs, output_config.format; 2026-10-24: Haiku wrote prose in
+// the support field and the readings were withheld). Built from the output schema above and validate.js's
+// vocabularies; a span's source_ref is one of the sources sent. The checks in validate.js still run on every reading.
+const S = { type: "string" }, N = (x) => ({ anyOf: [x, { type: "null" }] }), E = (list) => ({ type: "string", enum: list });
+const O = (props, required = Object.keys(props)) => ({ type: "object", properties: props, required, additionalProperties: false });
+const A = (items) => ({ type: "array", items });
+export function readingSchema(input, pass) {
+  const refs = ["claim", ...(input.sources || []).map((s) => s.id)];
+  const span = O({ quote: S, source_ref: E(refs), role: E(["support", "contrast", "scope"]) });
+  const attr = O({ operation: S, attribute: N(S), value: E(ATTR), reason: S, surviving: A(S), lost: A(S) });
+  const auth = O({ value: E(AUTHORITY), evidence: S, revision_required: S });
+  if (pass === 2) return O({ claim_id: S, support: A(E(SUPPORT)), support_source: A(E(SUPPORT_SOURCE)), spans: A(span),
+    paraphrase: O({ defensible: S }), attributization: O({ operation: S, value: E(ATTR), converted: { type: "boolean" } }),
+    retained_authority: O({ value: E(AUTHORITY) }), needs_more_context: { type: "boolean" }, notes: S });
+  return O({ claim_id: S, innocent_reading: S, innocent_reading_fails_at: N(S),
+    support: A(E(SUPPORT)), support_source: A(E(SUPPORT_SOURCE)), spans: A(span),
+    paraphrase: O({ defensible: S, deltas: A(O({ sentence_says: S, source_says: N(S), kind: S, measure: E(MEASURES), lambda: N({ type: "integer", enum: [1, 2, 3, 4, 5] }) })) }),
+    divided: A(O({ phrase: S, readings: A(S) })), attributization: attr, retained_authority: auth,
+    invitation: O({ codes: A(E(INVITATION)), qualification: N({ type: "boolean" }), closure: N({ type: "boolean" }), note: S }),
+    alternatives: A(S), correction_pathway: S,
+    five_part: O({ support: S, changes: S, alternative: S, status: S, revision: S }),
+    needs_more_context: { type: "boolean" }, policy: A(O({ clause: S, status: E(["applicable", "documented", "inferred"]) })), notes: S });
+}
+export const STRUCTURED = process.env.GNOSIS_STRUCTURED !== "off";
+
 async function anthropicPass(input, pass, model) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY is not set: the live reader cannot run");
   const { claim, ...rest } = input;
+  let format = STRUCTURED ? { type: "json_schema", schema: readingSchema(rest, pass) } : null, formatRefused = null;
   const call = async (maxTokens) => {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
-        model, max_tokens: maxTokens, ...(thinkingFor(model) ? { thinking: thinkingFor(model) } : {}),
+        model, max_tokens: maxTokens, ...(thinkingFor(model) ? { thinking: thinkingFor(model) } : {}), ...(format ? { output_config: { format } } : {}),
         system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: [
           { type: "text", text: "SOURCES\n" + JSON.stringify(rest), cache_control: { type: "ephemeral" } },
@@ -125,6 +154,8 @@ async function anthropicPass(input, pass, model) {
       }),
     });
     const j = await res.json();
+    // An enforced form the API refuses is dropped for this pass and the refusal recorded; the reading goes on unenforced.
+    if (!res.ok && format && res.status === 400) { formatRefused = JSON.stringify(j).slice(0, 300); format = null; return call(maxTokens); }
     if (!res.ok) throw new Error(`reader HTTP ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
     return j;
   };
@@ -146,7 +177,7 @@ async function anthropicPass(input, pass, model) {
     const e = new Error(`reader returned unparseable JSON (stop: ${j.stop_reason}; ${j.usage?.output_tokens ?? "?"} output tokens; ${String(err.message).slice(0, 120)}; begins ${JSON.stringify(text.slice(0, 120))}; ends ${JSON.stringify(text.slice(-120))})`);
     e.spent = spent; throw e;
   }
-  return { reading, usage: spent.length > 1 ? sumUsage(spent.map((s) => s.usage)) : j.usage, model, thinking: thinkingFor(model)?.type || "model default", sampling: "model defaults (temperature, top_p and top_k omitted)" };
+  return { reading, usage: spent.length > 1 ? sumUsage(spent.map((s) => s.usage)) : j.usage, model, thinking: thinkingFor(model)?.type || "model default", form: format ? "enforced (json_schema)" : formatRefused ? `unenforced: refused (${formatRefused})` : "unenforced", sampling: "model defaults (temperature, top_p and top_k omitted)" };
 }
 
 function sumUsage(us) {
@@ -171,7 +202,7 @@ export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", mode
   }
   return {
     // with thinking off the reader is named /direct; the model-default reader keeps the name its earlier readings carry
-    id: `anthropic:${model}/${READER_PROTOCOL}${suffix}${thinkingFor(model) ? "/direct" : ""}`, mode: "live", passes: nPasses,
+    id: `anthropic:${model}/${READER_PROTOCOL}${suffix}${thinkingFor(model) ? "/direct" : ""}${STRUCTURED ? "/schema" : ""}`, mode: "live", passes: nPasses,
     async read(claim, srcs, article, wide) {
       const input = inputFor(claim, srcs, article, wide);
       const passes = [];

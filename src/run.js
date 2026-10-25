@@ -29,7 +29,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.14.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.14.2", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -308,7 +308,8 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     // The passages each pass was shown, so a quotation from outside them is recorded (validate.js).
     const shownInput = r.input || inputFor(c, srcs, pinned, expanded ? { size: 3000, keep: 8 } : undefined);
     const shown = Object.fromEntries(shownInput.sources.map((x) => [x.id, x.passages.map((q) => q.text).join(" \n ")]));
-    const checked = r.passes.map((p) => ({ ...p, reading: normalizeReading(p.reading), validation: validateReading(p.reading, c, srcMap, shown) }));
+    // the reading is checked in the form it is compared and rendered in (labels in lower case; 0.4 fields read as 0.5)
+    const checked = r.passes.map((p) => { const nr = normalizeReading(p.reading); return { ...p, reading: nr, validation: validateReading(nr, c, srcMap, shown) }; });
     const valid = checked.filter((p) => p.validation.ok);
     checked.filter((p) => p.validation.breaches.length).forEach((p) => (B[idx] ||= []).push({ claim: c.id, model: p.model, withheld: !p.validation.ok, breaches: p.validation.breaches }));
     let verdict;
