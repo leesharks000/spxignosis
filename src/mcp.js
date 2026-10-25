@@ -4,30 +4,38 @@
 // route (x402) or the card link, and the caller pays there.
 export const MCP_PROTOCOL = "2025-06-18";
 
+// Each tool says when to use it, which tool answers the neighbouring question, and what it returns (2026-10-25: Glama's
+// tool-quality score marked find_entry, get_quote and get_result C for want of when-to-use guidance, and flagged
+// get_quote, order_status and open_sentence as overlapping on price and status).
 const TOOLS = [
   { name: "find_entry", title: "Find a /non entry by name",
-    description: "Use when an entity, concept or operator needs its public knowledge object: returns the Negative of the Negative (/non) entry the name answers, free, or the candidates, or the construction offered as a free quote.",
-    inputSchema: { type: "object", properties: { name: { type: "string" }, context: { type: "string", description: "a URL, a description or the kind of object, to tell candidates apart" } }, required: ["name"] },
+    description: "Use first when a person, work, concept, institution or operator needs a sourced knowledge object: looks the name up in the Negative of the Negative (/non), free. Returns the entry (its page, data and status) when one exists; the candidates and what tells them apart when the name is ambiguous; or, when none exists, the request for a free construction quote to pass to get_quote. Does not check a sentence (use open_sentence) and charges nothing.",
+    inputSchema: { type: "object", properties: { name: { type: "string", description: "the object's name as you have it, e.g. \"Sophistical Refutations\" or \"Attributization\"" }, context: { type: "string", description: "optional: a URL, a description or the kind of object, to choose among candidates with the same name" } }, required: ["name"] },
     call: ({ name, context }) => ({ path: `/v1/non?${new URLSearchParams({ name, ...(context ? { context } : {}) })}` }) },
-  { name: "open_sentence", title: "Open a Wikipedia sentence against its sources",
-    description: "Use when a sentence from Wikipedia needs checking against the sources it cites before it is relied on: send the sentence as held and the page it came from. Free where the sentence has been read; otherwise returns the price and the paid route.",
-    inputSchema: { type: "object", properties: { text: { type: "string" }, url: { type: "string", description: "the English Wikipedia page, by title URL or revision URL" }, mode: { type: "string", enum: ["opening", "preliminary", "grounded"] } }, required: ["text", "url"] },
+  { name: "open_sentence", title: "Check one Wikipedia sentence against its sources",
+    description: "Use when one sentence from an English Wikipedia page must be checked against the sources it cites before it is quoted or relied on. Send the sentence exactly as it stands and the page's URL. Free when the sentence has already been read at the same state; otherwise returns its price (typically 22¢ opened) and the paid HTTP route (x402) that reads it. A text that is not the page's sentence exactly is answered with the page's closest sentences, nothing charged. For a whole article use get_quote with the article instead.",
+    inputSchema: { type: "object", properties: { text: { type: "string", description: "the sentence exactly as it stands on the page (footnote markers may be left in)" }, url: { type: "string", description: "the English Wikipedia page, by title URL or revision URL" }, mode: { type: "string", enum: ["opening", "preliminary", "grounded"], description: "opening (default): two separately generated readings; preliminary: one pass on the small model; grounded: with the archive's claims, where a commissioned row holds the sentence" } }, required: ["text", "url"] },
     call: ({ text, url, mode }) => ({ path: `/v1/sentence?${new URLSearchParams({ text, url, ...(mode ? { mode } : {}) })}` }) },
-  { name: "get_quote", title: "Quote an opening or a commission",
-    description: "Free. For a Wikipedia revision (oldid) at a tier (check, opening, commission, portable), or a commission on an object the encyclopedia does not hold ({object: {kind, name, …}, commission: open | construct}). Returns the scope and maximum price, or, where the archive is consulted, a status address where the quote appears within minutes.",
-    inputSchema: { type: "object", properties: { oldid: { type: "integer" }, tier: { type: "string", enum: ["check", "opening", "commission", "portable"] }, object: { type: "object" }, commission: { type: "string", enum: ["open", "construct"] } } },
+  { name: "get_quote", title: "Price a whole article or a commission (free)",
+    description: "Use to price work before paying: a whole Wikipedia article (article: its link or title, or oldid), read sentence by sentence at a tier, or a commission on an object (object with kind entity or operator, name, and for an operator its strings; commission construct or open). Free; returns a quote_id with each deliverable, its line and the maximum, or, for a commission, a quote_id whose price appears at order_status within minutes. Pay a quote over x402 at POST /v1/openings/{quote_id}, or have a person pay with card_checkout. For one sentence use open_sentence; to see whether an object already exists use find_entry first.",
+    inputSchema: { type: "object", properties: {
+      article: { type: "string", description: "an English Wikipedia article's link or title; its current revision is pinned" },
+      oldid: { type: "integer", description: "a Wikipedia revision id, in place of article" },
+      tier: { type: "string", enum: ["check", "opening", "commission", "portable"], description: "check: two passes on the small model; opening (default): two separately generated readings; commission: opened, then the archive consulted and a public /non row composed; portable: the commission and its knowledge object as a package" },
+      object: { type: "object", description: "for a commission on an object: {kind: \"entity\" | \"operator\", name, description?, strings? (an operator's phrases), sources? (links)}" },
+      commission: { type: "string", enum: ["open", "construct"], description: "construct: compose the object from the archive and its sources; open: read an AI answer seated in the Capture Registry for the name" } } },
     call: (a) => ({ path: "/v1/quote", method: "POST", body: a }) },
-  { name: "order_status", title: "Where a quote or order stands",
-    description: "Returns a quote's price and expiry, or a paid order's progress, receipt, refund and result id once delivered.",
-    inputSchema: { type: "object", properties: { quote_id: { type: "string" } }, required: ["quote_id"] },
+  { name: "order_status", title: "Where a quote or paid order stands",
+    description: "Use after get_quote or a payment, with the quote_id: returns the state (estimating, quoted, paid and running, delivered, refunded), the quote with its lines and expiry, the order's progress, its receipt and refund, and, once delivered, the result_id to pass to get_result. Charges nothing and starts nothing.",
+    inputSchema: { type: "object", properties: { quote_id: { type: "string", description: "the quote_id from get_quote, e.g. Q-0123456789abcdef" } }, required: ["quote_id"] },
     call: ({ quote_id }) => ({ path: `/v1/quotes/${encodeURIComponent(quote_id)}/status` }) },
-  { name: "card_checkout", title: "A card checkout link for a person",
-    description: "Returns a Stripe Checkout link for a quote's maximum (at least $0.50), for a person to pay; the work runs when the payment completes and what it does not use is refunded.",
-    inputSchema: { type: "object", properties: { quote_id: { type: "string" } }, required: ["quote_id"] },
+  { name: "card_checkout", title: "A card payment link for a person",
+    description: "Use when a person, not the agent, will pay a quote by card: returns a Stripe Checkout link (url) for the quote's maximum, at least $0.50. The work runs when the payment completes; the charge follows the work delivered, never above the quote, the rest refunded, and an order that delivers nothing is refunded in full (a card order quoted under $0.50 keeps the $0.50 minimum). An agent paying itself uses x402 at POST /v1/openings/{quote_id} instead.",
+    inputSchema: { type: "object", properties: { quote_id: { type: "string", description: "the quote_id from get_quote" } }, required: ["quote_id"] },
     call: ({ quote_id }) => ({ path: `/v1/openings/${encodeURIComponent(quote_id)}/checkout`, method: "POST" }) },
-  { name: "get_result", title: "A delivered result",
-    description: "The usable result (composition: each sentence in five parts) or the full evidence record (spans, hashes, both readings, breaches, cost), by result id.",
-    inputSchema: { type: "object", properties: { result_id: { type: "string" }, part: { type: "string", enum: ["composition", "evidence", "publication"] } }, required: ["result_id"] },
+  { name: "get_result", title: "Read a delivered result",
+    description: "Use once order_status names a result_id: returns the delivered work. part composition (default): the usable result, each sentence's reading or the knowledge object; evidence: the full record behind it (quoted spans, source hashes, both readings, breaches, model cost); publication: whether the /non row is composed, checked, landed and public. Free to read.",
+    inputSchema: { type: "object", properties: { result_id: { type: "string", description: "the result_id order_status returns, e.g. R-d744378a9776dfdb" }, part: { type: "string", enum: ["composition", "evidence", "publication"], description: "which part of the result (default composition)" } }, required: ["result_id"] },
     call: ({ result_id, part = "composition" }) => ({ path: `/v1/results/${encodeURIComponent(result_id)}/${part}` }) },
 ];
 
