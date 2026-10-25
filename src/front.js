@@ -43,7 +43,7 @@ code,.mono{font-family:var(--mono);font-size:.86em;overflow-wrap:anywhere}
 @media (min-width:881px){.call{font-size:clamp(2.2rem,3.6vw,2.75rem)}}
 .hero-grid>*,.cols>*,.cols3>*{min-width:0}
 .call{font-family:var(--serif);font-weight:normal;font-size:clamp(1.55rem,7.4vw,2.75rem);line-height:1.08;letter-spacing:-.01em;margin:0 0 20px;hyphens:manual;overflow-wrap:normal;word-break:normal}
-.call .l2{display:block;color:var(--red)}
+.call.rebuild{color:var(--red);margin-bottom:28px}
 .prop{font-size:1.08rem;margin:0 0 18px;max-width:34em}
 .exchange{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid var(--rule)}
 .exchange li{display:grid;grid-template-columns:7.5em 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:.96rem}
@@ -151,7 +151,7 @@ export function frontPage(index) {
 <main>
 <section class="hero" id="commission"><div class="wrap hero-grid">
 <div>
-<h1 class="call">Fund the counterinfrastructure. <span class="l2">Rebuild the foundations of the world.</span></h1>
+<h1 class="call">Fund the counterinfrastructure.</h1>
 <p class="prop">SPXI-gnΩsis reads what the answering systems have settled against the sources it rests on, and builds sourced knowledge where they leave an absence. You commission one reading or one construction; you receive it with its evidence; and the work stays public for everyone after you.</p>
 <ul class="exchange">
 <li><b>Open</b><span>A Wikipedia article, sentence by sentence: each sentence kept verbatim and read twice against the sources it cites, with what it keeps, changes, adds or leaves out.</span></li>
@@ -307,6 +307,7 @@ export function frontPage(index) {
 </div></section>
 
 <section class="band" id="why"><div class="wrap">
+<h2 class="call rebuild">Rebuild the foundations of the world.</h2>
 <div class="cols">
 <div>
 <blockquote style="margin:0"><p class="epigram">Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I am making all things new.”</p>
