@@ -22,6 +22,20 @@ const fresh = [...new Set(b.run.calls.filter((c) => !c.from_checkpoint).map((c) 
 t(`checkpoint: only construction passes run again (${fresh.join(", ") || "none"})`, fresh.every((s) => ["compose", "delta", "audit"].includes(s)) && a.run.calls.some((c) => !["compose", "delta", "audit"].includes(c.stage)));
 t("checkpoint: the same ontology is settled", JSON.stringify(a.row.ontology?.case) === JSON.stringify(b.row.ontology?.case) && a.row.ontology?.rho?.value === b.row.ontology?.rho?.value);
 t("checkpoint: the reading is delivered", a.run.stages.reading.delivered && b.run.stages.reading.delivered);
+// A kept tree whose knowledge object differs from a new run's (2026-10-25: the earlier tree was a partial object) is not
+// handed back: the new run writes its own tree, under the key with a suffix; an identical composition reuses the kept one.
+{
+  const { readFileSync, writeFileSync } = await import("node:fs");
+  const keptRowPath = join(STORE, "s7", input().row, "runs", b.run.key, "landing", "datasets/negative-of-the-negative/v2/rows", `${input().row}.json`);
+  const same = await runS7(input(), { service: { name: "SPXI-gnΩsis", version: "probe" } });
+  t("kept tree: an identical composition reuses the kept tree", same.landing.kept === true && same.run.key === b.run.key);
+  const kr = JSON.parse(readFileSync(keptRowPath, "utf8")); kr.objects.KO = { ...kr.objects.KO, sentences: (kr.objects.KO.sentences || []).slice(0, 1) };
+  writeFileSync(keptRowPath, JSON.stringify(kr));
+  const { save } = await import("../src/util.js");
+  await save(`s7/${input().row}/runs/${b.run.key}/landing/datasets/negative-of-the-negative/v2/rows/${input().row}.json`, JSON.stringify(kr));
+  const c2 = await runS7(input(), { service: { name: "SPXI-gnΩsis", version: "probe" } });
+  t("kept tree: a different composition writes its own tree beside the kept one", !c2.landing.kept && c2.run.key.startsWith(b.run.key + ".") && (c2.row.objects.KO.sentences || []).length > 1);
+}
 const q = s7Stages({ stages: { admission: 0.5, extraction: 1, ontology: 0.2, composition: 0.3, delta: 0.05, audit: 0.05 } });
 const M = POLICY.margin, C = POLICY.s7_contingency, c = ceilCent;
 t(`stages: priced apart at ${M}× the estimate`, q.reading.price_usd === c(1.7 * M) && q.construction.price_usd === c(Math.max(0.25, 0.4 * M)));

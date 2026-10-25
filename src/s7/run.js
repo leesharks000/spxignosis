@@ -148,10 +148,14 @@ export async function runS7(input, { service, onProgress = () => {}, budget_usd,
   // (2026-10-25: otherwise a construction that failed once would stand for every later run).
   const kept = await load(`s7/${input.row}/runs/${key}/landing/landing/manifest.json`);
   const keptRow = kept ? await load(`s7/${input.row}/runs/${key}/landing/datasets/negative-of-the-negative/v2/rows/${input.row}.json`) : null;
-  if (kept && (keptRow?.objects?.KO || !row.objects.KO)) {
+  // The kept tree is reused when this run composed nothing new: no knowledge object, or the same one. A run that composed
+  // a different object writes its own tree (2026-10-25: a rerun of the first operator commission would have been
+  // charged for a full composition and handed back the earlier partial tree, its ontology unread).
+  const koSha = (r) => (r?.objects?.KO ? sha256(JSON.stringify(r.objects.KO)) : null);
+  if (kept && (!row.objects.KO || koSha(keptRow) === koSha(row))) {
     return { row, landing: { dir: join(STORE, `s7/${input.row}/runs/${key}/landing`), files: kept.files.map((f) => f.path), manifest: kept, kept: true }, run };
   }
-  if (kept) run.key = `${key}.${sha256(JSON.stringify(row.objects.KO)).slice(0, 8)}`;
+  if (kept) run.key = `${key}.${koSha(row).slice(0, 8)}`;
   const keptAt = `s7/${input.row}/runs/${run.key}/landing`;
   const landing = writeLanding(run, row);
   // The landing tree is kept in the service's store (Blob where configured), so the operator can fetch it from any
