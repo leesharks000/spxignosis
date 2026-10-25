@@ -14,9 +14,12 @@ import { lookupName } from "./lookup.js";
 import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
 import { load, save, BLOB } from "./util.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
-import { stripe, LIVE, x402Config, facilitatorConfig, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
+import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
 
-const { network: NETWORK, payTo: PAY_TO, payToKind, mainnet } = x402Config();
+const { network: NETWORK, mainnet } = x402Config();
+// The receiving address: from the environment, or created through Stripe once crypto is approved (payments.js).
+const DEPOSIT = await depositAddress();
+const PAY_TO = DEPOSIT.address, payToKind = DEPOSIT.kind;
 // Without a receiving address the service still starts: the page and the free quote answer, and every paid route says
 // that payments are not configured. Nothing is quoted for payment that could not be received.
 if (!PAY_TO) console.error("no receiving address (STRIPE_DEPOSIT_ADDRESS or GNOSIS_PAY_TO): paid routes answer 503 until one is set");
@@ -242,7 +245,7 @@ ${ops}
 }
 // Agents and scripts get the service description as JSON; a browser gets the same description as a page.
 app.get("/", (req, res) => {
-  const index = { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK}` : "not configured yet: the x402 routes answer 503" },
+  const index = { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK}` : mainnet ? `not ready: no receiving address yet${DEPOSIT.error ? " (Stripe declined to create one: crypto not yet approved, or the key lacks the permission)" : ""}; the x402 routes answer 503` : "not configured yet: the x402 routes answer 503" },
     // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
     reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
     worker_start: DISPATCH.token ? "on request, and every ten minutes" : "every ten minutes (GitHub's schedule; no dispatch token set)",

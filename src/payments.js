@@ -30,6 +30,30 @@ export function x402Config() {
   };
 }
 
+// The receiving address for agent payments (2026-10-25). Set in the environment (STRIPE_DEPOSIT_ADDRESS), or else,
+// once the service has Coinbase facilitator keys (mainnet) and Stripe has approved the account's Stablecoins and
+// Crypto payment method, created once through Stripe's API with the service's own key and kept in the store, so the
+// operator runs no command. A refusal (crypto not yet approved, or a key without that permission) is recorded and the
+// x402 routes keep answering 503; the next start tries again.
+export async function depositAddress() {
+  const cfg = x402Config();
+  if (cfg.payTo) return { address: cfg.payTo, kind: cfg.payToKind };
+  if (!stripe || !cfg.mainnet) return { address: null, kind: null };
+  const { load, save } = await import("./util.js");
+  const kept = await load("payments/deposit-address-base.json").catch(() => null);
+  if (kept?.address) return { address: kept.address.toLowerCase(), kind: "stripe deposit address (created by the service)" };
+  try {
+    const r = await stripe.rawRequest("POST", "/v1/crypto/deposit_addresses", { network: "base" }, { apiVersion: "2026-05-27.preview" });
+    const address = r.address || r.deposit_address || (r.addresses && r.addresses[0]?.address) || null;
+    if (!address) throw new Error(`Stripe answered without an address (fields: ${Object.keys(r).join(", ")})`);
+    await save("payments/deposit-address-base.json", { address, network: "base", id: r.id || null, created: new Date().toISOString() });
+    return { address: address.toLowerCase(), kind: "stripe deposit address (created by the service)" };
+  } catch (e) {
+    await save("payments/deposit-address-error.json", { at: new Date().toISOString(), error: String(e.message || e).slice(0, 400) }).catch(() => {});
+    return { address: null, kind: null, error: String(e.message || e).slice(0, 200) };
+  }
+}
+
 export async function facilitatorConfig() {
   const { mainnet } = x402Config();
   if (mainnet) {
