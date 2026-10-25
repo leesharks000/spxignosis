@@ -3,6 +3,7 @@
 // Replay: a recording under store/replays/s7/<row>/<stage>/<id>.json, labelled in every result.
 import { load } from "../util.js";
 import { callCost, estimateTokens } from "../cost.js";
+import { thinkingFor, THINKING } from "../reader.js";
 
 export const S7_PROTOCOL = "gnosis-S7/0.1 (EA-NEGONT-02 v0.9, #1690)";
 export const mode = () => ((process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay" : "live");
@@ -10,6 +11,7 @@ export const mode = () => ((process.env.GNOSIS_READER || "anthropic") === "repla
 export const MODELS = {
   triage: process.env.GNOSIS_TRIAGE_MODEL || "claude-haiku-5-5",
   reading: process.env.GNOSIS_MODEL || "claude-sonnet-5-5",
+  thinking: THINKING === "on" ? "model default" : "up-front thinking off", // recorded with every row (composition_gnosis.models)
 };
 
 function parseJSON(text) {
@@ -27,7 +29,8 @@ async function live({ system, shared, task, model, maxTokens = 8000 }) {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
-    body: JSON.stringify({ model, max_tokens: maxTokens,
+    // Up-front thinking is off for the S7 passes as for the readings (reader.js thinkingFor, 2026-10-24).
+    body: JSON.stringify({ model, max_tokens: maxTokens, ...(thinkingFor(model) ? { thinking: thinkingFor(model) } : {}),
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }], messages: [{ role: "user", content }] }),
   });
   const j = await res.json();

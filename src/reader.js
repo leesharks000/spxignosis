@@ -93,6 +93,19 @@ export const SECOND = `\n\nThis is an independent second reading: it reaches its
 
 // Prompt caching: the instructions and the sources form a shared prefix marked for caching;
 // the second pass reads it from cache. Pass-specific text comes after the cached blocks.
+// Thinking. The 5.5 models think by default, and thinking counts against max_tokens: the first live card tests spent
+// the whole budget thinking and returned no reading (2026-10-24). A reading is the JSON account the protocol asks for,
+// so up-front thinking is off: "disabled" on Haiku 5.5, "between_tools" on Sonnet 5.5 (its lowest setting; a reading
+// calls no tools). GNOSIS_THINKING=on leaves the model's default. The setting is part of the reader's identity, so
+// readings made each way are ledgered apart.
+export const THINKING = process.env.GNOSIS_THINKING === "on" ? "on" : "off";
+export function thinkingFor(model) {
+  if (THINKING === "on") return null;
+  if (/haiku-5-5/.test(model)) return { type: "disabled" };
+  if (/sonnet-5-5/.test(model)) return { type: "between_tools" };
+  return null;
+}
+
 async function anthropicPass(input, pass, model) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY is not set: the live reader cannot run");
@@ -103,7 +116,7 @@ async function anthropicPass(input, pass, model) {
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
-        model, max_tokens: maxTokens,
+        model, max_tokens: maxTokens, ...(thinkingFor(model) ? { thinking: thinkingFor(model) } : {}),
         system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: [
           { type: "text", text: "SOURCES\n" + JSON.stringify(rest), cache_control: { type: "ephemeral" } },
@@ -133,7 +146,7 @@ async function anthropicPass(input, pass, model) {
     const e = new Error(`reader returned unparseable JSON (stop: ${j.stop_reason}; ${j.usage?.output_tokens ?? "?"} output tokens; ${String(err.message).slice(0, 120)}; begins ${JSON.stringify(text.slice(0, 120))}; ends ${JSON.stringify(text.slice(-120))})`);
     e.spent = spent; throw e;
   }
-  return { reading, usage: spent.length > 1 ? sumUsage(spent.map((s) => s.usage)) : j.usage, model, sampling: "model defaults (temperature, top_p and top_k omitted)" };
+  return { reading, usage: spent.length > 1 ? sumUsage(spent.map((s) => s.usage)) : j.usage, model, thinking: thinkingFor(model)?.type || "model default", sampling: "model defaults (temperature, top_p and top_k omitted)" };
 }
 
 function sumUsage(us) {
@@ -157,7 +170,8 @@ export function makeReader(kind = process.env.GNOSIS_READER || "anthropic", mode
     };
   }
   return {
-    id: `anthropic:${model}/${READER_PROTOCOL}${suffix}`, mode: "live", passes: nPasses,
+    // with thinking off the reader is named /direct; the model-default reader keeps the name its earlier readings carry
+    id: `anthropic:${model}/${READER_PROTOCOL}${suffix}${thinkingFor(model) ? "/direct" : ""}`, mode: "live", passes: nPasses,
     async read(claim, srcs, article, wide) {
       const input = inputFor(claim, srcs, article, wide);
       const passes = [];
