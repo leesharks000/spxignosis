@@ -36,7 +36,7 @@ export async function save(rel, data) {
 // than one process writes (an order's progress, quote, receipt, refund and result pointer; the worker's queues; the
 // calibration) are read from Blob first, since this process's copy may be older than another's write (2026-10-25: an
 // instance that had queued an order showed it queued while the worker ran and delivered it).
-const SHARED = /^(progress|quotes|receipts|refunds|delivered|jobs|worker|calibration|settlements|landable)\//;
+const SHARED = /^(progress|quotes|receipts|refunds|delivered|jobs|worker|calibration|settlements|landable|limits)\//;
 async function fromBlob(rel, json) {
   const { get } = await blob();
   const r = await get(BLOB_PREFIX + rel, { access: "private", useCache: false }).catch((e) => { if (e?.name === "BlobNotFoundError") return null; throw e; });

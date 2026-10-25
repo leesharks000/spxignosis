@@ -97,3 +97,27 @@ export function priceClaim(tier, estCost, ledgered) {
   if (ledgered) return POLICY.ledgered_per_claim[tier];
   return ceilCent(Math.max(POLICY.floor_per_claim[tier], estCost * POLICY.sentence_margin));
 }
+
+// What a payment costs the service (2026-10-25: "partial object paid for at what it costs should also include stripe
+// fees and compute. i WILL NOT pay others to use this service"). Stripe keeps its fee on a refund, so the fee is on what
+// was paid. Card: Stripe's standard US rate; agents (x402): Stripe's stablecoin rate. Both can be set in the environment.
+export const PAYMENT_FEE = {
+  card: { pct: Number(process.env.GNOSIS_CARD_FEE_PCT || 0.029), fixed: Number(process.env.GNOSIS_CARD_FEE_FIXED || 0.30) },
+  x402: { pct: Number(process.env.GNOSIS_X402_FEE_PCT || 0.015), fixed: Number(process.env.GNOSIS_X402_FEE_FIXED || 0) },
+};
+export const CARD_MINIMUM = 0.5; // Stripe's smallest card charge
+export const paymentFee = (channel, paid) => { const f = PAYMENT_FEE[channel] || PAYMENT_FEE.card; return Math.ceil(((paid || 0) * f.pct + f.fixed) * 100) / 100; };
+// What model spending an order may reach: what it paid, less what the payment costs, so the work never costs more than
+// the order brings in.
+export const netBudget = (channel, paid) => Math.max(0, Math.floor(((paid || 0) - paymentFee(channel, paid)) * 100) / 100);
+// What a delivered order keeps: its charge, and never less than what it cost (its measured model cost and its payment
+// fee), up to what was paid. A card order at or below the card minimum keeps the minimum, stated on the quote.
+export function kept({ channel = "card", paid, charge = 0, cost = 0 }) {
+  if (channel === "card" && paid <= CARD_MINIMUM + 1e-9) return Math.round(paid * 100) / 100;
+  return Math.min(Math.round(paid * 100) / 100, Math.max(charge, Math.ceil(((cost || 0) + paymentFee(channel, paid)) * 100) / 100));
+}
+// An order that delivered nothing at all: refunded in full, its model spend and payment fee borne by the service, until
+// the operator rules otherwise (pending, 2026-10-25). Set true, the refund keeps the payment fee.
+export const UNDELIVERED_KEEPS_FEE = process.env.GNOSIS_UNDELIVERED_KEEPS_FEE === "1";
+export const undeliveredRefund = (channel, paid) => Math.round(((paid || 0) - (UNDELIVERED_KEEPS_FEE ? paymentFee(channel, paid) : 0)) * 100) / 100;
+

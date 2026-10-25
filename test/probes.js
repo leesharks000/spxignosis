@@ -375,4 +375,14 @@ if (rid && existsSync(`${STORE}/results/${rid}/portable/manifest.json`)) {
   t("delivery: nothing completed, read or composed is not", !deliveredWork({ composition: { summary: { completed: 0 }, non: { composed: false } } }));
 }
 
+// 2026-10-25: no order leaves the service short ("i WILL NOT pay others to use this service").
+{
+  const { kept, netBudget, paymentFee } = await import("../src/cost.js");
+  t("fees: a 50¢ card order keeps its 50¢ (Stripe keeps its fee on a refund)", kept({ channel: "card", paid: 0.5, charge: 0.02, cost: 0.008 }) === 0.5);
+  t("fees: a partial delivery keeps at least its model cost and payment fee", kept({ channel: "card", paid: 2.45, charge: 0.4, cost: 0.71 }) === Math.ceil((0.71 + paymentFee("card", 2.45)) * 100) / 100);
+  t("fees: a delivery whose charge covers its costs keeps its charge", kept({ channel: "card", paid: 1.6, charge: 1.48, cost: 0.43 }) === 1.48);
+  t("fees: an order never keeps more than it paid", kept({ channel: "x402", paid: 1, charge: 1, cost: 2 }) === 1);
+  t("fees: model spending stops where the payment, less its fee, is spent", netBudget("card", 2.45) === Math.floor((2.45 - paymentFee("card", 2.45)) * 100) / 100 && netBudget("card", 2.45) < 2.45);
+}
+
 process.exit(fail ? 1 : 0);

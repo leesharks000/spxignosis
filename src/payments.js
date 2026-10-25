@@ -99,7 +99,7 @@ export async function checkoutFor(q, { base }) {
     mode: "payment",
     line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: Math.round(amount * 100), product_data: {
       name: `SPXI-gnΩsis — ${q.commission || (q.kind === "entity" ? "construct" : "open")}: ${q.article?.title || q.entity?.name}`.slice(0, 250),
-      description: `Quote ${q.quote_id}. Charged for the work done; what it does not use is refunded. The /non row it composes is public under CC BY 4.0.`.slice(0, 500) } } }],
+      description: (amount <= CARD_MINIMUM_USD && q.max_price_usd < CARD_MINIMUM_USD ? `Quote ${q.quote_id}. A card charge is at least $${CARD_MINIMUM_USD.toFixed(2)}, and an order at that minimum keeps it whole. The /non row it composes is public under CC BY 4.0.` : `Quote ${q.quote_id}. Charged for the work done, and never less than what it cost (model and payment fee); the rest is refunded. The /non row it composes is public under CC BY 4.0.`).slice(0, 500) } } }],
     payment_intent_data: { metadata: { quote_id: q.quote_id, service: "SPXI-gnosis", channel: "card" } },
     metadata: { quote_id: q.quote_id },
     success_url: `${base}/v1/quotes/${q.quote_id}/status?session={CHECKOUT_SESSION_ID}`,

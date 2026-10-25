@@ -24,13 +24,13 @@ import { archiveRelease } from "./s7/traverse.js";
 import { validateReading, reconcile, NORMALIZATION, deltaText } from "./validate.js";
 import { sha256, save, load, STORE } from "./util.js";
 import { renderOpenedHTML, annotations } from "./emit.js";
-import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED, s7Stages, stageCharge, ceilCent } from "./cost.js";
+import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED, s7Stages, stageCharge, ceilCent, netBudget } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.20.8", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -417,7 +417,10 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
   // (2026-10-25: the first operator commission's estimate × 1.5 stopped both ontology passes 2¢ short, with $0.72 of
   // the reading's $1.44 line unspent; "remove unnecessary reasons for it to not deliver").
   const s7Stages_ = q.s7?.stages;
-  const preLog = passLog({ budget_usd: s7Stages_ ? Math.round((s7Stages_.reading.price_usd + s7Stages_.construction.budget_usd) * 100) / 100 : (q.s7?.budget_usd ?? Infinity) });
+  // and never past what the order brings in: what it paid, less its payment fee (2026-10-25).
+  const rc0 = await load(`receipts/${quoteId}.json`).catch(() => null);
+  const net = rc0 ? netBudget(rc0.channel || "card", rc0.paid_usd ?? rc0.reserved_usd ?? q.max_price_usd) : Infinity;
+  const preLog = passLog({ budget_usd: Math.min(net, s7Stages_ ? Math.round((s7Stages_.reading.price_usd + s7Stages_.construction.budget_usd) * 100) / 100 : (q.s7?.budget_usd ?? Infinity)) });
   if (q.kind === "entity") {
     // The entity path: the caller's composition as T, or the article constructed under Wikipedia's policies.
     const { snaps } = await prepareEntity(q.entity);
@@ -501,7 +504,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     if (cached?.complete && cached.ontology_rules === ONTOLOGY_RULES) s7 = { ...cached, from_ledger: true };
     else {
       // One log for the job: the construction's spending and S7's share the budget the quote declared.
-      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, construction_usd: q.s7.stages?.construction?.budget_usd || 0, ceiling_usd: (q.s7.price_usd || 0) + (q.construction?.price_usd || 0), log: preLog });
+      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, construction_usd: q.s7.stages?.construction?.budget_usd || 0, ceiling_usd: Math.min(net, (q.s7.price_usd || 0) + (q.construction?.price_usd || 0)), log: preLog });
       s7 = { row_key: input.row, entity: input.entity.slug, non_url: NON_URL(input.entity.slug), landing: out.landing.dir, manifest: out.landing.manifest,
         composed: !!out.row.objects.KO, case: out.row.ontology?.case?.value || null, rho: out.row.ontology?.rho?.value || null, breaches: out.row.breaches.length,
         audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key, provenance: out.row.objects?.T?.provenance || null,
@@ -572,7 +575,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     pinned: { title: pinned.title, oldid: pinned.oldid, url: pinned.url, retrieved: pinned.retrieved, from: pinned.from, html_sha256: pinned.html_sha256 },
     execution_contract: q.execution_contract, evidence, breaches, portable: portable ? { ok: portable.ok, breaches: portable.breaches, manifest: portable.manifest } : null,
     cost: { seconds: (Date.now() - t0) / 1000, reader_usage: usage, actual_cost_usd: Math.round(actual * 1e5) / 1e5, price_table: PRICE_TABLE.version },
-    billing: { quoted_max_usd: q.max_price_usd, charge_usd: charge, margin_usd: Math.round((charge - actual) * 1e5) / 1e5,
+    billing: { quoted_max_usd: q.max_price_usd, charge_usd: charge, cost_usd: Math.round(actual * 1e5) / 1e5, margin_usd: Math.round((charge - actual) * 1e5) / 1e5,
       cost_measured: reader.mode === "live", ...(reader.mode === "live" ? {} : { note: "replay mode: no model was called, so cost and margin are not measured" }), rule: "charged for completed claims only, at quoted per-claim prices; the rest of the reservation is released" },
   };
   await save(`results/${result_id}/composition.json`, composition);
