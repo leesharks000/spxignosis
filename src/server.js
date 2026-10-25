@@ -72,6 +72,21 @@ async function startWorker(why) {
   await save("worker/dispatch.json", { why, at: new Date().toISOString(), status: r.status, ok: r.status === 204, detail: r.body || undefined }).catch(() => {});
 }
 
+// The archive's landing workflow is started the moment a paid row is delivered (2026-10-25: its schedule never fired;
+// a manual run landed the first operator in 2 minutes 41 seconds). The same token starts it, where it may run the
+// archive's workflows; a refusal (the token cannot reach that repository) is recorded, and the row waits for the next
+// run, started by hand or by the schedule.
+const LANDING = { repo: process.env.GNOSIS_LANDING_REPO || "leesharks000/alexanarch", workflow: "land-non-rows.yml", token: process.env.GNOSIS_LANDING_TOKEN || DISPATCH.token };
+async function startLanding(why) {
+  if (!LANDING.token) return;
+  const r = await fetch(`https://api.github.com/repos/${LANDING.repo}/actions/workflows/${LANDING.workflow}/dispatches`, {
+    method: "POST", signal: AbortSignal.timeout(15000),
+    headers: { Authorization: `Bearer ${LANDING.token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "SPXI-gnosis" },
+    body: JSON.stringify({ ref: "main" }),
+  }).then(async (x) => ({ status: x.status, body: x.status === 204 ? "" : (await x.text()).slice(0, 200) })).catch((e) => ({ status: 0, body: String(e.message || e) }));
+  await save("worker/landing-dispatch.json", { why, at: new Date().toISOString(), status: r.status, ok: r.status === 204, detail: r.body || undefined }).catch(() => {});
+}
+
 // One invocation of a paid card order. The platform stops an invocation at about five minutes; a run that reaches its
 // time budget (RUN_SECONDS) hands itself on to a fresh invocation through /v1/quotes/{id}/continue, where the claims
 // already read come from the ledger, until the order is delivered (2026-10-24: "this needs to be able to run long
@@ -164,6 +179,7 @@ app.post("/v1/quotes/:quote_id/settle", async (req, res) => {
   const reason = out ? `unused by quote ${id}` : `quote ${id} could not complete: ${String(failed.error).slice(0, 200)}`;
   const state = await closeOrder(id, { channel: job.channel || "card", run_by: "archive worker", ...(failed ? { reason: failed.error, result_id: failed.result_id || undefined } : {}) },
     { payment_intent: job.payment_intent, owed, reason });
+  if (out?.composition?.non?.composed) waitUntil(startLanding(`row ${out.composition.non.row} delivered (${out.result_id})`));
   res.json({ settled: id, refunded_usd: owed, refund_state: state });
 });
 
@@ -257,6 +273,7 @@ app.get("/", (req, res) => {
     // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
     reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
     worker_start: DISPATCH.token ? "on request" : "GitHub's schedule only (no dispatch token set)",
+    landing_start: LANDING.token ? `on delivery of a paid row (${LANDING.repo}, ${LANDING.workflow})` : "the archive's schedule, or by hand (no token set)",
     storage: BLOB ? "private Vercel Blob, with this instance's /tmp in front" : process.env.VERCEL ? "local only (/tmp, not shared between instances): connect a Blob store" : "local folder" };
   if (!req.accepts(["application/json", "text/html"]) || req.accepts(["application/json", "text/html"]) === "application/json") return res.json(index);
   res.type("html").send(frontPage(index));
@@ -620,7 +637,9 @@ app.get("/v1/landable", async (req, res) => {
   }
   for (const k of [...rows.keys()]) if (!paidFor.has(k)) rows.delete(k);
   res.json({ landable: [...rows.values()].sort((a, b) => String(a.composed_at || "").localeCompare(String(b.composed_at || ""))),
-    landing: "the archive lands each row by scripts/land_non_row.py --result <result_id>, verified against its manifest; a row is listed when its order delivered" });
+    landing: "the archive lands each row by scripts/land_non_row.py --result <result_id>, verified against its manifest; a row is listed when its order delivered",
+    // the last start of the archive's landing workflow, as GitHub answered it (204 is started)
+    last_landing_start: await load("worker/landing-dispatch.json").catch(() => null) });
 });
 // The landing tree of a result's /non row, for the archive's landing tool (scripts/land_non_row.py --result): the manifest,
 // then each file it names, as kept in the store.
