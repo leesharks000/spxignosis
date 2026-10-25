@@ -15,7 +15,7 @@ import { constructArticle, asClaims, CONSTRUCTION_PROTOCOL } from "./s7/construc
 import { passLog, MODELS as S7_MODELS } from "./s7/model.js";
 import { snapshot } from "./resolve.js";
 import { politeFetch, SEED } from "./util.js";
-import { runS7, s7Key } from "./s7/run.js";
+import { runS7, s7Key, readingAt } from "./s7/run.js";
 import { estimateS7 } from "./s7/estimate.js";
 import { archiveOn, readLanding } from "./grounding.js";
 import { publicationState } from "./s7/publish.js";
@@ -23,13 +23,13 @@ import { archiveRelease } from "./s7/traverse.js";
 import { validateReading, reconcile, NORMALIZATION, deltaText } from "./validate.js";
 import { sha256, save, load, STORE } from "./util.js";
 import { renderOpenedHTML, annotations } from "./emit.js";
-import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED } from "./cost.js";
+import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED, s7Stages, stageCharge } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.16.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.17.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -115,11 +115,16 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
     const key = s7Key(input);
     const ledgered = !!(await load(`s7/${input.row}/by-key/${key}.json`))?.complete;
     const e = ledgered ? null : await estimateS7(input);
-    s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e,
-      est_cost_usd: ledgered ? 0 : e.est_cost_usd, price_usd: ledgered ? POLICY.ledgered_s7 : Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
-    // The execution budget: model spending stops at the quoted price divided by the budget ratio, so a run that costs
-    // more than estimated still clears its cost at the price it was quoted.
-    s7.budget_usd = Math.round((s7.price_usd / POLICY.s7_budget_ratio) * 100) / 100;
+    s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key, ledgered, estimate: e };
+    if (ledgered) Object.assign(s7, { est_cost_usd: 0, price_usd: POLICY.ledgered_s7 });
+    else {
+      // Two stages, priced apart (2026-10-25); the execution budget is each stage's price divided by the budget ratio,
+      // so a run that costs more than estimated still clears its cost at the price it was quoted.
+      s7.stages = s7Stages(e, { readingLedgered: !!(await load(readingAt(input.row, key))) });
+      s7.est_cost_usd = Math.round((s7.stages.reading.est_cost_usd + s7.stages.construction.est_cost_usd) * 1e4) / 1e4;
+      s7.price_usd = Math.round((s7.stages.reading.price_usd + s7.stages.construction.price_usd) * 100) / 100;
+    }
+    s7.budget_usd = s7.stages ? Math.round((s7.stages.reading.budget_usd + s7.stages.construction.budget_usd) * 100) / 100 : Math.round((s7.price_usd / POLICY.s7_budget_ratio) * 100) / 100;
   }
   const package_price = tier === "portable" ? POLICY.portable_package : 0;
   const est_cost = lines.reduce((n, l) => n + l.est_cost_usd, 0) + (s7?.est_cost_usd || 0);
@@ -135,7 +140,7 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
     estimated_cost_usd: Math.round(est_cost * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
     pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
       measured_cost_per_claim: MEASURED[model] || null, execution_budget_usd: Math.round((max / POLICY.sentence_margin) * 100) / 100,
-      rule: "price per claim = max(floor_per_claim, estimated cost × sentence_margin), rounded up to the cent; the archive's consultation and the /non row priced as one line, max(floor, estimated cost × margin), from the traversal it would run; work already in the ledger at the ledgered rates; the charge is for completed work only",
+      rule: "price per claim = max(floor_per_claim, estimated cost × sentence_margin), rounded up to the cent; the archive's consultation priced in two stages from the traversal it would run, each max(its floor, estimated cost × margin): the reading (traversal, admission, extraction, the ontology read twice) and the construction (the knowledge object, compression, delta and audit); a stage is charged when it delivers, at its measured cost × margin, never above its line, and a stage that does not deliver is refunded; work already in the ledger at the ledgered rates",
       lines_at_floor: lines.filter((l) => !l.ledgered && l.price_usd === POLICY.floor_per_claim[tier]).length },
     execution_contract: {
       sources: `the sources each sentence cites (footnotes and classical pointers), fetched once and hashed; and, for every sentence, at most ${ARTICLE_SOURCES} of the sources the article cites elsewhere that bear on it, marked "elsewhere in the article" (S3 rule 1); an uncited sentence is read against those alone`,
@@ -143,7 +148,8 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
       search_scope: ADMITS.has(tier) ? "the sources the article cites (the disclosed field B); and the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4): every deposit text and every blog post the blog–deposit map does not assign to a deposit, scanned for the entity's strings (the article's title and the names its lead gives) at D, R and O; one citation hop from the deposits admitted by reading, screened by string; admission by two reading passes" : "cited sources only at this tier",
       archive_release: s7?.estimate?.release || (s7 ? archiveRelease() : null),
       publication: ADMITS.has(tier) ? `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed: the opening contributes to the opened Wikipedia` : undefined,
-      execution_budget: s7 ? `model spending for the archive's consultation stops at $${s7.budget_usd} (the quoted line divided by ${POLICY.s7_budget_ratio}); passes beyond it are recorded as not run, and the row is composed from what was read, marked` : undefined,
+      execution_budget: s7 ? `model spending for the archive's consultation stops at $${s7.budget_usd} (the quoted lines divided by ${POLICY.s7_budget_ratio})${s7.stages ? `, and $${s7.stages.construction.budget_usd} of it is held for the construction while the reading runs` : ""}; passes beyond it are recorded as not run, and the row is composed from what was read, marked` : undefined,
+      deliverables: s7 ? { reading: "the reading dossier: the traversal, the admitted deposits with their readings, the archive and field ledgers with every claim's quote checked, and both ontology readings with the determination of the case and ρ (in the landing tree)", construction: "the knowledge object, its compression and the field-only arm, the delta read against T, and the reverse entailment audit (the /non row)" } : undefined,
       context_rule: "passages first; when a reading pass reports that the passages lack what a judgment needs, the passages are widened and the claim is read again, once",
       retrieval_budget: { max_sources: 100, max_bytes_per_source: 5_000_000 },
       stopping_rule: "every cited source fetched or recorded unavailable",
@@ -240,8 +246,10 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
   const nSent = spec.transcript?.text ? (input.field.some((b) => b.text) ? Math.min(30, input.T.claims.length) : 0) : compare ? Math.min(30, input.field.filter((b) => b.text).length * 3) : 0;
   const perSentEst = estimateClaim(TIERS[tier].reader_model, Math.min(9000, Math.ceil(srcTok / Math.max(1, input.field.length))) + 2500);
   const sentence_price = priceClaim(tier, perSentEst, false);
-  const s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key: null, ledgered: false, estimate: e, est_cost_usd: e.est_cost_usd,
-    price_usd: Math.ceil(Math.max(POLICY.floor_s7, e.est_cost_usd * POLICY.margin) * 100) / 100 };
+  const stages = s7Stages(e);
+  const s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key: null, ledgered: false, estimate: e, stages,
+    est_cost_usd: Math.round((stages.reading.est_cost_usd + stages.construction.est_cost_usd) * 1e4) / 1e4,
+    price_usd: Math.round((stages.reading.price_usd + stages.construction.price_usd) * 100) / 100 };
   s7.budget_usd = Math.round(((s7.price_usd + Math.ceil(construct * POLICY.margin * 100) / 100) / POLICY.s7_budget_ratio) * 100) / 100;
   const construct_price = construct ? Math.ceil(Math.max(0.10, construct * POLICY.margin) * 100) / 100 : 0;
   const package_price = tier === "portable" ? POLICY.portable_package : 0;
@@ -476,10 +484,11 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     if (cached?.complete) s7 = { ...cached, from_ledger: true };
     else {
       // One log for the job: the construction's spending and S7's share the budget the quote declared.
-      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, log: preLog });
+      const out = await runS7(input, { service: SERVICE, onProgress, budget_usd: q.s7.budget_usd, construction_usd: q.s7.stages?.construction?.budget_usd || 0, log: preLog });
       s7 = { row_key: input.row, entity: input.entity.slug, non_url: NON_URL(input.entity.slug), landing: out.landing.dir, manifest: out.landing.manifest,
         composed: !!out.row.objects.KO, case: out.row.ontology?.case?.value || null, rho: out.row.ontology?.rho?.value || null, breaches: out.row.breaches.length,
-        audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key, provenance: out.row.objects?.T?.provenance || null };
+        audit: out.run.audit, cost_usd: out.run.cost_usd, mode: out.run.mode, passes: out.run.calls.length, budget: out.run.budget, key: out.run.key, provenance: out.row.objects?.T?.provenance || null,
+        stages: { reading: { name: "reading", ...out.run.stages.reading }, construction: { name: "construction", ...out.run.stages.construction } } };
       for (const c of out.run.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
       actual += out.run.cost_usd || 0;
       // Composed, checked and complete are distinct. Only a complete row (composed; no pass failed or skipped by the
@@ -494,7 +503,15 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     }
     // The quoted S7 line is an upper bound (every candidate deposit costed as admitted); the charge is the measured cost
     // times the margin, at the floor, and never above the quote.
-    if (s7.composed) s7.charge_usd = s7.from_ledger ? POLICY.ledgered_s7 : Math.min(q.s7.price_usd, Math.ceil(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin) * 100) / 100);
+    // Each stage is charged when it delivers (2026-10-25): the reading when its ontology passes returned, the
+    // construction when the knowledge object was composed. A quote made before the stages were priced apart is charged
+    // as one line, on composition, as it was quoted.
+    if (s7.from_ledger) s7.charge_usd = POLICY.ledgered_s7;
+    else if (q.s7.stages && s7.stages) {
+      s7.stages.reading.charge_usd = stageCharge(s7.stages.reading, q.s7.stages.reading);
+      s7.stages.construction.charge_usd = stageCharge(s7.stages.construction, q.s7.stages.construction);
+      s7.charge_usd = Math.round((s7.stages.reading.charge_usd + s7.stages.construction.charge_usd) * 100) / 100;
+    } else if (s7.composed) s7.charge_usd = Math.min(q.s7.price_usd, Math.ceil(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin) * 100) / 100);
     charge += s7.charge_usd || 0;
     // Each sentence of the article, with what the archive's claims do to it (the ontology pass's alignment).
     const { row, ledger } = await readLanding(s7, input.row);
@@ -511,6 +528,8 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     licence_note: "Wikipedia sentences are CC BY-SA 4.0, attributed to the revision URL; the service's account is licensed to the caller under the service terms.",
     notice: "The treatment of this article's entities by composing systems may be recorded and measured.",
     non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, complete: !!s7.complete, coverage: s7.coverage || null, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,
+      stages: s7.stages ? Object.fromEntries(Object.entries(s7.stages).map(([k, v]) => [k, { delivered: !!v.delivered, charge_usd: v.charge_usd ?? null, ...(v.from_checkpoint ? { from_checkpoint: v.from_checkpoint } : {}) }])) : undefined,
+      dossier: s7.stages?.reading?.delivered ? `/v1/results/${result_id}/landing` : undefined,
       licence: "CC BY 4.0", publication: await publicationState(s7, { fetchPublic: false }), publication_endpoint: `/v1/results/${result_id}/publication` } : undefined,
     summary: { claims: entries.length, cited: entries.filter((e) => e.status !== "uncited").length, completed, contested: entries.filter((e) => e.status === "contested").length, withheld: entries.filter((e) => e.status === "withheld").length, unread: entries.filter((e) => e.status === "unread").length, from_ledger: entries.filter((e) => e.from_ledger).length },
     entries,

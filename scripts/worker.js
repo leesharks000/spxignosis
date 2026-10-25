@@ -13,7 +13,7 @@
 import { appendFileSync } from "node:fs";
 import { load, save, list, BLOB } from "../src/util.js";
 import { quote, quoteEntity } from "../src/run.js";
-import { deliver, HAS_ARCHIVE, WORKER } from "../src/deliver.js";
+import { deliver, HAS_ARCHIVE, WORKER, ORDER_DEADLINE_MS } from "../src/deliver.js";
 
 const BASE = (process.env.GNOSIS_BASE_URL || "https://gnosis.spxi.dev").replace(/\/$/, "");
 const STOP = Date.now() + Number(process.env.WORKER_MINUTES || 300) * 60e3;
@@ -24,7 +24,9 @@ async function pending() {
   const quotes = [], runs = [];
   for (const id of await ids(WORKER.quote_requests))
     if (!(await load(`quotes/${id}.json`)) && !(await load(`${WORKER.quote_errors}/${id}.json`))) quotes.push(id);
-  for (const id of await ids(WORKER.runs)) if (!(await load(`refunds/${id}.json`))) runs.push(id);
+  // An order is pending until it is settled, and a settled order whose refund failed is pending again: the refund
+  // owed is an obligation, retried through the service's settle (2026-10-25).
+  for (const id of await ids(WORKER.runs)) { const rf = await load(`refunds/${id}.json`); if (!rf || rf.refund_state === "failed") runs.push(id); }
   return { quotes, runs };
 }
 
@@ -51,6 +53,13 @@ async function settle(id, job) {
 async function runOne(id) {
   const [job, q] = await Promise.all([load(`${WORKER.runs}/${id}.json`), load(`quotes/${id}.json`)]);
   if (!job || !q) return console.log(`skip ${id}: no job or quote`);
+  // An order paid more than the order deadline ago and not delivered is closed as failed: it is refunded in full, and
+  // never left running (2026-10-25).
+  const age = Date.now() - Date.parse(job.queued || job.at || 0);
+  if (!(await load(`delivered/${id}.json`)) && !(await load(`${WORKER.failed}/${id}.json`)) && age > ORDER_DEADLINE_MS) {
+    await save(`${WORKER.failed}/${id}.json`, { quote_id: id, error: `not delivered within the order deadline (${Math.round(ORDER_DEADLINE_MS / 3600e3)} hours from payment)`, at: new Date().toISOString() });
+    console.log(`deadline ${id}: closed, refunded in full`);
+  }
   if (!(await load(`delivered/${id}.json`)) && !(await load(`${WORKER.failed}/${id}.json`))) {
     await save(`progress/${id}.json`, { stage: "running", detail: "the archive worker is running the order", at: new Date().toISOString() });
     try { const out = await deliver(q); console.log(`delivered ${id}: ${JSON.stringify(out.summary)}`); }

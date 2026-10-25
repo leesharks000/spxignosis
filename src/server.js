@@ -82,17 +82,43 @@ async function runCard(q, id, { paid, payment_intent, hop = 0 }) {
   try {
     const out = await deliver(q, { deadline: Date.now() + RUN_SECONDS * 1000 });
     const owed = Math.round((paid - (out.billing?.charge_usd ?? 0)) * 100) / 100;
-    const refund = await refundUnused(payment_intent, owed, `unused by quote ${id}`).catch((e) => ({ error: String(e.message || e) }));
-    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: owed, refund, at: new Date().toISOString(), invocations: hop + 1 });
+    await closeOrder(id, { invocations: hop + 1 }, { payment_intent, owed, reason: `unused by quote ${id}` });
   } catch (e) {
     if (e.code === "continue" && hop + 1 < MAX_HOPS) return handOn(id, hop + 1, e);
     // Nothing delivered: the whole payment goes back.
     const reason = e.code === "continue" ? `the run did not finish within ${MAX_HOPS} invocations` : String(e.message || e);
-    const refund = await refundUnused(payment_intent, paid, `quote ${id} could not complete: ${reason.slice(0, 200)}`).catch((x) => ({ error: String(x.message || x) }));
     // the run that failed is named, where there was one: its composition carries each failed call with its error
-    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: paid, refund, reason, at: new Date().toISOString(), invocations: hop + 1,
-      ...(e.result_id ? { result_id: e.result_id, composition: `/v1/results/${e.result_id}/composition`, evidence: `/v1/results/${e.result_id}/evidence` } : {}) });
+    await closeOrder(id, { reason, invocations: hop + 1,
+      ...(e.result_id ? { result_id: e.result_id, composition: `/v1/results/${e.result_id}/composition`, evidence: `/v1/results/${e.result_id}/evidence` } : {}) },
+      { payment_intent, owed: paid, reason: `quote ${id} could not complete: ${reason.slice(0, 200)}` });
   }
+}
+
+// The order is closed and its refund sent (2026-10-25). A refund owed is recorded with its state: none owed, succeeded,
+// pending (Stripe settles it), or failed. A failed refund is an obligation still owed, never a settlement: it is retried
+// (by /resume, and by the worker's settle), safely, since Stripe takes the same idempotency key for the same refund.
+const refundOpen = (rf) => !!rf && rf.refund_state === "failed";
+async function closeOrder(id, base, { payment_intent, owed, reason }) {
+  const prior = await load(`refunds/${id}.json`);
+  const now = new Date().toISOString();
+  let refund = null, state;
+  if (!(owed >= 0.01)) state = "none owed";
+  else {
+    try {
+      refund = await refundUnused(payment_intent, owed, reason);
+      state = !refund ? "failed" : refund.status === "succeeded" ? "succeeded" : ["failed", "canceled"].includes(refund.status) ? "failed" : "pending";
+      if (!refund) refund = { error: "the refund could not be sent: no card key, or no payment to refund" };
+    } catch (e) { refund = { error: String(e.message || e).slice(0, 300) }; state = "failed"; }
+  }
+  const attempts = [...(prior?.attempts || []).slice(-19), { at: now, state, ...(refund?.error ? { error: refund.error } : {}), ...(refund?.refund ? { refund: refund.refund } : {}) }];
+  await save(`refunds/${id}.json`, { ...(prior || {}), ...base, quote_id: id, channel: "card", amount_usd: owed, refund_state: state, refund,
+    reason_sent: reason, attempts, at: prior?.at || now, last_attempt: now });
+  return state;
+}
+async function retryRefund(id) {
+  const rf = await load(`refunds/${id}.json`), rc = await load(`receipts/${id}.json`), job = await load(`${WORKER.runs}/${id}.json`);
+  const pi = rc?.stripe_payment_intent || job?.payment_intent;
+  return closeOrder(id, {}, { payment_intent: pi, owed: rf.amount_usd, reason: rf.reason_sent || `quote ${id}` });
 }
 
 async function handOn(id, hop, e) {
@@ -119,15 +145,16 @@ app.post("/v1/quotes/:quote_id/settle", async (req, res) => {
   const id = req.params.quote_id;
   const [job, q] = await Promise.all([load(`${WORKER.runs}/${id}.json`), load(`quotes/${id}.json`)]);
   if (!job || !q || req.get("x-gnosis-worker") !== job.token) return res.status(404).json({ error: "no queued run to settle" });
-  if (await load(`refunds/${id}.json`)) return res.json({ note: "already settled" });
+  const rf = await load(`refunds/${id}.json`);
+  if (rf && !refundOpen(rf)) return res.json({ note: "already settled", refund_state: rf.refund_state || (rf.refund?.error ? "failed" : "recorded") });
+  if (rf) return res.json({ settled: id, retried: true, refund_state: await retryRefund(id), refunded_usd: rf.amount_usd });
   const [out, failed] = await Promise.all([load(`delivered/${id}.json`), load(`${WORKER.failed}/${id}.json`)]);
   if (!out && !failed) return res.status(409).json({ error: "the worker has written neither a result nor a failure" });
   const owed = out ? Math.round((job.paid - (out.billing?.charge_usd ?? 0)) * 100) / 100 : job.paid;
   const reason = out ? `unused by quote ${id}` : `quote ${id} could not complete: ${String(failed.error).slice(0, 200)}`;
-  const refund = owed > 0 ? await refundUnused(job.payment_intent, owed, reason).catch((e) => ({ error: String(e.message || e) })) : null;
-  await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: owed, refund, at: new Date().toISOString(), run_by: "archive worker",
-    ...(failed ? { reason: failed.error, result_id: failed.result_id || undefined } : {}) });
-  res.json({ settled: id, refunded_usd: owed });
+  const state = await closeOrder(id, { run_by: "archive worker", ...(failed ? { reason: failed.error, result_id: failed.result_id || undefined } : {}) },
+    { payment_intent: job.payment_intent, owed, reason });
+  res.json({ settled: id, refunded_usd: owed, refund_state: state });
 });
 
 // A paid card order whose run stopped (nothing delivered, nothing refunded, no progress for six minutes) is started
@@ -136,7 +163,9 @@ app.post("/v1/quotes/:quote_id/resume", async (req, res) => {
   const id = req.params.quote_id;
   const [q, rc, pr] = await Promise.all([load(`quotes/${id}.json`), load(`receipts/${id}.json`), load(`progress/${id}.json`)]);
   if (!q || !rc || rc.channel !== "card") return res.status(404).json({ error: "no paid card order with this id" });
-  if ((await load(`delivered/${id}.json`)) || (await load(`refunds/${id}.json`))) return res.json({ note: "already finished" });
+  const rf = await load(`refunds/${id}.json`);
+  if (refundOpen(rf)) return res.json({ note: "finished; the refund owed had failed and is sent again", refund_state: await retryRefund(id) });
+  if ((await load(`delivered/${id}.json`)) || rf) return res.json({ note: "already finished" });
   if (pr && Date.now() - Date.parse(pr.at) < 6 * 60e3) return res.status(409).json({ note: "still running", progress: pr });
   await save(`progress/${id}.json`, { stage: "resumed", detail: "started again after its run stopped", at: new Date().toISOString() });
   res.status(202).json({ resumed: id });
@@ -245,7 +274,7 @@ a{color:var(--red)}p{margin:10px 0}.small{font-size:.9rem;color:var(--muted)}
 <p>A commission composes the entity's row in <a href="https://www.alexanarch.org/non/">/non</a>: public knowledge of the entity composed three ways, as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms, ontology included (EA-NEGONT-02 v0.9, <a href="https://www.alexanarch.org/s/records/1690/">#1690</a>). The row is public under CC BY 4.0 and lands in the archive by the operator's act; each entry has its page, its data and an AXN in the family NON.</p>
 <p class="small"><a href="https://www.alexanarch.org/non/">the entries</a> · <a href="https://www.alexanarch.org/non/index.json">contents as data</a> · <a href="https://www.alexanarch.org/non/claims.json">every field claim quoted</a> · <a href="https://www.alexanarch.org/non/about/">status, method and procedure</a></p>
 <h2>Prices</h2>
-<p>From measured cost, never subsidized: a quote is free and lists the maximum; the charge is for completed work only, and what the work did not use is refunded. A sentence is 2¢ checked and 22¢ opened (1¢ or less where the reading is already in the ledger). A commission adds the archive's consultation, priced from the traversal it would run at twice its estimated cost, at least $1.00, and charged at twice its measured cost, never above the quote. Card payments run through Stripe Checkout.</p>
+<p>From measured cost, never subsidized: a quote is free and lists the maximum; the charge is for completed work only, and what the work did not use is refunded. A sentence is 2¢ checked and 22¢ opened (1¢ or less where the reading is already in the ledger). A commission adds the archive's consultation in two stages, each priced from the traversal it would run at twice its estimated cost and charged when it delivers, at twice its measured cost, never above its line: the reading (at least $0.75), whose deliverable is its dossier of readings, ledgers and both ontology readings, and the construction (at least $0.25), whose deliverable is the row. A stage that does not deliver is refunded; an order not delivered within a day is refunded in full. Card payments run through Stripe Checkout.</p>
 <h2>Operations</h2><dl>${ops}</dl>
 <h2>Publication</h2><p>${esc(index.publication)}</p><p class="small">${esc(index.notice)}</p>
 <p class="small">Protocol home: <a href="https://spxi.dev">spxi.dev</a> · archive: <a href="https://www.alexanarch.org">alexanarch.org</a> · source: <a href="https://github.com/leesharks000/spxignosis">github.com/leesharks000/spxignosis</a> (PolyForm Shield 1.0.0)</p>

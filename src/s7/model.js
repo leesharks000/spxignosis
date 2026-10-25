@@ -44,11 +44,16 @@ async function live({ system, shared, task, model, maxTokens = 8000 }) {
 // read (a marked partial result). Usage is billed before the reply is parsed, so a reply that does not parse still
 // counts. A call that fails is recorded with its error and returns nothing; the run continues. One log can serve a
 // whole job (the construction and S7 share it), so the budget is the job's.
+// A part of the budget can be held for later stages (2026-10-25): while it is held, the earlier passes may not spend
+// into it, so the investigation cannot consume what the composition and its audit need to finish.
 export function passLog({ budget_usd = Infinity } = {}) {
   const calls = [];
   const spent = () => calls.reduce((n, c) => n + (c.cost_usd || 0), 0);
+  let held = 0;
   return {
     calls, budget_usd,
+    hold(usd) { held = Math.max(0, usd || 0); },
+    held() { return held; },
     exhausted() { return calls.some((c) => c.how === "not run: execution budget exhausted"); },
     async run({ row, stage, id, system, shared, task, model, maxTokens = 8000 }) {
       if (mode() === "replay") {
@@ -58,7 +63,7 @@ export function passLog({ budget_usd = Infinity } = {}) {
         return r ? r.out : null;
       }
       const reserve = callCost(model, { input_tokens: estimateTokens(`${system || ""}${shared || ""}${task || ""}`), output_tokens: maxTokens }) || 0;
-      if (spent() + reserve > budget_usd) { calls.push({ stage, id, how: "not run: execution budget exhausted", model, usage: null, cost_usd: 0, reserve_usd: Math.round(reserve * 1e4) / 1e4 }); return null; }
+      if (spent() + reserve > budget_usd - held) { calls.push({ stage, id, how: "not run: execution budget exhausted", model, usage: null, cost_usd: 0, reserve_usd: Math.round(reserve * 1e4) / 1e4, ...(held ? { held_for_construction_usd: Math.round(held * 1e4) / 1e4 } : {}) }); return null; }
       let text, usage;
       try { ({ text, usage } = await live({ system, shared, task, model, maxTokens })); }
       catch (e) { calls.push({ stage, id, how: `failed: ${String(e.message || e).slice(0, 200)}`, model, usage: null, cost_usd: 0 }); return null; }

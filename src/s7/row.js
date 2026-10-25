@@ -59,7 +59,7 @@ export function buildRow(run) {
     breaches,
     ...(run.dro?.works?.length ? { works: { rule: "scanned, not read: the deposits the registry gives as by the entity (or by a name the caller counts as its)", count: run.dro.works.length, deposits: run.dro.works } } : {}),
     ...(run.dro?.division?.scanned ? { division: run.dro.division } : {}),
-    composition_gnosis: { service: run.service, protocol: run.protocol, mode: run.mode, models: run.models, archive_release: release, passes: run.calls, cost_usd: run.cost_usd, seconds: run.seconds },
+    composition_gnosis: { service: run.service, protocol: run.protocol, mode: run.mode, models: run.models, archive_release: release, passes: run.calls, cost_usd: run.cost_usd, seconds: run.seconds, ...(run.stages ? { stages: run.stages } : {}) },
   };
   if (onto.status === "read" || onto.status === "read (single pass)" || onto.status === "contested") {
     row.ontology = { composition: caseV, case: onto.case, E_F: onto.E_F, E_A: onto.E_A, rho: onto.rho, translation: onto.translation,
