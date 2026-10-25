@@ -1,5 +1,6 @@
 // SPXI-gnΩsis HTTP service. Free quote; the paid work behind x402 (agents) or Stripe Checkout (people); results by id.
 import express from "express";
+import { waitUntil } from "@vercel/functions";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
@@ -27,10 +28,22 @@ app.post("/v1/stripe/webhook", express.raw({ type: "application/json", limit: "1
   const s = ev.data.object, id = s.metadata?.quote_id;
   const q = id && await load(`quotes/${id}.json`);
   if (!q || s.payment_status !== "paid") return res.json({ received: true, note: "no paid quote in this session" });
-  if (await load(`receipts/${id}.json`)) return res.json({ received: true, note: "already delivered" });
-  res.json({ received: true, running: id }); // Stripe gets its answer at once; the work runs after.
+  // A paid order is run once. A message for one already delivered or refunded is acknowledged; one still running (its
+  // progress written in the last five minutes) is left to run; a paid order whose run stopped is resumed, so a message
+  // re-sent from Stripe recovers it (2026-10-24: the first card test stopped after its sentences, nothing delivered).
+  if (await load(`delivered/${id}.json`)) return res.json({ received: true, note: "already delivered" });
+  if (await load(`refunds/${id}.json`)) return res.json({ received: true, note: "already refunded" });
+  const prior = await load(`receipts/${id}.json`), pr = await load(`progress/${id}.json`);
+  if (prior && pr && Date.now() - Date.parse(pr.at) < 5 * 60e3) return res.json({ received: true, note: "running" });
+  res.json({ received: true, running: id, resumed: !!prior }); // Stripe gets its answer at once; the work runs after.
+  // The work after the answer is registered with the platform (waitUntil), which otherwise may stop it once the
+  // response is sent; outside Vercel it simply runs.
+  waitUntil(cardWork(q, s, id, prior));
+});
+
+async function cardWork(q, s, id, prior) {
   const paid = s.amount_total / 100;
-  await save(`receipts/${id}.json`, { quote_id: id, at: new Date().toISOString(), channel: "card", stripe_session: s.id, stripe_payment_intent: s.payment_intent, paid_usd: paid,
+  if (!prior) await save(`receipts/${id}.json`, { quote_id: id, at: new Date().toISOString(), channel: "card", stripe_session: s.id, stripe_payment_intent: s.payment_intent, paid_usd: paid,
     settlement: { success: true, payer: s.customer_details?.email ? "card (email on the Stripe record)" : "card" } });
   try {
     const out = await deliver(q);
@@ -42,7 +55,7 @@ app.post("/v1/stripe/webhook", express.raw({ type: "application/json", limit: "1
     const refund = await refundUnused(s.payment_intent, paid, `quote ${id} could not complete: ${String(e.message || e).slice(0, 200)}`).catch((x) => ({ error: String(x.message || x) }));
     await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: paid, refund, reason: String(e.message || e), at: new Date().toISOString() });
   }
-});
+}
 app.use(express.json({ limit: "64kb" }));
 
 // The work for a paid quote, by either channel. Throws when nothing could be delivered.
