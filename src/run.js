@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.2", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -274,7 +274,7 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
       sources: "the sources the caller supplies, fetched once and hashed (the disclosed field B); notability is not applied",
       encyclopedia: wikipedia.exists ? `the encyclopedia holds an article at this title (${wikipedia.url}); the entity is opened as given here, and the article can be opened by its revision id` : "the encyclopedia holds no article at this title (observed at the quote); the absence is recorded in the row",
       search_scope: "the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4), as for an article",
-      archive_release: e.release, execution_budget: `model spending stops at $${s7.budget_usd}`,
+      archive_release: e.release, execution_budget: `model spending on each stage stops at its line (the reading's $${stages.reading.price_usd}, the construction's $${stages.construction.price_usd}), with $${stages.construction.budget_usd} held for the construction while the reading runs, and never passes what the order brings in (what it paid, less its payment fee); passes beyond it are recorded as not run, and the row is composed from what was read, marked`,
       publication: `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed`,
     },
     expires: new Date(Date.now() + ttl_ms).toISOString(),
