@@ -460,7 +460,10 @@ app.get("/v1/quotes/:quote_id/status", async (req, res) => {
     // a refund with nothing delivered is a refunded order, not a running one (2026-10-24: the first card test read so)
     state: out ? "delivered" : rf && rc ? `refunded${rf.reason ? `: ${rf.reason}` : ""}` : rc ? "paid, running" : "quoted",
     progress: pr || null, result: out ? { result_id: out.result_id, composition: `/v1/results/${out.result_id}/composition`, evidence: `/v1/results/${out.result_id}/evidence` } : null,
-    receipt: rc ? { channel: rc.channel, at: rc.at, paid_usd: rc.paid_usd ?? rc.reserved_usd } : null, refund: rf || null });
+    receipt: rc ? { channel: rc.channel, at: rc.at, paid_usd: rc.paid_usd ?? rc.reserved_usd } : null, refund: rf || null,
+    // the quote itself, each line with its estimate, as a quote answered at once returns it (2026-10-25: a quote priced
+    // by the archive worker showed only its maximum)
+    quote: q });
 });
 if (PAY_TO) app.use(paymentMiddleware({
   "GET /v1/sentence": {
