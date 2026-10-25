@@ -3,6 +3,7 @@ import express from "express";
 import { waitUntil } from "@vercel/functions";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
+import { bazaarResourceServerExtension, declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { decodePaymentResponseHeader, decodePaymentSignatureHeader } from "@x402/core/http";
 import { quote, quoteEntity, runOpening, SERVICE, RUN_SECONDS, ADMITS } from "./run.js";
@@ -28,6 +29,7 @@ if (!PAY_TO) console.error("no receiving address (STRIPE_DEPOSIT_ADDRESS or GNOS
 const BASE = process.env.GNOSIS_BASE_URL || `http://localhost:${process.env.PORT || 4402}`;
 
 const app = express();
+app.set("trust proxy", true); // behind Vercel's proxy the request is https; the payment layer's resource URL had read http
 // The logo and icons (public/). Vercel serves public/ itself; locally Express does.
 app.use(express.static(new URL("../public", import.meta.url).pathname, { maxAge: "1d" }));
 // Stripe's signed webhook needs the raw body, so it is mounted before the JSON parser.
@@ -465,7 +467,10 @@ if (!PAY_TO) app.use(/^\/v1\/(sentence|openings)/, (req, res, next) => {
   res.status(503).json({ error: "payments are not configured on this deployment yet; quotes are free at POST /v1/quote",
     ...(p ? { state: "found", sentence: p.sentence, request_id: p.request_id, est_cost_usd: p.est_cost_usd, price_usd: p.price_usd, expires: p.expires } : {}) });
 });
-const resourceServer = !PAY_TO ? null : new x402ResourceServer(new HTTPFacilitatorClient(await facilitatorConfig())).register(NETWORK, new ExactEvmScheme());
+const resourceServer = !PAY_TO ? null : new x402ResourceServer(new HTTPFacilitatorClient(await facilitatorConfig())).register(NETWORK, new ExactEvmScheme())
+  // the paid routes declare themselves for discovery (Bazaar): facilitators that keep a catalogue list them with their
+  // input and output (2026-10-25)
+  .registerExtension(bazaarResourceServerExtension);
 // A settled x402 payment is recorded in Stripe as a PaymentIntent, keyed by its transaction, before the route's receipt.
 resourceServer?.onAfterSettle(async (ctx) => {
   try { const rec = await recordSettlement(ctx); if (rec) { await save(`settlements/${ctx.result.transaction}.json`, rec);
@@ -521,6 +526,14 @@ if (PAY_TO) app.use(paymentMiddleware({
         return `$${Math.max(0.01, p.price_usd).toFixed(2)}`;
       },
     }],
+    resource: `${BASE}/v1/sentence`, serviceName: "SPXI-gnΩsis", iconUrl: "https://gnosis.spxi.dev/omega-512.png", tags: ["fact-checking", "citations", "wikipedia", "provenance", "sources", "research"],
+    extensions: declareDiscoveryExtension({
+      input: { text: "According to Aristotle, this is the first work to treat the subject of deductive reasoning in ancient Greece (Soph. Ref., 34, 183b34 ff.).", url: "https://en.wikipedia.org/wiki/Sophistical_Refutations", mode: "opening" },
+      inputSchema: { type: "object", properties: { text: { type: "string", description: "the sentence exactly as it stands on the page" }, url: { type: "string", description: "the English Wikipedia page, by title or revision URL" }, mode: { type: "string", enum: ["opening", "preliminary", "grounded"] } }, required: ["text", "url"] },
+      output: { example: { mode: "opening", page: { title: "Sophistical Refutations", oldid: 1361634710 }, sentence: { id: "W2", text: "According to Aristotle, this is the first work to treat the subject of deductive reasoning in ancient Greece (Soph. Ref., 34, 183b34 ff.).", match: "identical" },
+        result: { status: "contested", support: ["partially-supported", "interpretation-beyond-paraphrase"], attributization: { value: "partial", reason: "an act of self-presentation (a claim of priority) restated as a property of a book" }, retained_authority: { value: "mixed" }, spans: [{ quote: "περὶ δὲ τοῦ συλλογίζεσθαι παντελῶς οὐδὲν εἴχομεν πρότερον ἄλλο λέγειν", source_ref: "S1", role: "support" }] },
+        evidence: { verdict: { status: "contested", differs: ["support"] } } } },
+    }),
     description: "Use when a received claim needs checking against its source before it is cited or relied on: send the sentence and the Wikipedia page it came from; returns whether its cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary for one quick pass; mode=grounded adds the Crimson Hexagonal Archive's claims on the sentence where the article has been commissioned. The paid reading is kept and served free to later callers; the response names it under contributes.",
     mimeType: "application/json",
   },
@@ -534,6 +547,13 @@ if (PAY_TO) app.use(paymentMiddleware({
         return `$${q.max_price_usd.toFixed(2)}`;
       },
     }],
+    serviceName: "SPXI-gnΩsis", iconUrl: "https://gnosis.spxi.dev/omega-512.png", tags: ["knowledge-graph", "entities", "wikipedia", "provenance", "research", "commission"],
+    extensions: declareDiscoveryExtension({
+      bodyType: "json", input: {},
+      pathParams: { quote_id: "Q-0123456789abcdef" },
+      pathParamsSchema: { type: "object", properties: { quote_id: { type: "string", description: "a quote from POST /v1/quote (free), which states its deliverables and maximum" } }, required: ["quote_id"] },
+      output: { example: { quote_id: "Q-0123456789abcdef", state: "paid, running", status: "/v1/quotes/Q-0123456789abcdef/status", note: "the result is named at the status address when delivered; a commission's /non row lands public under CC BY 4.0" } },
+    }),
     description: "Use when an existing representation of an entity cannot support the task: opens a pinned Wikipedia revision (or an entity it does not hold), each sentence kept verbatim and checked against its cited source, the entity composed with the Crimson Hexagonal Archive admitted by the archive's own procedure. Pays the quote's maximum and answers 202 with a status address to poll; the result, which names the public /non row it composed under contributes, is retrieved by id. What the work does not use is refunded.",
     mimeType: "application/json",
   },
