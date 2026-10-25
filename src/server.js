@@ -92,6 +92,8 @@ const INDEX = {
 // Agents and scripts get the service description as JSON; a browser gets the same description as a page.
 app.get("/", (req, res) => {
   const index = { ...INDEX, payments: PAY_TO ? "configured" : "not configured yet: paid routes answer 503",
+    // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
+    reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
     storage: BLOB ? "private Vercel Blob, with this instance's /tmp in front" : process.env.VERCEL ? "local only (/tmp, not shared between instances): connect a Blob store" : "local folder" };
   if (!req.accepts(["application/json", "text/html"]) || req.accepts(["application/json", "text/html"]) === "application/json") return res.json(index);
   res.type("html").send(frontPage(index));
@@ -117,7 +119,7 @@ a{color:var(--red)}p{margin:10px 0}.small{font-size:.9rem;color:var(--muted)}
 <img class="mark" src="/spxi-gnosis.png" alt="SPXI-gnΩsis: an Omega with a red vertical line through its centre" width="1774" height="887">
 <h1>opens pinned Wikipedia revisions, sentence by sentence, against the sources they cite</h1>
 <p>Each sentence is read against the sources it cites and the sources its article cites elsewhere, under the policy texts it was written against, and the reading is kept as evidence: what the source says, quoted; what the sentence adds or drops; whether an act of the source has been restated as a property of the entity. A sentence costs cents. A commissioned article consults the Crimson Hexagonal Archive and composes the entity's row in the <a href="https://www.alexanarch.org/non/">Negative of the Negative</a>, which is public.</p>
-<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · network ${esc(index.network)} · payments ${esc(index.payments)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
+<p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · network ${esc(index.network)} · payments ${esc(index.payments)} · reader ${esc(index.reader)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
 <h2>Operations</h2><dl>${ops}</dl>
 <h2>Publication</h2><p>${esc(index.publication)}</p><p class="small">${esc(index.notice)}</p>
 <p class="small">Protocol home: <a href="https://spxi.dev">spxi.dev</a> · archive: <a href="https://www.alexanarch.org">alexanarch.org</a> · source: <a href="https://github.com/leesharks000/spxignosis">github.com/leesharks000/spxignosis</a> (PolyForm Shield 1.0.0)</p>
@@ -212,7 +214,9 @@ app.get("/v1/quotes/:quote_id/status", async (req, res) => {
   const id = req.params.quote_id, q = await load(`quotes/${id}.json`);
   if (!q) return res.status(404).json({ error: "unknown quote" });
   const rc = await load(`receipts/${id}.json`), out = await load(`delivered/${id}.json`), pr = await load(`progress/${id}.json`), rf = await load(`refunds/${id}.json`);
-  res.json({ quote_id: id, max_price_usd: q.max_price_usd, state: out ? "delivered" : rc ? "paid, running" : "quoted",
+  res.json({ quote_id: id, max_price_usd: q.max_price_usd,
+    // a refund with nothing delivered is a refunded order, not a running one (2026-10-24: the first card test read so)
+    state: out ? "delivered" : rf && rc ? `refunded${rf.reason ? `: ${rf.reason}` : ""}` : rc ? "paid, running" : "quoted",
     progress: pr || null, result: out ? { result_id: out.result_id, composition: `/v1/results/${out.result_id}/composition`, evidence: `/v1/results/${out.result_id}/evidence` } : null,
     receipt: rc ? { channel: rc.channel, at: rc.at, paid_usd: rc.paid_usd ?? rc.reserved_usd } : null, refund: rf || null });
 });
