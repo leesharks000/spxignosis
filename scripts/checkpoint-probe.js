@@ -9,7 +9,13 @@ import { stageCharge, s7Stages, POLICY, ceilCent } from "../src/cost.js";
 const t = (name, ok) => { console.log(`${ok ? "ok  " : "FAIL"} ${name}`); if (!ok) process.exitCode = 1; };
 const input = () => fromNonRow("se-183b34", join(STORE, "calibration/se-183b34"));
 const a = await runS7(input(), { service: { name: "SPXI-gnΩsis", version: "probe" } });
+// The second run stands for another worker: the first run's traversal directories and landing trees are gone, and only
+// the store's records remain (2026-10-25: a recomposition failed reading a directory the first worker had written).
+const { rmSync } = await import("node:fs");
+rmSync(join(STORE, "s7", input().row, "traversal"), { recursive: true, force: true });
+rmSync(join(STORE, "s7", input().row, "runs"), { recursive: true, force: true });
 const b = await runS7(input(), { service: { name: "SPXI-gnΩsis", version: "probe" } });
+t("checkpoint: on another worker, the row's tree is written from the checkpoint", b.landing.files.some((f) => f.endsWith("summary.json")) && b.landing.files.some((f) => f.endsWith("candidates-D.jsonl")));
 t("checkpoint: the second run reads from the first run's checkpoint", !!b.run.stages.reading.from_checkpoint && b.run.stages.reading.cost_usd === 0);
 const fresh = [...new Set(b.run.calls.filter((c) => !c.from_checkpoint).map((c) => c.stage))];
 t(`checkpoint: only construction passes run again (${fresh.join(", ") || "none"})`, fresh.every((s) => ["compose", "delta", "audit"].includes(s)) && a.run.calls.some((c) => !["compose", "delta", "audit"].includes(c.stage)));

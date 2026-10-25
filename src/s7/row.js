@@ -105,10 +105,23 @@ export function writeLanding(run, row) {
   files.push(put(`${V2}/rows/${input.row}.json`, row));
   files.push(put(`${V2}/ledgers/${input.row}/ledger-archive.json`, arch.ledger.map(({ read, ...c }) => ({ ...c, offset_basis: "NFC text of the deposit file" }))));
   files.push(put(`${V2}/ledgers/${input.row}/field.json`, { field: row.field, field_claims: row.field_claims, note: "Saved source texts are held by the service, by hash; third-party texts are not redistributed." }));
-  for (const f of ["candidates-D.jsonl", "candidates-R.jsonl", "candidates-O.jsonl"]) { const src = join(trav.dir, f); if (existsSync(src)) { mkdirSync(join(base, V2, "traversal", input.row), { recursive: true }); copyFileSync(src, join(base, V2, "traversal", input.row, f)); files.push(`${V2}/traversal/${input.row}/${f}`); } }
-  if (existsSync(join(travH.dir, "candidates-H.jsonl"))) { copyFileSync(join(travH.dir, "candidates-H.jsonl"), join(base, V2, "traversal", input.row, "candidates-H.jsonl")); files.push(`${V2}/traversal/${input.row}/candidates-H.jsonl`); }
+  // The traversal's files are copied where they are on disk; where the reading came from its checkpoint on another
+  // worker they are not, and the candidates and summary are written from the traversal the checkpoint carries
+  // (2026-10-25: a recomposition composed and then failed here, reading a directory that existed only on the first worker).
+  const travFile = (t, f) => (t?.dir && existsSync(join(t.dir, f)) ? join(t.dir, f) : null);
+  const jsonl = (xs) => (xs || []).map((c) => JSON.stringify(c)).join("\n") + ((xs || []).length ? "\n" : "");
+  mkdirSync(join(base, V2, "traversal", input.row), { recursive: true });
+  for (const [f, xs] of [["candidates-D.jsonl", trav.D], ["candidates-R.jsonl", trav.R], ["candidates-O.jsonl", trav.O]]) {
+    const src = travFile(trav, f);
+    if (src) { copyFileSync(src, join(base, V2, "traversal", input.row, f)); files.push(`${V2}/traversal/${input.row}/${f}`); }
+    else if (xs) files.push(put(`${V2}/traversal/${input.row}/${f}`, jsonl(xs)));
+  }
+  const hsrc = travFile(travH, "candidates-H.jsonl");
+  if (hsrc) { copyFileSync(hsrc, join(base, V2, "traversal", input.row, "candidates-H.jsonl")); files.push(`${V2}/traversal/${input.row}/candidates-H.jsonl`); }
+  else if (travH?.H?.length) files.push(put(`${V2}/traversal/${input.row}/candidates-H.jsonl`, jsonl(travH.H)));
   if (blogFile) files.push(put(`${V2}/traversal/${input.row}/${blogFile}`, run.blog.D.map((c) => JSON.stringify(c)).join("\n") + "\n"));
-  const summary = { ...JSON.parse(readFileSync(join(travH.dir || trav.dir, "summary.json"), "utf8")), blog: run.blog ? { corpus: "data/blog-index.json (posts the blog–deposit map does not assign to a deposit)", index_sha256: run.blog.index_sha256, posts_scanned: run.blog.posts_scanned, D_sentences: run.blog.D.length, D_posts: new Set(run.blog.D.map((c) => c.dep)).size } : null };
+  const sumSrc = travFile(travH, "summary.json") || travFile(trav, "summary.json");
+  const summary = { ...(sumSrc ? JSON.parse(readFileSync(sumSrc, "utf8")) : (travH?.summary || trav.summary || {})), blog: run.blog ? { corpus: "data/blog-index.json (posts the blog–deposit map does not assign to a deposit)", index_sha256: run.blog.index_sha256, posts_scanned: run.blog.posts_scanned, D_sentences: run.blog.D.length, D_posts: new Set(run.blog.D.map((c) => c.dep)).size } : null };
   files.push(put(`${V2}/traversal/${input.row}/summary.json`, summary));
   const reading = {
     row: input.row, pass: `SPXI-gnΩsis reading, ${row.epoch}`, procedure: "EA-NEGONT-02 v0.9 §3.4 D/R/O with the hop. Admission by reading, two independent passes; a deposit on which they differ is admitted and marked extraction_contested, with both readings (§3.8). Hop candidates screened by string (a sentence that cites a deposit admitted by reading, names the entity, or shares two of the admitted passages' rare words) and the screened ones read.",
