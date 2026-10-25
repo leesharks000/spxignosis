@@ -1,6 +1,10 @@
 # SPXI-gnΩsis
 
-Opens pinned Wikipedia revisions: each sentence read against the sources it cites and the sources its article cites elsewhere, under the policy texts it was written against, with the reading kept as evidence. A commission also consults the Crimson Hexagonal Archive by its own procedure and composes the entity's row in [the Negative of the Negative](https://www.alexanarch.org/non/) (/non), which is public. Paid by card (Stripe Checkout); agent payment over x402 is built and not yet configured.
+Opens existing compositions against their sources and constructs sourced knowledge objects, for entities and for operators. Its principal application opens pinned Wikipedia revisions: each sentence read against the sources it cites and the sources its article cites elsewhere, under the policy texts it was written against, with the reading kept as evidence. A commission also consults the Crimson Hexagonal Archive by its own procedure and composes the object's row in [the Negative of the Negative](https://www.alexanarch.org/non/) (/non), which lands there public. Paid by card (Stripe Checkout) and, for agents, per request over x402 (USDC on Base mainnet).
+
+*Fund the counterinfrastructure. Rebuild the foundations of the world.*
+
+> Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I am making all things new.” — after [The Gospel of Antioch](https://www.alexanarch.org/s/records/71/), saying 11, and Revelation 21:5, its order inverted
 
 SPXI methods: the opening is [0.17](https://www.spxi.dev/methods/#m-0-17) and /non is [0.16](https://www.spxi.dev/methods/#m-0-16) of the [SPXI method inventory](https://www.spxi.dev/methods/).
 
