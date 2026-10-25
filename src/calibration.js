@@ -111,7 +111,7 @@ async function summarize(prior, rq, base, nothingLeft) {
     : "provisional: at least one scored row is below the provisional thresholds";
   prior.scorer = SCORER;
   prior.by_stage = Object.fromEntries(["admission", "archive_claims", "field_claims", "case", "rho"].map((k) => [k, scored.map((r) => ({ row: Object.keys(prior.rows).find((x) => prior.rows[x] === r), meets: r.score[k].meets,
-    ...(r.score[k].recall !== undefined ? { recall: r.score[k].recall, precision: r.score[k].precision } : { got: r.score[k].got, want: r.score[k].want }) }))]));
+    ...(r.score[k].recall !== undefined ? Object.fromEntries(["recall", "precision", "verified", "precision_vs_seated", "measured"].filter((m) => r.score[k][m] !== undefined).map((m) => [m, r.score[k][m]])) : { got: r.score[k].got, want: r.score[k].want }) }))]));
   prior.updated = new Date().toISOString();
   await save(`${base}/summary.json`, prior);
   await save("calibration/latest.json", { id: rq.id, summary: `${base}/summary.json`, verdict: prior.verdict, complete: prior.complete, spent_usd: prior.spent_usd, updated: prior.updated });

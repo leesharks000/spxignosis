@@ -17,8 +17,12 @@ const qkey = (src, q) => `${src}|${norm(q).replace(/^["“]|["”]$/g, "").toLow
 // passes is accepted when, on every held-out row, each stage meets its floor and the case and ρ are read back without
 // contest. Below that its outputs are labelled provisional. Rows used in tuning any part of the procedure are not held out.
 // The scorer's version: a release scored by an earlier scorer is scored again from its kept landing tree, at no cost.
-export const SCORER = "2026-10-25: grouped verdicts split; deposits after the row not counted; a run given no field is not measured on the field";
-export const THRESHOLDS = { admission: { recall: 0.9, precision: 0.8 }, archive_claims: { recall: 0.6, precision: 0.6 }, field_claims: { recall: 0.6, precision: 0.6 } };
+export const SCORER = "2026-10-25b: claims by recall, with the run's verified share; grouped verdicts split; deposits after the row not counted; a run given no field is not measured on the field";
+// Claims are scored by recall (ruled 2026-10-25: "claims by recall"): the seated ledgers were extracted at different
+// densities (33 claims for anne-carson, 353 for sophistical-refutations), so precision against one measures how densely
+// that row was extracted. It is reported as precision_vs_seated and decides nothing. What decides beside recall is the
+// run's own claims: the share whose quotation verifies in its source (verified).
+export const THRESHOLDS = { admission: { recall: 0.9, precision: 0.8 }, archive_claims: { recall: 0.6, verified: 0.9 }, field_claims: { recall: 0.6, verified: 0.9 } };
 export const TUNED_ON = { "se-183b34": "the hop screen's thresholds and the grounding floor", "ai-overview-capture-registry": "the hop screen's citing-paragraph rule",
   "aristotle-originality-claim": "the hop screen (scored)", "political-economy": "the hop screen (scored)", theophrastus: "the grounding floor", "model-collapse": "the grounding floor", howl: "the grounding floor" };
 
@@ -34,6 +38,11 @@ function claimMatch(got, want) {
   }
   return { precision: got.length ? Math.round((hit / got.length) * 1000) / 1000 : null, recall: want.length ? Math.round((hit / want.length) * 1000) / 1000 : null, got: got.length, want: want.length, missed: [], extra: [] };
 }
+
+const byRecall = (m, claims) => {
+  const { precision, ...rest } = m;
+  return { ...rest, precision_vs_seated: precision, verified: claims.length ? Math.round((claims.filter((c) => c.quote_ok === true).length / claims.length) * 1000) / 1000 : null };
+};
 
 export function calibrate(rowKey, landingDir) {
   const V2 = "datasets/negative-of-the-negative/v2";
@@ -61,8 +70,10 @@ export function calibrate(rowKey, landingDir) {
     reader: run.row.status.readings,
     traversal: Object.fromEntries(["candidates-D.jsonl", "candidates-R.jsonl", "candidates-O.jsonl"].map((f) => [f, run.summary.sha256?.[f] === ex.summary.sha256?.[f] ? "identical" : "differs"])),
     admission: pr(inTime(deps(run.reading.verdicts)), [...deps(ex.reading.verdicts), ...ex.ledger.filter((c) => c.record).map(depKey)]),
-    archive_claims: claimMatch(run.ledger.filter((c) => !after(depKey(c))).map((c) => ({ src: depKey(c), quote: c.quote })), ex.ledger.map((c) => ({ src: depKey(c), quote: c.quote }))),
-    field_claims: claimMatch(Object.values(run.row.field_claims).map((c) => ({ src: c.source, quote: c.quote })), Object.values(ex.field.field_claims).map((c) => ({ src: c.source, quote: c.quote.replace(/^"|"$/g, "") }))),
+    archive_claims: byRecall(claimMatch(run.ledger.filter((c) => !after(depKey(c))).map((c) => ({ src: depKey(c), quote: c.quote })), ex.ledger.map((c) => ({ src: depKey(c), quote: c.quote }))),
+      run.ledger.filter((c) => !after(depKey(c)))),
+    field_claims: byRecall(claimMatch(Object.values(run.row.field_claims).map((c) => ({ src: c.source, quote: c.quote })), Object.values(ex.field.field_claims).map((c) => ({ src: c.source, quote: c.quote.replace(/^"|"$/g, "") }))),
+      Object.values(run.row.field_claims)),
     case: { got: run.row.ontology?.case?.value ?? null, want: ex.row.ontology?.case?.value ?? null },
     rho: { got: run.row.ontology?.rho?.value ?? null, want: ex.row.ontology?.rho?.value ?? null },
     composition: { KO_sentences: { got: run.row.objects.KO?.sentences?.length ?? null, want: ex.row.objects.KO?.sentences?.length ?? null },
@@ -74,7 +85,7 @@ export function calibrate(rowKey, landingDir) {
   out.scorer = SCORER;
   out.after_the_row = { epoch: epoch || null, deposits: [...later], note: "deposited after the row was composed; not counted" };
   for (const k of ["admission", "archive_claims", "field_claims"]) { out[k].missed = out[k].missed.slice(0, 20); out[k].extra = out[k].extra.slice(0, 20);
-    out[k].meets = out[k].recall >= THRESHOLDS[k].recall && out[k].precision >= THRESHOLDS[k].precision; }
+    out[k].meets = out[k].measured !== false && Object.entries(THRESHOLDS[k]).every(([m, floor]) => out[k][m] != null && out[k][m] >= floor); }
   out.case.meets = out.case.got === out.case.want && !run.row.ontology?.contested;
   out.rho.meets = out.rho.got === out.rho.want && !run.row.ontology?.contested;
   out.held_out = !TUNED_ON[rowKey];

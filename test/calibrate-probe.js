@@ -22,6 +22,6 @@ let bad = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) bad++; };
 ok(s.admission.recall === 1 && s.admission.precision === 1, `calibration: grouped verdicts are split, so the row's own admissions score 1 and 1 (got ${s.admission.recall}, ${s.admission.precision})`);
 ok(s.after_the_row.deposits.includes("1697"), "calibration: a deposit made after the row was composed is reported and not counted");
-ok(s.archive_claims.recall === 1 && s.archive_claims.precision === 1, `calibration: the row's own archive claims score 1 and 1 (got ${s.archive_claims.recall}, ${s.archive_claims.precision})`);
+ok(s.archive_claims.recall === 1 && s.archive_claims.precision_vs_seated === 1 && s.archive_claims.verified !== undefined, `calibration: claims are scored by recall (the row against itself: ${s.archive_claims.recall}), with precision against the seated row reported and the run's verified share beside it (${s.archive_claims.verified})`);
 ok(s.field_claims.measured === false, "calibration: a run given no field sources is not measured on the field");
 process.exit(bad ? 1 : 0);
