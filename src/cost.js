@@ -31,10 +31,20 @@ export function estimateTokens(text) {
 // the second, independent pass reads the first's cached prefix and returns only the fields the passes are reconciled
 // on (about 300). Output is most of the cost: two full accounts of 2,800 tokens each cost $0.075 a sentence on the
 // middle model, against about $0.03 this way. outSecond = 0 costs a single pass.
+// What one claim's reading measurably costs, per model: both passes, the widened reading where it happened, the cache
+// as it was used. The estimate above it assumes compact replies and no widening; the live card tests of 2026-10-24
+// cost several times that, so a claim is never estimated below what it was measured to cost (operator, 2026-10-24:
+// the buyer pays for the service; it is not subsidized). Re-measure when the reader changes.
+export const MEASURED = {
+  "claude-haiku-5-5": { usd_per_claim: 0.008, basis: "test orders 5 (8 claims, $0.0506, 0.63¢ each) and 6 (Mycelium, 62 claims read fresh in its last invocation, $0.497, 0.80¢ each), 2026-10-24" },
+  "claude-sonnet-5-5": { usd_per_claim: 0.145, basis: "test order 7 (Sophistical Refutations, 8 claims, $1.160), 2026-10-24, before 0.14.3 let the second pass read the first's cache" },
+};
+
 export function estimateClaim(model, promptTokens, outFirst = 1200, outSecond = 300) {
   const a = callCost(model, { cache_creation_input_tokens: promptTokens, output_tokens: outFirst });
   const b = outSecond ? callCost(model, { cache_read_input_tokens: promptTokens, input_tokens: 200, output_tokens: outSecond }) : 0;
-  return a + b;
+  const m = MEASURED[model]?.usd_per_claim || 0;
+  return Math.max(a + b, outSecond ? m : m / 2); // a one-pass reading, half the measured two-pass cost
 }
 
 // Price policy. A sentence is priced in cents, where agents pay (operator, 2026-10-23: "opening sentences cannot cost

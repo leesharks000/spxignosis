@@ -23,13 +23,13 @@ import { archiveRelease } from "./s7/traverse.js";
 import { validateReading, reconcile, NORMALIZATION, deltaText } from "./validate.js";
 import { sha256, save, load, STORE } from "./util.js";
 import { renderOpenedHTML, annotations } from "./emit.js";
-import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
+import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.14.3", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.14.4", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -134,6 +134,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
     lines, s7: s7 || undefined, package_price_usd: package_price || undefined,
     estimated_cost_usd: Math.round(est_cost * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
     pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
+      measured_cost_per_claim: MEASURED[model] || null, execution_budget_usd: Math.round((max / POLICY.sentence_margin) * 100) / 100,
       rule: "price per claim = max(floor_per_claim, estimated cost × sentence_margin), rounded up to the cent; the archive's consultation and the /non row priced as one line, max(floor, estimated cost × margin), from the traversal it would run; work already in the ledger at the ledgered rates; the charge is for completed work only",
       lines_at_floor: lines.filter((l) => !l.ledgered && l.price_usd === POLICY.floor_per_claim[tier]).length },
     execution_contract: {
@@ -274,7 +275,7 @@ export async function quoteEntity(spec, { tier = "commission" } = {}) {
 
 // S3 over a set of sentences: each read against the sources it cites, two passes, code checks, reconciliation; the
 // claim ledger serves any sentence whose state matches. Shared by the encyclopedia path and the constructed article.
-export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline = Infinity, concurrency = READ_CONCURRENCY, runCache = null }) {
+export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline = Infinity, concurrency = READ_CONCURRENCY, runCache = null, budget_usd = Infinity }) {
   const E = [], V = [], B = [];
   let completed = 0, charge = 0, actual = 0;
   // One claim's reading; claims are read several at a time (2026-10-24: one at a time, an eight-sentence check outran
@@ -295,11 +296,14 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     if (!r && !unreadBefore && !mayRead()) return "deferred";
     const billFailed = (e) => { for (const p of e.spent || []) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; } };
     if (unreadBefore) err = unreadBefore;
+    // The order's spend never passes its execution budget (its price over the sentence margin): past it, a claim is not
+    // read, is recorded as such, and is not charged (2026-10-24).
+    else if (!r && actual >= budget_usd) err = `not read: the order's execution budget ($${budget_usd.toFixed(2)}) is spent`;
     else if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); billFailed(e); } }
     if (runCache && !fromLedger && !fromRun && !unreadBefore) await save(`${runCache}/${key}.json`, r || { unread: err || "no reading available for this claim" });
     // Windowing can drop the passage that revises a claim. When a pass says the passages lack what it needs,
     // widen them and read again, once; both readings' costs are counted.
-    if (r && !fromLedger && !fromRun && r.passes.some((p) => p.reading?.needs_more_context)) {
+    if (r && !fromLedger && !fromRun && actual < budget_usd && r.passes.some((p) => p.reading?.needs_more_context)) {
       for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
       try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; if (runCache) await save(`${runCache}/${key}.json`, { ...r2, expanded: true }); } } catch (e) { err = String(e.message || e); billFailed(e); }
     }
@@ -457,7 +461,8 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
 
   const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   for (const c of preLog.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
-  const s3 = await readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline, runCache: Number.isFinite(deadline) ? `runs/${quoteId}/reads` : null });
+  const s3 = await readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline, runCache: Number.isFinite(deadline) ? `runs/${quoteId}/reads` : null,
+    budget_usd: q.max_price_usd ? q.max_price_usd / POLICY.sentence_margin : Infinity });
   const { entries, evidence, breaches } = s3;
   let completed = s3.completed, charge = s3.charge, actual = s3.actual + preLog.cost();
   if (construction?.article && q.construction) charge += Math.min(q.construction.price_usd, Math.ceil(Math.max(0.10, preLog.cost() * POLICY.margin) * 100) / 100);
