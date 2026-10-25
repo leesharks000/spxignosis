@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.19.7", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.20.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -575,6 +575,11 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
   await save(`results/${result_id}/opened.html`, renderOpenedHTML(composition, pinned));
   await save(`results/${result_id}/annotations.jsonld`, annotations(composition));
   if (s7) await save(`results/${result_id}/s7.json`, { ...s7, row: undefined, ledger: undefined });
+  // A composed row is listed for the archive's landing workflow (GET /v1/landable), which lands it in /non by itself
+  // (2026-10-25: "a microservice … and me hand clicking every one. it does not compute").
+  if (s7?.composed && s7.manifest) await save(`landable/${result_id}.json`, { result_id, row: s7.row_key, execution_key: s7.manifest.key,
+    row_sha256: (s7.manifest.files || []).find((f) => f.path === `datasets/negative-of-the-negative/v2/rows/${s7.row_key}.json`)?.sha256 || null,
+    complete: !!s7.complete, attested: s7.provenance?.class === "attested", composed_at: new Date().toISOString() });
   const pointer = { result_id, composition_path: `results/${result_id}/composition.json`, portable_dir: portable?.ok ? portable.dir : undefined, non_row: s7?.composed ? s7.row_key : undefined, s7_complete: !!s7?.complete };
   await save(`results/by-state/${execution_key}.json`, pointer);
   return { ...pointer, composition, record, reused: false };

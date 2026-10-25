@@ -12,7 +12,7 @@ import { publicationState } from "./s7/publish.js";
 import { accounts } from "./accounts.js";
 import { lookupName } from "./lookup.js";
 import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
-import { load, save, BLOB } from "./util.js";
+import { load, save, list, BLOB } from "./util.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
 import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, facilitatorName, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
 
@@ -205,7 +205,7 @@ const INDEX = {
   },
   non: { name: "The Negative of the Negative (/non)", url: "https://www.alexanarch.org/non/", contents: "https://www.alexanarch.org/non/index.json",
     claims: "https://www.alexanarch.org/non/claims.json", entry: "https://www.alexanarch.org/non/{entity}/ (as data: …/entity.json)",
-    statement: "Every commission composes the entity's row in /non: public knowledge of the entity composed as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms. The row is written as a landing tree (GET /v1/results/{result_id}/landing) and lands in the archive by the operator's act; a grounded sentence is served from a landed row." },
+    statement: "Every commission composes the entity's row in /non: public knowledge of the entity composed as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms. The row is written as a landing tree (GET /v1/results/{result_id}/landing) and the archive's landing workflow lands it in /non by itself, verified against its manifest; a grounded sentence is served from a landed row." },
   spxi_instrument: { method: "0.17", name: "The opening (a pinned Wikipedia revision, read sentence by sentence)", url: "https://www.spxi.dev/methods/#m-0-17",
     also: [{ method: "0.16", name: "The Negative of the Negative (/non)", url: "https://www.spxi.dev/methods/#m-0-16" }], inventory: "https://www.spxi.dev/methods/" },
   publication: "Every commission composes the entity's row in the Negative of the Negative (alexanarch.org/non), the opened Wikipedia, and the row is public (CC BY 4.0): a paid commission contributes to the public counter-infrastructure it draws on.",
@@ -280,7 +280,7 @@ a{color:var(--red)}p{margin:10px 0}.small{font-size:.9rem;color:var(--muted)}
 <p>Each sentence is read against the sources it cites and the sources its article cites elsewhere, under the policy texts it was written against, and the reading is kept as evidence: what the source says, quoted; what the sentence adds or drops; whether an act of the source has been restated as a property of the entity. A sentence costs cents. A commissioned article consults the Crimson Hexagonal Archive and composes the entity's row in the <a href="https://www.alexanarch.org/non/">Negative of the Negative</a>, which is public.</p>
 <p class="small">${esc(index.service.name)} ${esc(index.service.version)} · protocol ${esc(index.service.protocol)} · card ${esc(index.payments.card)} · agents ${esc(index.payments.agents)} · reader ${esc(index.reader)} · storage ${esc(index.storage)} · <a href="/" onclick="fetch('/',{headers:{Accept:'application/json'}}).then(r=>r.text()).then(t=>{document.body.innerHTML='<pre style=\'white-space:pre-wrap;padding:16px\'>'+t.replace(/</g,'&lt;')+'</pre>'});return false">this page as JSON</a></p>
 <h2 id="non">The Negative of the Negative</h2>
-<p>A commission composes the entity's row in <a href="https://www.alexanarch.org/non/">/non</a>: public knowledge of the entity composed three ways, as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms, ontology included (EA-NEGONT-02 v0.9, <a href="https://www.alexanarch.org/s/records/1690/">#1690</a>). The row is public under CC BY 4.0 and lands in the archive by the operator's act; each entry has its page, its data and an AXN in the family NON.</p>
+<p>A commission composes the entity's row in <a href="https://www.alexanarch.org/non/">/non</a>: public knowledge of the entity composed three ways, as the composition layer gave it, as its own disclosed sources give it, and with the Crimson Hexagonal Archive admitted on equal terms, ontology included (EA-NEGONT-02 v0.9, <a href="https://www.alexanarch.org/s/records/1690/">#1690</a>). The row is public under CC BY 4.0 and lands in the archive by itself, verified against its manifest; each entry has its page, its data and an AXN in the family NON.</p>
 <p class="small"><a href="https://www.alexanarch.org/non/">the entries</a> · <a href="https://www.alexanarch.org/non/index.json">contents as data</a> · <a href="https://www.alexanarch.org/non/claims.json">every field claim quoted</a> · <a href="https://www.alexanarch.org/non/about/">status, method and procedure</a></p>
 <h2>Prices</h2>
 <p>From measured cost, never subsidized: a quote is free and lists the maximum; the charge is for completed work only, and what the work did not use is refunded. A sentence is 2¢ checked and 22¢ opened (1¢ or less where the reading is already in the ledger). A commission adds the archive's consultation in two stages, each priced from the traversal it would run at three times its estimated cost and charged when it delivers, at three times its measured cost, never above its line: the reading (at least $0.75), whose deliverable is its dossier of readings, ledgers and both ontology readings, and the construction (at least $0.25), whose deliverable is the row. A stage that does not deliver is refunded; an order not delivered within a day is refunded in full. Card payments run through Stripe Checkout.</p>
@@ -520,8 +520,30 @@ app.get("/v1/results/:id/publication", async (req, res) => {
   if (!s7) return res.status(404).json({ error: "no /non row for this result" });
   res.json(await publicationState(s7));
 });
+// The composed /non rows, for the archive's landing workflow (.github/workflows/land-non-rows.yml in the archive), which
+// lands each one it has not landed by scripts/land_non_row.py and rebuilds /non (2026-10-25). Rows composed before the
+// list was kept are found from the result pointers. Rows whose T the caller attests are listed with attested: true and
+// are held by the landing tool until their capture is seated.
+app.get("/v1/landable", async (req, res) => {
+  const rows = new Map();
+  for (const f of (await list("landable")).filter((n) => n.endsWith(".json"))) {
+    const r = await load(`landable/${f}`).catch(() => null);
+    if (r?.result_id) rows.set(r.result_id, r);
+  }
+  for (const f of (await list("results/by-state")).filter((n) => n.endsWith(".json"))) {
+    const p = await load(`results/by-state/${f}`).catch(() => null);
+    if (!p?.non_row || rows.has(p.result_id)) continue;
+    const s7 = await load(`results/${p.result_id}/s7.json`).catch(() => null);
+    if (!s7?.composed || !s7.manifest) continue;
+    rows.set(p.result_id, { result_id: p.result_id, row: s7.row_key, execution_key: s7.manifest.key,
+      row_sha256: (s7.manifest.files || []).find((x) => x.path === `datasets/negative-of-the-negative/v2/rows/${s7.row_key}.json`)?.sha256 || null,
+      complete: !!s7.complete, attested: s7.provenance?.class === "attested", composed_at: null });
+  }
+  res.json({ landable: [...rows.values()].sort((a, b) => String(a.composed_at || "").localeCompare(String(b.composed_at || ""))),
+    landing: "the archive lands each row by scripts/land_non_row.py --result <result_id>, verified against its manifest" });
+});
 // The landing tree of a result's /non row, for the archive's landing tool (scripts/land_non_row.py --result): the manifest,
-// then each file it names, as kept in the store. Landing stays the operator's act (2026-10-24).
+// then each file it names, as kept in the store.
 app.get("/v1/results/:id/landing", async (req, res) => {
   const s7 = await load(`results/${req.params.id}/s7.json`);
   if (!s7?.manifest) return res.status(404).json({ error: "no /non row for this result" });

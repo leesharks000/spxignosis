@@ -1,6 +1,6 @@
 // Publication as observed stages: composed (the row exists) → checked (the code checks ran and the audit is complete)
 // → landed (the archive checkout holds the row file with the landing tree's hash) → public (the entity's /non page answers
-// and names the row). Each stage is observed when asked for, never assumed; landing itself is the operator's act.
+// and names the row). Each stage is observed when asked for, never assumed; the archive's landing workflow lands composed rows by itself.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ARCHIVE } from "./input.js";
@@ -29,5 +29,5 @@ export async function publicationState(s7, { fetchPublic = true } = {}) {
     stages: { composed: true, checked, landed, public: pub }, row: s7.row_key, url: s7.non_url, row_sha256: want || null,
     provenance: s7.provenance || null,
     ...(s7.provenance?.class === "attested" ? { hold: "T is a composition the caller attests and the service did not observe: the row is held from landing until the registry's intake seats the composition as a capture" } : {}),
-    note: landed ? null : "the row awaits landing in the archive (the operator's act); its landing tree is held by the service under its execution key" };
+    note: landed ? null : "the row awaits landing in the archive, which its landing workflow does by itself; its landing tree is held by the service under its execution key" };
 }

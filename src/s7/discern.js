@@ -12,7 +12,7 @@
 // opening: S3, each sentence of the transcript read against the cards it engages, as any sentence is read against
 // its cited sources. (3) What no check here can verify: that the surface composed this text at this address on this
 // date. That is the caller's attestation. It is recorded as attestation, and a row whose T rests on it is held from
-// landing until the registry's own intake seats the composition as a capture, since landing is the operator's act.
+// landing until the registry's own intake seats the composition as a capture.
 // Checks record; they do not prevent: a failing check is written into the row as a breach, with its evidence.
 import { capturesFor } from "./input.js";
 
@@ -85,5 +85,5 @@ export function discern(spec, snaps, { today = new Date().toISOString().slice(0,
     : "admissible";
   return { protocol: "gnosis discernment v1", verdict, mode: "attested composition", checks, breaches,
     provenance: "attested by the caller, not observed by the service: the surface, address and date are the caller's statement",
-    landing: "held: a row whose T is a supplied composition lands only once the registry's intake seats the composition as a capture (the operator's act)" };
+    landing: "held: a row whose T is a supplied composition lands only once the registry's intake seats the composition as a capture" };
 }
