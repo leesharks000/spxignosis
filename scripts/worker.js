@@ -14,7 +14,7 @@ import { appendFileSync } from "node:fs";
 import { load, save, list, BLOB } from "../src/util.js";
 import { quote, quoteEntity } from "../src/run.js";
 import { deliver, HAS_ARCHIVE, WORKER, ORDER_DEADLINE_MS } from "../src/deliver.js";
-import { pendingCalibration, runCalibration } from "../src/calibration.js";
+import { pendingCalibration, runCalibration, rescoreCalibration } from "../src/calibration.js";
 
 const BASE = (process.env.GNOSIS_BASE_URL || "https://gnosis.spxi.dev").replace(/\/$/, "");
 const STOP = Date.now() + Number(process.env.WORKER_MINUTES || 300) * 60e3;
@@ -88,4 +88,7 @@ if (calibration && Date.now() < STOP) {
   const c = await runCalibration(calibration, { stopAt: STOP });
   console.log(`calibration ${c.id}: ${c.verdict}; spent $${c.spent_usd}; complete ${c.complete}`);
 }
+// A release scored by an earlier scorer is scored again from its kept trees; this spends nothing.
+const rs = await rescoreCalibration().catch((e) => (console.error("rescore:", e.message), null));
+if (rs) console.log(`calibration ${rs.id} rescored: ${rs.verdict}`);
 console.log(`done: ${quotes.length} quotes, ${runs.length} runs`);

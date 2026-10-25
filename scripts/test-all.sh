@@ -16,6 +16,7 @@ node scripts/stand-in.js portable > /dev/null
 node scripts/run-replay.js 1361634710 portable | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);console.log("portable (stand-in row)",d.result,"max="+d.max_price_usd,"charge="+d.billing?.charge_usd,"non="+(d.non?d.non.row+(d.non.composed?" composed from_ledger="+d.non.from_ledger:" not composed"):"-"),"portable="+!!d.portable,JSON.stringify(d.portable_breaches));process.env.R=d.result;require("fs").writeFileSync(process.env.GNOSIS_STORE+"/last-portable",d.result)})'
 node test/probes.js "$(cat "$S/last-portable")"
 node scripts/checkpoint-probe.js
+node test/calibrate-probe.js
 # A composed row with a landing tree, as a live commission leaves it: one listed when composed, one found from its pointer.
 mkdir -p "$S/landable" "$S/results/by-state" "$S/results/R-landtest00000002"
 echo '{"result_id":"R-landtest00000001","row":"row-one","execution_key":"k1","row_sha256":"aa","complete":true,"attested":false,"composed_at":"2026-10-25T00:00:00Z"}' > "$S/landable/R-landtest00000001.json"

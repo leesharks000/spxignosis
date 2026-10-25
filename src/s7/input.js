@@ -64,8 +64,12 @@ export function fromNonRow(rowKey, savedDir) {
   const tPath = join(ARCHIVE, row.objects.T?.path || "-");
   const T = existsSync(tPath) ? readFileSync(tPath, "utf8") : "";
   const summary = JSON.parse(readFileSync(join(NON, "traversal", rowKey, "summary.json"), "utf8"));
-  const field = (fieldLedger.field || []).filter((b) => b.saved?.text).map((b) => {
-    const p = savedDir ? join(savedDir, b.saved.text) : "";
+  // Every disclosed source with an address is carried. The rows record what was fetched (a description, a date, a hash) and
+  // do not save the text, so a source with no saved text is carried without one, for the caller to fetch (calibration
+  // does, pinned to the date the row read it); before 2026-10-25 such sources were dropped, and every calibration row ran
+  // with no field at all.
+  const field = (fieldLedger.field || []).filter((b) => b.saved?.text || (b.url && b.url !== "None")).map((b) => {
+    const p = savedDir && b.saved?.text ? join(savedDir, b.saved.text) : "";
     const text = existsSync(p) ? readFileSync(p, "utf8") : "";
     return { id: b.id, kind: "card", card: b.card, url: b.url, text, text_sha256: text ? sha256(text) : null,
       availability: text ? "fetched" : "unavailable", fetched: b.fetched, expected_sha256: b.sha256?.text || null };
