@@ -5,7 +5,8 @@ import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { decodePaymentResponseHeader } from "@x402/core/http";
-import { quote, quoteEntity, runOpening, SERVICE, RUN_SECONDS } from "./run.js";
+import { quote, quoteEntity, runOpening, SERVICE, RUN_SECONDS, ADMITS } from "./run.js";
+import { deliver, HAS_ARCHIVE, WORKER, needsArchive } from "./deliver.js";
 import { randomUUID } from "node:crypto";
 import { publicationState } from "./s7/publish.js";
 import { load, save, BLOB } from "./util.js";
@@ -55,6 +56,13 @@ async function cardWork(q, s, id, prior) {
 // enough to write a full article"). A run handed on more than MAX_HOPS times is refunded in full.
 const MAX_HOPS = Number(process.env.GNOSIS_MAX_HOPS || 60);
 async function runCard(q, id, { paid, payment_intent, hop = 0 }) {
+  // An order that consults the archive is run by the archive worker; this service settles it when the worker reports
+  // (POST /v1/quotes/{id}/settle, with the token written here).
+  if (needsArchive(q) && !HAS_ARCHIVE) {
+    if (!(await load(`${WORKER.runs}/${id}.json`))) await save(`${WORKER.runs}/${id}.json`, { quote_id: id, token: randomUUID(), paid, payment_intent, queued: new Date().toISOString() });
+    await save(`progress/${id}.json`, { stage: "queued", detail: "queued for the archive worker, which runs orders that consult the archive", at: new Date().toISOString() });
+    return;
+  }
   try {
     const out = await deliver(q, { deadline: Date.now() + RUN_SECONDS * 1000 });
     const owed = Math.round((paid - (out.billing?.charge_usd ?? 0)) * 100) / 100;
@@ -88,6 +96,24 @@ app.post("/v1/quotes/:quote_id/continue", async (req, res) => {
   res.status(202).json({ continuing: id, invocation: job.hop + 1 });
   waitUntil(runCard(q, id, { paid: rc.paid_usd, payment_intent: rc.stripe_payment_intent, hop: job.hop }));
 });
+// The archive worker's report on an order it ran: delivered (the result is in the store) or failed (its reason). Only
+// the token this service wrote when it queued the order is accepted; the refund is computed and sent here, where the
+// payment key is.
+app.post("/v1/quotes/:quote_id/settle", async (req, res) => {
+  const id = req.params.quote_id;
+  const [job, q] = await Promise.all([load(`${WORKER.runs}/${id}.json`), load(`quotes/${id}.json`)]);
+  if (!job || !q || req.get("x-gnosis-worker") !== job.token) return res.status(404).json({ error: "no queued run to settle" });
+  if (await load(`refunds/${id}.json`)) return res.json({ note: "already settled" });
+  const [out, failed] = await Promise.all([load(`delivered/${id}.json`), load(`${WORKER.failed}/${id}.json`)]);
+  if (!out && !failed) return res.status(409).json({ error: "the worker has written neither a result nor a failure" });
+  const owed = out ? Math.round((job.paid - (out.billing?.charge_usd ?? 0)) * 100) / 100 : job.paid;
+  const reason = out ? `unused by quote ${id}` : `quote ${id} could not complete: ${String(failed.error).slice(0, 200)}`;
+  const refund = owed > 0 ? await refundUnused(job.payment_intent, owed, reason).catch((e) => ({ error: String(e.message || e) })) : null;
+  await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: owed, refund, at: new Date().toISOString(), run_by: "archive worker",
+    ...(failed ? { reason: failed.error, result_id: failed.result_id || undefined } : {}) });
+  res.json({ settled: id, refunded_usd: owed });
+});
+
 // A paid card order whose run stopped (nothing delivered, nothing refunded, no progress for six minutes) is started
 // again; anyone may ask, since it only does work already paid for, and what was read comes from the ledger.
 app.post("/v1/quotes/:quote_id/resume", async (req, res) => {
@@ -102,15 +128,6 @@ app.post("/v1/quotes/:quote_id/resume", async (req, res) => {
 });
 app.use(express.json({ limit: "64kb" }));
 
-// The work for a paid quote, by either channel. Throws when nothing could be delivered.
-async function deliver(q, { deadline } = {}) {
-  const r = await runOpening(q.quote_id, { deadline, onProgress: (p) => { save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }).catch((e) => console.error("progress write:", e.message)); } });
-  // Completion follows the commissioned operation: a composed row is delivered work even where T needed no S3 check.
-  if (r.composition.summary.completed === 0 && !r.non?.composed) throw Object.assign(new Error("no claim could be completed and no row was composed"), { result_id: r.result_id });
-  const out = { result_id: r.result_id, reused: r.reused, summary: r.composition.summary, billing: r.record?.billing, composition: r.composition, portable: r.portable_dir ? `/v1/results/${r.result_id}/portable/manifest.json` : null };
-  await save(`delivered/${q.quote_id}.json`, out);
-  return out;
-}
 
 const INDEX = {
   service: SERVICE, network: NETWORK,
@@ -122,6 +139,7 @@ const INDEX = {
     "POST /v1/openings/{quote_id}/checkout": "for people: a Stripe Checkout link for the quote's maximum (at least $0.50); the work runs when the payment completes, and what it did not use is refunded",
     "GET /v1/quotes/{quote_id}/status": "where a quote stands: quoted, paid and running, delivered; its receipt and any refund",
     "GET /v1/results/{result_id}/publication": "the /non row's publication, observed now: composed, checked, landed, public",
+    "archive worker": "commissions, portable packages and entity objects consult the archive, which this deployment does not hold: their quotes and runs are made by a scheduled job with the archive checked out (" + WORKER.where + "); a quote answers 202 with its status address, and a paid order is queued, run there and settled here",
     "POST /v1/quotes/{quote_id}/resume": "a paid card order whose run stopped (no progress for six minutes, nothing delivered or refunded) is started again",
     "GET /v1/results/{result_id}/landing": "the /non row's landing tree: the manifest, each file at …/landing/{path}, for the operator's landing",
     "GET /v1/openings/{quote_id}/progress": "the stage a running opening has reached",
@@ -177,6 +195,16 @@ app.post("/v1/quote", async (req, res) => {
     // A commission names what is done (open, construct) and the object it is done to (an entity, or an operator).
     // An object is always a commission: the archive is consulted on commission only.
     const objTier = tier === "opening" ? "commission" : tier;
+    // Where the service holds no archive, a quote that consults it (a commission, a portable package, any entity or
+    // object) is priced by the archive worker: the request is recorded and answered at once with where its quote will
+    // appear (2026-10-24).
+    if (!HAS_ARCHIVE && (object || entity || ADMITS.has(tier))) {
+      if (!object && !entity && !/^\d+$/.test(String(oldid))) return res.status(400).json({ error: "oldid (a Wikipedia revision id) or entity {name, aliases?, type?, works_by?, capture?, sources?: [url]} is required" });
+      const id = `Q-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+      await save(`${WORKER.quote_requests}/${id}.json`, { quote_id: id, body: req.body, tier: object || entity ? objTier : tier, at: new Date().toISOString() });
+      return res.status(202).json({ quote_id: id, state: "estimating", status: `/v1/quotes/${id}/status`,
+        note: "the archive is consulted on this tier: the quote is priced by the archive worker, which traverses the archive (usually within half an hour); its price appears at the status address, and it holds for a day" });
+    }
     if (object) return res.json(await quoteEntity({ ...object, ...(commission ? { commission } : {}) }, { tier: objTier }));
     // An entity the encyclopedia does not hold is opened from its name and strings, with T from the Capture Registry or
     // constructed from sources the service fetches; a composition the caller supplies is refused.
@@ -257,9 +285,14 @@ app.post("/v1/openings/:quote_id/checkout", async (req, res) => {
 // Where a quote stands, for either channel: quoted, paid, running, delivered, refunded.
 app.get("/v1/quotes/:quote_id/status", async (req, res) => {
   const id = req.params.quote_id, q = await load(`quotes/${id}.json`);
-  if (!q) return res.status(404).json({ error: "unknown quote" });
+  if (!q) {
+    const [rq, qe] = await Promise.all([load(`${WORKER.quote_requests}/${id}.json`), load(`${WORKER.quote_errors}/${id}.json`)]);
+    if (qe) return res.json({ quote_id: id, state: "not quoted", error: qe.error, at: qe.at });
+    if (rq) return res.json({ quote_id: id, state: "estimating", requested: rq.at, worker: WORKER.where, note: "the archive worker has not priced it yet" });
+    return res.status(404).json({ error: "unknown quote" });
+  }
   const rc = await load(`receipts/${id}.json`), out = await load(`delivered/${id}.json`), pr = await load(`progress/${id}.json`), rf = await load(`refunds/${id}.json`);
-  res.json({ quote_id: id, max_price_usd: q.max_price_usd,
+  res.json({ quote_id: id, max_price_usd: q.max_price_usd, expires: q.expires, ...(!rc ? { pay: { card: `POST /v1/openings/${id}/checkout` } } : {}),
     // a refund with nothing delivered is a refunded order, not a running one (2026-10-24: the first card test read so)
     state: out ? "delivered" : rf && rc ? `refunded${rf.reason ? `: ${rf.reason}` : ""}` : rc ? "paid, running" : "quoted",
     progress: pr || null, result: out ? { result_id: out.result_id, composition: `/v1/results/${out.result_id}/composition`, evidence: `/v1/results/${out.result_id}/evidence` } : null,

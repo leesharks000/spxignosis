@@ -29,7 +29,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.14.4", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.15.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -95,7 +95,7 @@ export function withArticleSources(claims, cited) {
 }
 
 // Quote (free): S0–S2, a per-claim cost estimate from the passages that would be sent, and a price that clears it.
-export async function quote(oldid, { tier = "opening", claims: only } = {}) {
+export async function quote(oldid, { tier = "opening", claims: only, quote_id = null, ttl_ms = 15 * 60_000 } = {}) {
   if (!TIERS[tier]) throw new Error(`unknown tier ${tier}`);
   const { pinned, claims, sources } = await prepare(oldid, only);
   const model = TIERS[tier].reader_model;
@@ -125,7 +125,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
   const est_cost = lines.reduce((n, l) => n + l.est_cost_usd, 0) + (s7?.est_cost_usd || 0);
   const max = Math.max(0.01, Math.round((lines.reduce((n, l) => n + l.price_usd, 0) + (s7?.price_usd || 0) + package_price) * 100) / 100);
   const q = {
-    quote_id: `Q-${sha256(`${oldid}|${tier}|${(only || []).join(",")}|${Date.now()}`).slice(0, 16)}`,
+    quote_id: quote_id || `Q-${sha256(`${oldid}|${tier}|${(only || []).join(",")}|${Date.now()}`).slice(0, 16)}`,
     article: { title: pinned.title, oldid: pinned.oldid, url: pinned.url, html_sha256: pinned.html_sha256 },
     tier, tier_steps: TIERS[tier].steps, reader_model: model,
     claims_total: claims.length, claims_cited: claims.filter((c) => c.cited).length, claims_uncited: claims.filter((c) => !c.cited).length,
@@ -148,7 +148,7 @@ export async function quote(oldid, { tier = "opening", claims: only } = {}) {
       retrieval_budget: { max_sources: 100, max_bytes_per_source: 5_000_000 },
       stopping_rule: "every cited source fetched or recorded unavailable",
     },
-    expires: new Date(Date.now() + 15 * 60_000).toISOString(),
+    expires: new Date(Date.now() + ttl_ms).toISOString(),
   };
   await save(`quotes/${q.quote_id}.json`, { ...q, only: only || null });
   return q;
@@ -215,7 +215,7 @@ const specWithCapture = (spec, capture) => (capture ? { ...spec, address: captur
 // and the sources the caller names, with no T; the article Wikipedia's policies would write is constructed only when
 // the caller asks for it as a comparison (compare: "encyclopedia"). With no commission named, a composition found or
 // supplied is opened, and otherwise the object is constructed.
-export async function quoteEntity(spec, { tier = "commission" } = {}) {
+export async function quoteEntity(spec, { tier = "commission", quote_id = null, ttl_ms = 15 * 60_000 } = {}) {
   if (!spec?.name) throw new Error("object.name is required");
   if (!ADMITS.has(tier)) throw new Error("an object without an article is commissioned at the commission or portable tier");
   if (spec.kind && !["entity", "operator"].includes(spec.kind)) throw new Error("object.kind is entity or operator");
@@ -247,7 +247,7 @@ export async function quoteEntity(spec, { tier = "commission" } = {}) {
   const package_price = tier === "portable" ? POLICY.portable_package : 0;
   const max = Math.round((construct_price + nSent * sentence_price + s7.price_usd + package_price) * 100) / 100;
   const q = {
-    quote_id: `Q-${sha256(`entity|${spec.name}|${tier}|${Date.now()}`).slice(0, 16)}`, kind: "entity",
+    quote_id: quote_id || `Q-${sha256(`entity|${spec.name}|${tier}|${Date.now()}`).slice(0, 16)}`, kind: "entity",
     article: { title: spec.name, oldid: null, url: null, entity: true }, entity: spec, wikipedia,
     discernment: discernment || undefined,
     T_source: supplied ? { kind: discernment.mode === "attested composition" ? "composition supplied by the caller, admitted through discernment" : discernment.provenance, verdict: discernment.verdict, provenance: discernment.provenance, landing: discernment.landing }
@@ -267,7 +267,7 @@ export async function quoteEntity(spec, { tier = "commission" } = {}) {
       archive_release: e.release, execution_budget: `model spending stops at $${s7.budget_usd}`,
       publication: `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed`,
     },
-    expires: new Date(Date.now() + 15 * 60_000).toISOString(),
+    expires: new Date(Date.now() + ttl_ms).toISOString(),
   };
   await save(`quotes/${q.quote_id}.json`, q);
   return q;
