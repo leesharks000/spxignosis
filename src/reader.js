@@ -97,27 +97,49 @@ async function anthropicPass(input, pass, model) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY is not set: the live reader cannot run");
   const { claim, ...rest } = input;
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({
-      // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
-      model, max_tokens: pass === 2 ? 1200 : 3000,
-      system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: [
-        { type: "text", text: "SOURCES\n" + JSON.stringify(rest), cache_control: { type: "ephemeral" } },
-        { type: "text", text: "CLAIM\n" + JSON.stringify(claim) + (pass === 2 ? SECOND : "") },
-      ] }],
-    }),
-  });
-  const j = await res.json();
-  if (!res.ok) throw new Error(`reader HTTP ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
-  const text = j.content.map((c) => c.text || "").join("");
-  const m = text.match(/\{[\s\S]*\}/);
+  const call = async (maxTokens) => {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        // Sampling parameters are omitted: Sonnet 5.5 rejects non-default values and Haiku 5.5 asks callers to omit them.
+        model, max_tokens: maxTokens,
+        system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: [
+          { type: "text", text: "SOURCES\n" + JSON.stringify(rest), cache_control: { type: "ephemeral" } },
+          { type: "text", text: "CLAIM\n" + JSON.stringify(claim) + (pass === 2 ? SECOND : "") },
+        ] }],
+      }),
+    });
+    const j = await res.json();
+    if (!res.ok) throw new Error(`reader HTTP ${res.status}: ${JSON.stringify(j).slice(0, 300)}`);
+    return j;
+  };
+  const base = pass === 2 ? 1200 : 3000;
+  let j = await call(base);
+  const spent = [{ model, usage: j.usage }];
+  // A reply cut off at the output limit is read again once with twice the room (2026-10-24: the first live card tests
+  // returned no parseable reading on any sentence); the first reply's usage is still counted.
+  if (j.stop_reason === "max_tokens") { j = await call(base * 2); spent.push({ model, usage: j.usage }); }
+  const text = (j.content || []).map((c) => c.text || "").join("");
+  // The object itself: a fenced block where the reply has one, else from the first brace to the last.
+  const fenced = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+  const m = fenced ? [fenced[1]] : text.match(/\{[\s\S]*\}/);
   // Usage is billed whether or not the reply parses: a pass that returns unparseable text still cost what it cost.
   let reading;
-  try { reading = JSON.parse(m ? m[0] : text); } catch { const e = new Error("reader returned unparseable JSON"); e.spent = [{ model, usage: j.usage }]; throw e; }
-  return { reading, usage: j.usage, model, sampling: "model defaults (temperature, top_p and top_k omitted)" };
+  try { reading = JSON.parse(m ? m[0] : text); } catch (err) {
+    // What the reply was, recorded with the failure, so that the cause is on the record (stop reason, length, its
+    // opening and closing characters, the parser's message).
+    const e = new Error(`reader returned unparseable JSON (stop: ${j.stop_reason}; ${j.usage?.output_tokens ?? "?"} output tokens; ${String(err.message).slice(0, 120)}; begins ${JSON.stringify(text.slice(0, 120))}; ends ${JSON.stringify(text.slice(-120))})`);
+    e.spent = spent; throw e;
+  }
+  return { reading, usage: spent.length > 1 ? sumUsage(spent.map((s) => s.usage)) : j.usage, model, sampling: "model defaults (temperature, top_p and top_k omitted)" };
+}
+
+function sumUsage(us) {
+  const out = {};
+  for (const u of us) for (const [k, v] of Object.entries(u || {})) if (typeof v === "number") out[k] = (out[k] || 0) + v;
+  return out;
 }
 
 // passes: 2 for an opening (two independent readings, reconciled); 1 for a preliminary reading, which is a reading of
