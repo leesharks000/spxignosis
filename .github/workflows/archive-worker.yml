@@ -1,0 +1,62 @@
+# The archive worker (2026-10-24): quotes and runs the orders that consult the archive (commissions, portable
+# packages, entity objects), which the deployed service cannot, since it holds no archive and no Python. Every ten
+# minutes it checks the service's store for work; only when there is some does it check the archive out (the parts
+# a commission reads) and run scripts/worker.js. See scripts/worker.js.
+#
+# Secrets (repository settings → Secrets and variables → Actions):
+#   BLOB_READ_WRITE_TOKEN  the service's Blob store (Vercel → Storage → the store → its read-write token)
+#   ANTHROPIC_API_KEY      a key in the gnosis workspace of the Claude Console
+name: archive worker
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+concurrency:
+  group: archive-worker
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GNOSIS_BASE_URL: https://gnosis.spxi.dev
+      GNOSIS_STORE: /tmp/gnosis-store
+      GNOSIS_ARCHIVE: ${{ github.workspace }}/alexanarch
+      WORKER_MINUTES: "300"
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - id: check
+        run: node scripts/worker.js check
+      - if: steps.check.outputs.work != '0'
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: leesharks000/alexanarch
+          path: alexanarch
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /data/*.json
+            /data/*.md
+            /data/texts/
+            /data/deposits/
+            /datasets/negative-of-the-negative/
+            /datasets/heteronyms/
+            /scripts/
+      - if: steps.check.outputs.work != '0'
+        id: py
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.12"
+      - if: steps.check.outputs.work != '0'
+        run: node scripts/worker.js
+        env:
+          GNOSIS_PYTHON: ${{ steps.py.outputs.python-path }}
