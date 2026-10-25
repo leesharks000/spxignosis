@@ -45,9 +45,14 @@ code,.mono{font-family:var(--mono);font-size:.86em;overflow-wrap:anywhere}
 .call{font-family:var(--serif);font-weight:normal;font-size:clamp(1.55rem,7.4vw,2.75rem);line-height:1.08;letter-spacing:-.01em;margin:0 0 20px;hyphens:manual;overflow-wrap:normal;word-break:normal}
 .call.rebuild{color:var(--red);margin-bottom:28px}
 .prop{font-size:1.08rem;margin:0 0 18px;max-width:34em}
-.exchange{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid var(--rule)}
-.exchange li{display:grid;grid-template-columns:7.5em 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:.96rem}
-.exchange b{font-weight:600}
+.flow{display:grid;grid-template-columns:minmax(0,1.05fr) 18px minmax(0,1fr) 18px minmax(0,1fr);align-items:center;gap:6px;margin:6px 0 10px}
+.flow-in{display:grid;gap:6px}
+.step{appearance:none;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;background:var(--bg);color:var(--ink);border:1px solid var(--rule-2);border-radius:10px;padding:10px 6px 9px;cursor:pointer;font:inherit;min-width:0}
+.step:hover{border-color:var(--ink)}.step[aria-expanded="true"]{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.step b{font-weight:600;font-size:.95rem;line-height:1.1}.step span{font-size:.76rem;color:var(--muted);line-height:1.2}
+.arrow{height:2px;background:var(--rule-2);position:relative}.arrow::after{content:"";position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left:7px solid var(--rule-2);border-right:0}
+.flow-x{min-height:0;margin:0 0 6px}.flow-x .x{margin:0 0 8px;padding:10px 12px;border-left:3px solid var(--red);background:var(--panel);font-size:.95rem;border-radius:0 6px 6px 0}
+@media (max-width:420px){.step span{display:none}.step{padding:9px 4px}.flow{grid-template-columns:minmax(0,1.1fr) 12px minmax(0,1fr) 12px minmax(0,1fr);gap:4px}}
 @media (max-width:480px){.exchange li{grid-template-columns:1fr;gap:2px}}
 .fine{font-size:.86rem;color:var(--muted)}
 /* request */
@@ -120,6 +125,7 @@ pre{font:13px/1.5 var(--mono);background:var(--panel);border:1px solid var(--rul
 .agent{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px}
 footer{border-top:1px solid var(--rule);padding:22px 0 40px;font-size:.86rem;color:var(--muted)}
 footer a{color:var(--muted)}
+.tile svg{display:block;margin-bottom:6px}.tile h3{margin-bottom:4px}.tile>p{margin:0 0 4px}.tile details{border-top:0;padding:2px 0}.tile details summary{font-weight:500;color:var(--muted);font-size:.86rem}
 .chips{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 @media (max-width:880px){.chips{grid-template-columns:1fr}}
 .chip{border:1px solid var(--rule-2);border-radius:8px;padding:12px 14px;background:var(--bg)}
@@ -152,14 +158,11 @@ export function frontPage(index) {
 <section class="hero" id="commission"><div class="wrap hero-grid">
 <div>
 <h1 class="call">Fund the counterinfrastructure.</h1>
-<p class="prop">SPXI-gnΩsis reads what the answering systems have settled against the sources it rests on, and builds sourced knowledge where they leave an absence. You commission one reading or one construction; you receive it with its evidence; and the work stays public for everyone after you.</p>
-<ul class="exchange">
-<li><b>Open</b><span>A Wikipedia article, sentence by sentence: each sentence kept verbatim and read twice against the sources it cites, with what it keeps, changes, adds or leaves out.</span></li>
-<li><b>Construct</b><span>A knowledge object for an entity or an operator, every sentence naming the claims it states and every claim its quote. Wikipedia notability is not a condition.</span></li>
-<li><b>Inspect</b><span>The quoted passages, each located by code in the stored source; source metadata and hashes; both readings; disagreements kept as contested.</span></li>
-<li><b>Accumulate</b><span>Every reading is kept and served to the next caller. A commission composes a row in <a href="https://www.alexanarch.org/non/">/non</a>, public under CC BY 4.0.</span></li>
-</ul>
-<p class="fine">A quote is free and names its deliverables and its maximum before you pay. Card through Stripe Checkout; agents over x402 (USDC on Base).</p>
+<p class="prop">Commission a reading or a construction. Receive it with its evidence. The work stays public for everyone after you.</p>
+<div class="flow" role="group" aria-label="How the service works"><div class="flow-in"><button type="button" class="step s-open" aria-expanded="false" aria-controls="x-open"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11"/><path d="M16 6.5v19" stroke="var(--red)" stroke-width="2.2"/></svg><b>Open</b><span>a composition</span></button><button type="button" class="step s-construct" aria-expanded="false" aria-controls="x-construct"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="20" width="20" height="6" rx="1"/><rect x="9" y="13" width="14" height="6" rx="1"/><rect x="12" y="6" width="8" height="6" rx="1"/></svg><b>Construct</b><span>an object</span></button></div><span class="arrow" aria-hidden="true"></span><button type="button" class="step s-inspect" aria-expanded="false" aria-controls="x-inspect"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="7.5"/><path d="M19.5 19.5 26 26"/><path d="M11 14h6M14 11v6" stroke-width="1.3"/></svg><b>Inspect</b><span>the evidence</span></button><span class="arrow" aria-hidden="true"></span><button type="button" class="step s-accumulate" aria-expanded="false" aria-controls="x-accumulate"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24h20"/><path d="M8 19.5h16"/><path d="M10 15h12"/><path d="M12 10.5h8"/><path d="M16 4v3" stroke="var(--red)"/></svg><b>Accumulate</b><span>in public</span></button></div>
+<div class="flow-x"><p id="x-open" class="x" hidden><b>Open.</b> A Wikipedia article, sentence by sentence: each sentence kept verbatim and read twice against the sources it cites, with what it keeps, changes, adds or leaves out.</p><p id="x-construct" class="x" hidden><b>Construct.</b> A knowledge object for an entity or an operator, every sentence naming the claims it states and every claim its quote. Wikipedia notability is not a condition.</p><p id="x-inspect" class="x" hidden><b>Inspect.</b> The quoted passages, each located by code in the stored source; source metadata and hashes; both readings; disagreements kept as contested.</p><p id="x-accumulate" class="x" hidden><b>Accumulate.</b> Every reading is kept and served to the next caller. A commission composes a row in <a href="https://www.alexanarch.org/non/">/non</a>, public under CC BY 4.0.</p></div>
+<noscript><style>.flow-x .x{display:block!important}</style></noscript>
+<p class="fine">Quotes are free and name the deliverables and the maximum before you pay. Card, or x402 for agents.</p>
 </div>
 <div class="req" id="request">
 <div class="tabs" role="tablist">
@@ -269,9 +272,9 @@ export function frontPage(index) {
 <p class="kicker">The public accumulation</p>
 <h2>The first caller funds the work. Everyone after uses it.</h2>
 <div class="cols3">
-<div><h3>Kept</h3><p>Every sentence reading is kept at the state it was read in: the sentence, the hashes of its sources, the reader. The next caller is served it free at <code>GET /v1/sentence</code>, or for 1¢ in an order. Readings are licensed CC BY 4.0.</p></div>
-<div><h3>Composed</h3><p>A commission composes a row in <a href="https://www.alexanarch.org/non/">the Negative of the Negative</a>: the object as the answering layer gives it, as its own sources give it, and with the Crimson Hexagonal Archive admitted. The row lands public by itself, versioned with an AXN, and is published to <a href="https://huggingface.co/datasets/leesharks/negative-of-the-negative">Hugging Face</a>.</p></div>
-<div><h3>Free</h3><p>Reading /non costs nothing: <a href="https://www.alexanarch.org/non/">every entry</a>, <a href="https://www.alexanarch.org/non/index.json">its contents as data</a>, <a href="https://www.alexanarch.org/non/claims.json">every field claim quoted</a>. What is paid for is new work: a reading not yet made, a construction, a row composed again against changed sources.</p></div>
+<div class="tile"><svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24h20"/><path d="M8 19.5h16"/><path d="M10 15h12"/><path d="M12 10.5h8"/></svg><h3>Kept</h3><p>Every reading is kept and served to the next caller.</p><details><summary>More</summary><p>Every sentence reading is kept at the state it was read in: the sentence, the hashes of its sources, the reader. The next caller is served it free at <code>GET /v1/sentence</code>, or for 1¢ in an order. Readings are licensed CC BY 4.0.</p></details></div>
+<div class="tile"><svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="20" width="20" height="6" rx="1"/><rect x="9" y="13" width="14" height="6" rx="1"/><rect x="12" y="6" width="8" height="6" rx="1"/></svg><h3>Composed</h3><p>A commission composes a public row in /non.</p><details><summary>More</summary><p>A commission composes a row in <a href="https://www.alexanarch.org/non/">the Negative of the Negative</a>: the object as the answering layer gives it, as its own sources give it, and with the Crimson Hexagonal Archive admitted. The row lands public by itself, versioned with an AXN, and is published to <a href="https://huggingface.co/datasets/leesharks/negative-of-the-negative">Hugging Face</a>.</p></details></div>
+<div class="tile"><svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11"/><path d="M16 6.5v19" stroke="var(--red)" stroke-width="2.2"/></svg><h3>Free</h3><p>Reading /non costs nothing.</p><details><summary>More</summary><p>Reading /non costs nothing: <a href="https://www.alexanarch.org/non/">every entry</a>, <a href="https://www.alexanarch.org/non/index.json">its contents as data</a>, <a href="https://www.alexanarch.org/non/claims.json">every field claim quoted</a>. What is paid for is new work: a reading not yet made, a construction, a row composed again against changed sources.</p></details></div>
 </div>
 </div></section>
 
@@ -354,6 +357,8 @@ const FRONT_JS = `
 (function(){
   var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
   function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  // the flow: a step's sentence opens beneath it
+  $$('.step').forEach(function(b){b.addEventListener('click',function(){var open=b.getAttribute('aria-expanded')!=='true';$$('.step').forEach(function(o){o.setAttribute('aria-expanded','false');$('#'+o.getAttribute('aria-controls')).hidden=true});if(open){b.setAttribute('aria-expanded','true');$('#'+b.getAttribute('aria-controls')).hidden=false}})});
   // tabs
   var tabs=$$('[role=tab]');
   function show(id){tabs.forEach(function(t){var on=t.id===id;t.setAttribute('aria-selected',on);$('#'+t.getAttribute('aria-controls')).hidden=!on});}
