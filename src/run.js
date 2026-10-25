@@ -26,7 +26,10 @@ import { renderOpenedHTML, annotations } from "./emit.js";
 import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.13.6", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+// How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
+export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
+export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.14.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -271,32 +274,43 @@ export async function quoteEntity(spec, { tier = "commission" } = {}) {
 
 // S3 over a set of sentences: each read against the sources it cites, two passes, code checks, reconciliation; the
 // claim ledger serves any sentence whose state matches. Shared by the encyclopedia path and the constructed article.
-export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage }) {
-  const entries = [], evidence = [], breaches = [];
+export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline = Infinity, concurrency = READ_CONCURRENCY, runCache = null }) {
+  const E = [], V = [], B = [];
   let completed = 0, charge = 0, actual = 0;
-  for (const c of claims) {
+  // One claim's reading; claims are read several at a time (2026-10-24: one at a time, an eight-sentence check outran
+  // the platform's five-minute limit). Each result is kept at its claim's place, so the order is the article's.
+  const one = async (c, idx, mayRead) => {
     const srcs = sources[c.id] || [];
-    if (!srcs.length) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "uncited", note: "the sentence carries no citation, and no source the article cites elsewhere bears on it; nothing to check it against" }); continue; }
+    if (!srcs.length) { (E[idx] = { id: c.id, section: c.section, sentence: c.text, status: "uncited", note: "the sentence carries no citation, and no source the article cites elsewhere bears on it; nothing to check it against" }); return; }
     const srcMap = Object.fromEntries(srcs.map((s, i) => [`S${i + 1}`, s]));
     const key = claimKey(c, srcs, model, reader);
     onProgress({ stage: "S3", detail: c.id });
-    let r = await load(`ledger/claims/${key}.json`), fromLedger = !!r, err = null, expanded = false;
+    let r = await load(`ledger/claims/${key}.json`), fromLedger = !!r, err = null, expanded = false, fromRun = false;
+    // An order that runs across invocations keeps every reading it made, withheld ones included, for its own later
+    // invocations only (the ledger keeps only readings that stand); so no invocation reads a claim an earlier one read.
+    let unreadBefore = null;
+    if (!r && runCache) { const k = await load(`${runCache}/${key}.json`); if (k?.unread) unreadBefore = k.unread; else if (k) { r = k; fromRun = true; expanded = !!k.expanded; } }
+    // Past the deadline, a claim the ledger already holds is still taken from it; one that needs reading waits for the
+    // next invocation. A claim an earlier invocation tried and could not read is not tried again.
+    if (!r && !unreadBefore && !mayRead()) return "deferred";
     const billFailed = (e) => { for (const p of e.spent || []) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; } };
-    if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); billFailed(e); } }
+    if (unreadBefore) err = unreadBefore;
+    else if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); billFailed(e); } }
+    if (runCache && !fromLedger && !fromRun && !unreadBefore) await save(`${runCache}/${key}.json`, r || { unread: err || "no reading available for this claim" });
     // Windowing can drop the passage that revises a claim. When a pass says the passages lack what it needs,
     // widen them and read again, once; both readings' costs are counted.
-    if (r && !fromLedger && r.passes.some((p) => p.reading?.needs_more_context)) {
+    if (r && !fromLedger && !fromRun && r.passes.some((p) => p.reading?.needs_more_context)) {
       for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
-      try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; } } catch (e) { err = String(e.message || e); billFailed(e); }
+      try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; if (runCache) await save(`${runCache}/${key}.json`, { ...r2, expanded: true }); } } catch (e) { err = String(e.message || e); billFailed(e); }
     }
-    if (!r) { entries.push({ id: c.id, section: c.section, sentence: c.text, status: "unread", note: err || "no reading available for this claim" }); continue; }
-    if (!fromLedger) for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
+    if (!r) { (E[idx] = { id: c.id, section: c.section, sentence: c.text, status: "unread", note: err || "no reading available for this claim" }); return; }
+    if (!fromLedger && !fromRun) for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
     // The passages each pass was shown, so a quotation from outside them is recorded (validate.js).
     const shownInput = r.input || inputFor(c, srcs, pinned, expanded ? { size: 3000, keep: 8 } : undefined);
     const shown = Object.fromEntries(shownInput.sources.map((x) => [x.id, x.passages.map((q) => q.text).join(" \n ")]));
     const checked = r.passes.map((p) => ({ ...p, reading: normalizeReading(p.reading), validation: validateReading(p.reading, c, srcMap, shown) }));
     const valid = checked.filter((p) => p.validation.ok);
-    checked.filter((p) => p.validation.breaches.length).forEach((p) => breaches.push({ claim: c.id, model: p.model, withheld: !p.validation.ok, breaches: p.validation.breaches }));
+    checked.filter((p) => p.validation.breaches.length).forEach((p) => (B[idx] ||= []).push({ claim: c.id, model: p.model, withheld: !p.validation.ok, breaches: p.validation.breaches }));
     let verdict;
     const fam = (m) => (/claude/.test(m || "") ? "anthropic" : String(m || "").split(/[-:/]/)[0]);
     if (valid.length === 2) verdict = reconcile({ ...valid[0].reading, __family: fam(valid[0].model) }, { ...valid[1].reading, __family: fam(valid[1].model) });
@@ -307,7 +321,7 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     // The full account comes from the first pass; the second returns only the reconciled fields.
     const lead = verdict.status === "contested" ? null : (valid.find((v) => v.reading?.five_part) || valid[0])?.reading;
     if (verdict.status !== "withheld") { completed++; charge += priceOf[c.id] || 0; }
-    entries.push({
+    (E[idx] = {
       id: c.id, section: c.section, sentence: c.text, status: verdict.status, from_ledger: fromLedger || undefined,
       cited: !!c.cited,
       support: verdict.support || null,
@@ -331,7 +345,7 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
       spans: lead ? lead.spans : verdict.status === "contested" ? valid.flatMap((p) => p.reading.spans || []) : [],
       expanded: expanded || undefined,
     });
-    evidence.push({
+    (V[idx] = {
       claim: c, ledger_key: key, sources: srcs.map((s, i) => ({ ref: `S${i + 1}`, ...s, text: undefined, text_chars: s.text ? s.text.length : 0 })),
       passes: checked.map((p) => ({ model: p.model, reading: p.reading, validation: p.validation, usage: p.usage || null })),
       verdict,
@@ -348,11 +362,26 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
         B_W: "unimplemented: S4's grammar ledger is not run", C_W: "unimplemented: talk-page and deletion pointers are not fetched",
       } : null,
     });
-  }
+  };
+  // A pool of readers; none starts after the deadline. Claims not started are named, and the caller continues the
+  // run in a fresh invocation, where the claims already read come from the ledger (2026-10-24).
+  // Each worker reads at least one claim live per invocation, so every invocation makes progress.
+  let next = 0; const notStarted = [];
+  const worker = async () => {
+    let readLive = 0;
+    while (next < claims.length) {
+      const idx = next++;
+      const got = await one(claims[idx], idx, () => { const ok = readLive === 0 || Date.now() <= deadline; if (ok) readLive++; return ok; });
+      if (got === "deferred") notStarted.push(claims[idx].id);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, claims.length)) }, worker));
+  if (notStarted.length) throw Object.assign(new Error(`continue: ${notStarted.length} claims not yet read`), { code: "continue", not_started: notStarted, read: claims.length - notStarted.length });
+  const entries = E.filter(Boolean), evidence = V.filter(Boolean), breaches = B.filter(Boolean).flat();
   return { entries, evidence, breaches, completed, charge, actual };
 }
 
-export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
+export async function runOpening(quoteId, { onProgress = () => {}, deadline = Infinity } = {}) {
   const q = await load(`quotes/${quoteId}.json`);
   if (!q) throw new Error(`unknown quote ${quoteId}`);
   const t0 = Date.now();
@@ -405,7 +434,10 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
   // whose row was not composed is recomputed.
   // Reuse needs a complete row: a partial one (a pass failed, was skipped by the budget, or the audit is incomplete) is
   // delivered and recorded, and the next request recomputes it.
-  if (prior && (!q.s7 || (prior.non_row && prior.s7_complete))) {
+  // A result in which no claim was read and no row composed is never served again: its failure may have been passing
+  // (2026-10-24: a reader that could not run, or replies that would not parse, would otherwise stand for that state).
+  const priorEmpty = prior && !prior.non_row && (await load(prior.composition_path))?.summary?.completed === 0;
+  if (prior && !priorEmpty && (!q.s7 || (prior.non_row && prior.s7_complete))) {
     // The same state was computed before: the result is served again, and billed against this quote, at the
     // ledgered rates it was quoted at (each completed claim's line; a cached portable package at the ledgered writer rate).
     const composition = await load(prior.composition_path), record = await load(prior.composition_path.replace("composition", "evidence"));
@@ -421,7 +453,7 @@ export async function runOpening(quoteId, { onProgress = () => {} } = {}) {
 
   const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   for (const c of preLog.calls) if (c.usage) for (const k of Object.keys(usage)) usage[k] += c.usage[k] || 0;
-  const s3 = await readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage });
+  const s3 = await readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline, runCache: Number.isFinite(deadline) ? `runs/${quoteId}/reads` : null });
   const { entries, evidence, breaches } = s3;
   let completed = s3.completed, charge = s3.charge, actual = s3.actual + preLog.cost();
   if (construction?.article && q.construction) charge += Math.min(q.construction.price_usd, Math.ceil(Math.max(0.10, preLog.cost() * POLICY.margin) * 100) / 100);

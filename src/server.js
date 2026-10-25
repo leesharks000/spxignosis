@@ -5,7 +5,8 @@ import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { decodePaymentResponseHeader } from "@x402/core/http";
-import { quote, quoteEntity, runOpening, SERVICE } from "./run.js";
+import { quote, quoteEntity, runOpening, SERVICE, RUN_SECONDS } from "./run.js";
+import { randomUUID } from "node:crypto";
 import { publicationState } from "./s7/publish.js";
 import { load, save, BLOB } from "./util.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
@@ -45,24 +46,65 @@ async function cardWork(q, s, id, prior) {
   const paid = s.amount_total / 100;
   if (!prior) await save(`receipts/${id}.json`, { quote_id: id, at: new Date().toISOString(), channel: "card", stripe_session: s.id, stripe_payment_intent: s.payment_intent, paid_usd: paid,
     settlement: { success: true, payer: s.customer_details?.email ? "card (email on the Stripe record)" : "card" } });
+  await runCard(q, id, { paid, payment_intent: s.payment_intent });
+}
+
+// One invocation of a paid card order. The platform stops an invocation at about five minutes; a run that reaches its
+// time budget (RUN_SECONDS) hands itself on to a fresh invocation through /v1/quotes/{id}/continue, where the claims
+// already read come from the ledger, until the order is delivered (2026-10-24: "this needs to be able to run long
+// enough to write a full article"). A run handed on more than MAX_HOPS times is refunded in full.
+const MAX_HOPS = Number(process.env.GNOSIS_MAX_HOPS || 60);
+async function runCard(q, id, { paid, payment_intent, hop = 0 }) {
   try {
-    const out = await deliver(q);
+    const out = await deliver(q, { deadline: Date.now() + RUN_SECONDS * 1000 });
     const owed = Math.round((paid - (out.billing?.charge_usd ?? 0)) * 100) / 100;
-    const refund = await refundUnused(s.payment_intent, owed, `unused by quote ${id}`).catch((e) => ({ error: String(e.message || e) }));
-    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: owed, refund, at: new Date().toISOString() });
+    const refund = await refundUnused(payment_intent, owed, `unused by quote ${id}`).catch((e) => ({ error: String(e.message || e) }));
+    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: owed, refund, at: new Date().toISOString(), invocations: hop + 1 });
   } catch (e) {
+    if (e.code === "continue" && hop + 1 < MAX_HOPS) return handOn(id, hop + 1, e);
     // Nothing delivered: the whole payment goes back.
-    const refund = await refundUnused(s.payment_intent, paid, `quote ${id} could not complete: ${String(e.message || e).slice(0, 200)}`).catch((x) => ({ error: String(x.message || x) }));
+    const reason = e.code === "continue" ? `the run did not finish within ${MAX_HOPS} invocations` : String(e.message || e);
+    const refund = await refundUnused(payment_intent, paid, `quote ${id} could not complete: ${reason.slice(0, 200)}`).catch((x) => ({ error: String(x.message || x) }));
     // the run that failed is named, where there was one: its composition carries each failed call with its error
-    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: paid, refund, reason: String(e.message || e), at: new Date().toISOString(),
+    await save(`refunds/${id}.json`, { quote_id: id, channel: "card", amount_usd: paid, refund, reason, at: new Date().toISOString(), invocations: hop + 1,
       ...(e.result_id ? { result_id: e.result_id, composition: `/v1/results/${e.result_id}/composition`, evidence: `/v1/results/${e.result_id}/evidence` } : {}) });
   }
 }
+
+async function handOn(id, hop, e) {
+  const token = randomUUID();
+  await save(`jobs/${id}.json`, { quote_id: id, hop, token, at: new Date().toISOString(), read: e.read, not_started: e.not_started?.length });
+  await save(`progress/${id}.json`, { stage: "continuing", detail: `invocation ${hop + 1}: ${e.not_started?.length ?? "?"} claims still to read`, at: new Date().toISOString() });
+  const r = await fetch(`${BASE}/v1/quotes/${id}/continue`, { method: "POST", headers: { "x-gnosis-continue": token }, signal: AbortSignal.timeout(20000) }).catch((x) => ({ ok: false, status: String(x.message || x) }));
+  if (!r.ok) await save(`jobs/${id}.json`, { quote_id: id, hop, token, at: new Date().toISOString(), handoff_failed: String(r.status) });
+}
+// The next invocation of a card order that reached its time budget: only the token the last invocation wrote starts
+// it, and only for an order paid, not delivered and not refunded. It answers at once; the work runs after.
+app.post("/v1/quotes/:quote_id/continue", async (req, res) => {
+  const id = req.params.quote_id;
+  const [job, q, rc] = await Promise.all([load(`jobs/${id}.json`), load(`quotes/${id}.json`), load(`receipts/${id}.json`)]);
+  if (!job || !q || !rc || req.get("x-gnosis-continue") !== job.token) return res.status(404).json({ error: "no run to continue" });
+  if ((await load(`delivered/${id}.json`)) || (await load(`refunds/${id}.json`))) return res.json({ note: "already finished" });
+  res.status(202).json({ continuing: id, invocation: job.hop + 1 });
+  waitUntil(runCard(q, id, { paid: rc.paid_usd, payment_intent: rc.stripe_payment_intent, hop: job.hop }));
+});
+// A paid card order whose run stopped (nothing delivered, nothing refunded, no progress for six minutes) is started
+// again; anyone may ask, since it only does work already paid for, and what was read comes from the ledger.
+app.post("/v1/quotes/:quote_id/resume", async (req, res) => {
+  const id = req.params.quote_id;
+  const [q, rc, pr] = await Promise.all([load(`quotes/${id}.json`), load(`receipts/${id}.json`), load(`progress/${id}.json`)]);
+  if (!q || !rc || rc.channel !== "card") return res.status(404).json({ error: "no paid card order with this id" });
+  if ((await load(`delivered/${id}.json`)) || (await load(`refunds/${id}.json`))) return res.json({ note: "already finished" });
+  if (pr && Date.now() - Date.parse(pr.at) < 6 * 60e3) return res.status(409).json({ note: "still running", progress: pr });
+  await save(`progress/${id}.json`, { stage: "resumed", detail: "started again after its run stopped", at: new Date().toISOString() });
+  res.status(202).json({ resumed: id });
+  waitUntil(runCard(q, id, { paid: rc.paid_usd, payment_intent: rc.stripe_payment_intent }));
+});
 app.use(express.json({ limit: "64kb" }));
 
 // The work for a paid quote, by either channel. Throws when nothing could be delivered.
-async function deliver(q) {
-  const r = await runOpening(q.quote_id, { onProgress: (p) => { save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }).catch((e) => console.error("progress write:", e.message)); } });
+async function deliver(q, { deadline } = {}) {
+  const r = await runOpening(q.quote_id, { deadline, onProgress: (p) => { save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }).catch((e) => console.error("progress write:", e.message)); } });
   // Completion follows the commissioned operation: a composed row is delivered work even where T needed no S3 check.
   if (r.composition.summary.completed === 0 && !r.non?.composed) throw Object.assign(new Error("no claim could be completed and no row was composed"), { result_id: r.result_id });
   const out = { result_id: r.result_id, reused: r.reused, summary: r.composition.summary, billing: r.record?.billing, composition: r.composition, portable: r.portable_dir ? `/v1/results/${r.result_id}/portable/manifest.json` : null };
@@ -80,6 +122,7 @@ const INDEX = {
     "POST /v1/openings/{quote_id}/checkout": "for people: a Stripe Checkout link for the quote's maximum (at least $0.50); the work runs when the payment completes, and what it did not use is refunded",
     "GET /v1/quotes/{quote_id}/status": "where a quote stands: quoted, paid and running, delivered; its receipt and any refund",
     "GET /v1/results/{result_id}/publication": "the /non row's publication, observed now: composed, checked, landed, public",
+    "POST /v1/quotes/{quote_id}/resume": "a paid card order whose run stopped (no progress for six minutes, nothing delivered or refunded) is started again",
     "GET /v1/results/{result_id}/landing": "the /non row's landing tree: the manifest, each file at …/landing/{path}, for the operator's landing",
     "GET /v1/openings/{quote_id}/progress": "the stage a running opening has reached",
     "GET /v1/receipts/{quote_id}": "the settlement receipt (transaction, payer, amount) and any refund owed or sent",
