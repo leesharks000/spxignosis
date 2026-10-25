@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.20.3", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.20.4", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -540,7 +540,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     licence_note: "Wikipedia sentences are CC BY-SA 4.0, attributed to the revision URL; the service's account is licensed to the caller under the service terms.",
     notice: "The treatment of this article's entities by composing systems may be recorded and measured.",
     non: s7 ? { row: s7.row_key, entity_page: s7.non_url, composed: s7.composed, complete: !!s7.complete, coverage: s7.coverage || null, case: s7.case, rho: s7.rho, breaches_recorded: s7.breaches, from_ledger: !!s7.from_ledger,
-      stages: s7.stages ? Object.fromEntries(Object.entries(s7.stages).map(([k, v]) => [k, { delivered: !!v.delivered, charge_usd: v.charge_usd ?? null, ...(v.from_checkpoint ? { from_checkpoint: v.from_checkpoint } : {}) }])) : undefined,
+      stages: s7.stages ? Object.fromEntries(Object.entries(s7.stages).map(([k, v]) => [k, { delivered: !!v.delivered, ...(v.from_checkpoint ? { from_checkpoint: v.from_checkpoint } : {}) }])) : undefined,
       dossier: s7.stages?.reading?.delivered ? `/v1/results/${result_id}/landing` : undefined,
       licence: "CC BY 4.0", publication: await publicationState(s7, { fetchPublic: false }), publication_endpoint: `/v1/results/${result_id}/publication` } : undefined,
     summary: { claims: entries.length, cited: entries.filter((e) => e.status !== "uncited").length, completed, contested: entries.filter((e) => e.status === "contested").length, withheld: entries.filter((e) => e.status === "withheld").length, unread: entries.filter((e) => e.status === "unread").length, from_ledger: entries.filter((e) => e.from_ledger).length },
@@ -571,7 +571,9 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
       cost_measured: reader.mode === "live", ...(reader.mode === "live" ? {} : { note: "replay mode: no model was called, so cost and margin are not measured" }), rule: "charged for completed claims only, at quoted per-claim prices; the rest of the reservation is released" },
   };
   await save(`results/${result_id}/composition.json`, composition);
-  await save(`results/${result_id}/evidence.json`, record);
+  // The charge and what it left over cost are kept privately, beside the result and never served (2026-10-25).
+  await save(`results/${result_id}/evidence.json`, { ...record, billing: { rule: record.billing.rule, cost_measured: record.billing.cost_measured } });
+  await save(`billing/${result_id}.json`, record.billing);
   await save(`results/${result_id}/opened.html`, renderOpenedHTML(composition, pinned));
   await save(`results/${result_id}/annotations.jsonld`, annotations(composition));
   if (s7) await save(`results/${result_id}/s7.json`, { ...s7, row: undefined, ledger: undefined });

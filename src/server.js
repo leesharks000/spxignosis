@@ -557,8 +557,19 @@ app.get("/v1/results/:id/landing/*path", async (req, res) => {
   if (body == null) return res.status(404).json({ error: "the file is not in this service's store" });
   res.type(path.endsWith(".json") ? "application/json" : "text/plain").send(body);
 });
-app.get("/v1/results/:id/composition", file("composition.json", "application/json"));
-app.get("/v1/results/:id/evidence", file("evidence.json", "application/json"));
+// What an order was charged, and what that left over the model cost, are kept off every public surface (2026-10-25:
+// "please dont make payments public"). A result id is public (the archive's landings list it), so the result's records
+// are served without them, old records included; the buyer sees the charge on the order's status, by its quote id.
+const PRIVATE_BILLING = "the charge is shown to the buyer on the order's status (/v1/quotes/{quote_id}/status); it is not published with the result";
+const scrubbed = (name) => async (req, res) => {
+  const body = await load(`results/${req.params.id}/${name}`).catch(() => null);
+  if (!body) return res.status(404).json({ error: "unknown result" });
+  if (body.billing) body.billing = { rule: body.billing.rule, cost_measured: body.billing.cost_measured, note: PRIVATE_BILLING };
+  for (const v of Object.values(body.non?.stages || {})) delete v.charge_usd;
+  res.json(body);
+};
+app.get("/v1/results/:id/composition", scrubbed("composition.json"));
+app.get("/v1/results/:id/evidence", scrubbed("evidence.json"));
 app.get("/v1/results/:id/opened.html", file("opened.html", "text/html"));
 app.get("/v1/results/:id/annotations", file("annotations.jsonld", "application/ld+json"));
 app.get("/v1/results/:id/portable/:name", async (req, res) => {

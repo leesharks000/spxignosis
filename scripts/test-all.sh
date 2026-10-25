@@ -27,6 +27,9 @@ PORT=4431 GNOSIS_PAY_TO=0x0000000000000000000000000000000000000001 node src/serv
 SP=$!; sleep 3
 code=$(curl -s -o /dev/null -w "%{http_code}" -XPOST localhost:4431/v1/openings/Q-doesnotexist)
 land=$(curl -s localhost:4431/v1/landable)
+ev=$(curl -s localhost:4431/v1/results/$(cat "$S/last-portable")/evidence; curl -s localhost:4431/v1/results/$(cat "$S/last-portable")/composition)
 kill $SP 2>/dev/null || true
+echo "$ev" | grep -qE '"(charge_usd|margin_usd)"' && { echo "FAIL billing: a result record serves a charge or margin"; exit 1; } || echo "ok   billing: a result's evidence and composition are served with no charge and no margin"
+[ -s "$S/billing/$(cat "$S/last-portable").json" ] && echo "ok   billing: the charge is kept privately beside the result" || { echo "FAIL billing: no private billing record"; exit 1; }
 echo "$land" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);const one=d.landable.find(l=>l.result_id==="R-landtest00000001"),two=d.landable.find(l=>l.result_id==="R-landtest00000002");const reused=d.landable.find(l=>l.result_id===process.argv[1]);if(!one||two?.row_sha256!=="bb"||reused){console.log("FAIL landable: "+JSON.stringify(d.landable));process.exit(1)}console.log("ok   landable: composed rows are listed for the archive with their row hash, from the list and from the result pointer; a row reused from the ledger is not")})' "$(cat "$S/last-portable")"
 [ "$code" = "404" ] && echo "ok   server: an unknown quote is refused with 404 before any payment challenge" || { echo "FAIL server: unknown quote answered $code"; exit 1; }
