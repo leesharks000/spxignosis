@@ -385,4 +385,11 @@ if (rid && existsSync(`${STORE}/results/${rid}/portable/manifest.json`)) {
   t("fees: model spending stops where the payment, less its fee, is spent", netBudget("card", 2.45) === Math.floor((2.45 - paymentFee("card", 2.45)) * 100) / 100 && netBudget("card", 2.45) < 2.45);
 }
 
+// 2026-10-25: the lookup of an operator offers to extend it as an operator.
+{
+  const { lookupName } = await import("../src/lookup.js");
+  const r = await lookupName("Attributization").catch(() => null);
+  t("lookup: an operator found by name is extended as an operator", r?.body?.state !== "found" || r.body.extend?.body?.object?.kind === "operator");
+}
+
 process.exit(fail ? 1 : 0);

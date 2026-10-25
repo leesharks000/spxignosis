@@ -41,7 +41,7 @@ export async function handleMcp(msg, { base, service }) {
   if (method === "initialize")
     return ok(id, { protocolVersion: MCP_PROTOCOL, capabilities: { tools: { listChanged: false } },
       serverInfo: { name: "spxi-gnosis", title: "SPXI-gnΩsis", version: service.version },
-      instructions: "SPXI-gnΩsis opens Wikipedia sentences against the sources they cite and, on commission, composes an entity's public row in the Negative of the Negative (alexanarch.org/non). Quotes and reads of existing work are free; new work is paid at the HTTP routes the tools name. Description: https://gnosis.spxi.dev/llms.txt" });
+      instructions: "SPXI-gnΩsis opens existing compositions against their sources and constructs sourced knowledge objects, for entities and for operators (the operations an entity form conceals). Its principal application opens Wikipedia sentences against the sources they cite. A commission composes the object's public row in the Negative of the Negative (alexanarch.org/non). Quotes and reads of existing work are free. The tools return quotes, results and payment directions; payment itself is made at the HTTP routes they name (card checkout, or x402). Description: https://gnosis.spxi.dev/llms.txt" });
   if (method === "ping") return ok(id, {});
   if (method === "tools/list") return ok(id, { tools: TOOLS.map(({ call, ...t }) => t) });
   if (method === "tools/call") {

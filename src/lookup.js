@@ -32,7 +32,14 @@ export async function lookupName(name, { context = "" } = {}) {
     composer: e.composer_class, stage: e.stage, record: e.record_url, data: e.json_url, addresses: e.addresses });
   const construct = { request: "POST /v1/quote", body: { commission: "construct", object: { kind: "entity", name } },
     note: "a free quote, priced by the archive worker within minutes; nothing is charged until the quote is paid. For an operator, object.kind is \"operator\" with its strings." };
-  if (exact.length === 1) return { status: 200, body: { state: "found", price_usd: 0, entry: card(exact[0]), extend: { ...construct, note: "the entry is free as composed; recomposing it against a changed source or a new archive release is new work, quoted the same way" } } };
+  // An operator is extended as an operator, with its description and strings to be restated (2026-10-25: the lookup of
+  // the first operator offered to extend it as an entity).
+  const isOp = (e) => String(e?.entity || "").startsWith("op-") || /^Op\b/.test(String(e?.type || ""));
+  const extendOf = (e) => isOp(e)
+    ? { request: "POST /v1/quote", body: { commission: "construct", object: { kind: "operator", name: e.name || name, description: "<what the operation is>", strings: ["<the phrases in which it is performed>"] } },
+        note: "the entry is free as composed; recomposing it against a changed source or a new archive release is new work, quoted the same way, with the operator's description and strings" }
+    : { ...construct, note: "the entry is free as composed; recomposing it against a changed source or a new archive release is new work, quoted the same way" };
+  if (exact.length === 1) return { status: 200, body: { state: "found", price_usd: 0, entry: card(exact[0]), extend: extendOf(exact[0]) } };
   if (exact.length > 1 || near.length) return { status: 200, body: { state: exact.length > 1 ? "several" : "candidates", price_usd: 0,
     candidates: [...exact, ...near].map(card), note: "no single entry answers the name; the context (a URL, a description, the kind of object) tells them apart, or the object is constructed", construct } };
   return { status: 404, body: { state: "not in /non", price_usd: 0, name, construct } };
