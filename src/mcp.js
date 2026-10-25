@@ -34,10 +34,28 @@ const TOOLS = [
 const ok = (id, result) => ({ jsonrpc: "2.0", id, result });
 const err = (id, code, message) => ({ jsonrpc: "2.0", id, error: { code, message } });
 
+// A tool's arguments checked against its own published schema before anything is sent on (2026-10-25, the first
+// adversarial test: params null reached params.name and the route answered an HTML 500).
+const TYPES = { string: (v) => typeof v === "string", integer: (v) => Number.isInteger(v), number: (v) => typeof v === "number" && isFinite(v), object: (v) => v !== null && typeof v === "object" && !Array.isArray(v), array: Array.isArray, boolean: (v) => typeof v === "boolean" };
+function badArguments(schema, args) {
+  if (!TYPES.object(args)) return "arguments must be an object";
+  for (const k of schema.required || []) if (args[k] === undefined || args[k] === null || args[k] === "") return `arguments.${k} is required`;
+  for (const [k, v] of Object.entries(args)) {
+    const p = schema.properties?.[k];
+    if (!p) continue;
+    if (p.type && TYPES[p.type] && !TYPES[p.type](v)) return `arguments.${k} must be ${p.type === "integer" ? "an integer" : `a ${p.type}`}`;
+    if (p.enum && !p.enum.includes(v)) return `arguments.${k} must be one of ${p.enum.join(", ")}`;
+  }
+  return null;
+}
 export async function handleMcp(msg, { base, service }) {
   if (Array.isArray(msg)) return Promise.all(msg.map((m) => handleMcp(m, { base, service }))).then((xs) => xs.filter(Boolean));
-  const { id, method, params = {} } = msg || {};
+  if (!msg || typeof msg !== "object") return err(null, -32600, "invalid request: a JSON-RPC 2.0 object is expected");
+  const { id, method } = msg;
   if (id === undefined || id === null) return null; // a notification: nothing to answer
+  if (msg.jsonrpc !== "2.0" || typeof method !== "string") return err(id, -32600, "invalid request: jsonrpc must be \"2.0\" and method a string");
+  if (msg.params !== undefined && (msg.params === null || typeof msg.params !== "object" || Array.isArray(msg.params))) return err(id, -32602, "invalid params: params must be an object");
+  const params = msg.params || {};
   if (method === "initialize")
     return ok(id, { protocolVersion: MCP_PROTOCOL, capabilities: { tools: { listChanged: false } },
       serverInfo: { name: "spxi-gnosis", title: "SPXI-gnΩsis", version: service.version },
@@ -45,9 +63,14 @@ export async function handleMcp(msg, { base, service }) {
   if (method === "ping") return ok(id, {});
   if (method === "tools/list") return ok(id, { tools: TOOLS.map(({ call, ...t }) => t) });
   if (method === "tools/call") {
+    if (typeof params.name !== "string") return err(id, -32602, "invalid params: name, the tool to call, is required");
     const tool = TOOLS.find((t) => t.name === params.name);
     if (!tool) return err(id, -32602, `unknown tool: ${params.name}`);
-    const req = tool.call(params.arguments || {});
+    const args = params.arguments === undefined ? {} : params.arguments;
+    const bad = badArguments(tool.inputSchema, args);
+    if (bad) return err(id, -32602, `invalid params for ${tool.name}: ${bad}`);
+    let req;
+    try { req = tool.call(args); } catch (e) { return err(id, -32602, `invalid params for ${tool.name}: ${String(e.message || e)}`); }
     try {
       const r = await fetch(base + req.path, { method: req.method || "GET", headers: { Accept: "application/json", ...(req.body ? { "Content-Type": "application/json" } : {}) },
         body: req.body ? JSON.stringify(req.body) : undefined, signal: AbortSignal.timeout(120000) });

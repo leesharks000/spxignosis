@@ -48,17 +48,31 @@ async function currentRevision(title) {
 
 // Normalized for matching: footnote markers, quotes, dashes and spacing set aside.
 const norm = (s) => String(s || "").normalize("NFKC").replace(/\[\s*(\d+|[a-z]|citation needed|note \d+)\s*\]/gi, " ")
-  .replace(/[“”"‘’']/g, "'").replace(/[–—]/g, "-").replace(/\s+/g, " ").trim().toLowerCase();
+  .replace(/[“”"‘’']/g, "'").replace(/[–—]/g, "-").replace(/\s+/g, " ").replace(/ ([.,;:!?])/g, "$1").trim().replace(/\.$/, "").toLowerCase(); // a removed marker leaves no space before its stop; a final full stop is optional ("?" and "!" are not)
 const words = (s) => norm(s).match(/[\p{L}\p{N}]+/gu) || [];
+// The sentence read is the sentence sent (2026-10-25, the first adversarial test: "Plato criticized Aristotle, while
+// Socrates defended Theophrastus" was accepted for "Aristotle criticized Plato, while Theophrastus defended Socrates" at
+// 100% of words shared, and a sentence with its "not" removed at 91%). Only identity after the declared normalization
+// (footnote markers, quotation marks, dashes, spacing, case and a final full stop; see norm) selects a sentence to read and charge for. A
+// text the page's sentence contains (an excerpt), a text that contains it, and a near match are returned as
+// suggestions, the stored sentence beside the text sent, with nothing read: the caller sends the stored sentence to
+// have it read.
 export function locate(claims, text) {
   const t = norm(text);
   if (!t) return { claim: null, closest: [] };
-  const exact = claims.find((c) => norm(c.text) === t) || claims.find((c) => norm(c.text).includes(t) && t.length >= 25) || claims.find((c) => t.includes(norm(c.text)) && norm(c.text).length >= 25);
-  if (exact) return { claim: exact, match: "exact", closest: [] };
+  const exact = claims.find((c) => norm(c.text) === t);
+  if (exact) return { claim: exact, match: "identical", closest: [] };
   const tw = new Set(words(text));
-  const scored = claims.map((c) => { const cw = new Set(words(c.text)); let n = 0; for (const w of tw) if (cw.has(w)) n++; return { c, s: n / Math.max(1, new Set([...tw, ...cw]).size) }; }).sort((a, b) => b.s - a.s);
-  if (scored[0] && scored[0].s >= 0.75) return { claim: scored[0].c, match: `near (${Math.round(scored[0].s * 100)}% of words shared)`, closest: [] };
-  return { claim: null, closest: scored.slice(0, 3).filter((x) => x.s > 0.2).map((x) => ({ id: x.c.id, section: x.c.section, text: x.c.text, overlap: Math.round(x.s * 100) / 100 })) };
+  const suggest = [];
+  for (const c of claims) {
+    const n = norm(c.text);
+    const kind = n.includes(t) && t.length >= 25 ? "the page's sentence contains the text sent" : t.includes(n) && n.length >= 25 ? "the text sent contains the page's sentence" : null;
+    const cw = new Set(words(c.text)); let k = 0; for (const w of tw) if (cw.has(w)) k++;
+    const overlap = k / Math.max(1, new Set([...tw, ...cw]).size);
+    if (kind || overlap > 0.2) suggest.push({ id: c.id, section: c.section, text: c.text, relation: kind || "shares words with the text sent", overlap: Math.round(overlap * 100) / 100 });
+  }
+  suggest.sort((a, b) => (b.relation !== "shares words with the text sent") - (a.relation !== "shares words with the text sent") || b.overlap - a.overlap);
+  return { claim: null, closest: suggest.slice(0, 3) };
 }
 
 // Where /non already holds the sentence: a field claim of some row quoting it. Read from the archive checkout where the
@@ -120,7 +134,9 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
   const found = locate(claims, text);
   const rid = requestId({ text, url, mode });
   const base = { request_id: rid, mode, mode_label: MODES[mode].label, page: { title: pinned.title, oldid: pinned.oldid, url: pinned.url, html_sha256: pinned.html_sha256 } };
-  if (!found.claim) return { ...base, state: "not found", status: 404, note: "the sentence is not on this revision of the page", closest: found.closest };
+  if (!found.claim) return found.closest.length
+    ? { ...base, state: "not identical", status: 409, sent: String(text), suggestions: found.closest, note: "no sentence on this revision is the text sent; the closest are suggested beside it. Nothing was read or charged: send a suggestion's text exactly to have that sentence read." }
+    : { ...base, state: "not found", status: 404, note: "the sentence is not on this revision of the page", closest: [] };
   const c = found.claim;
   const non = await nonEntriesFor(c.text);
   base.non_index = nonSource();

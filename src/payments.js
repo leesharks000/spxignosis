@@ -108,7 +108,9 @@ export async function checkoutFor(q, { base }) {
     // 31 minutes and the quote's price holds for a payment made in it (2026-10-24: Stripe refused the quote's own expiry).
     expires_at: Math.floor((Date.now() + 31 * 60e3) / 1000),
   });
-  return { checkout_url: s.url, session: s.id, amount_usd: amount };
+  // url is the field the order page and MCP read; checkout_url is kept for callers written to it (2026-10-25: the page
+  // read url and the adapter answered checkout_url, so the Pay button could not redirect)
+  return { url: s.url, checkout_url: s.url, session: s.id, amount_usd: amount, expires_at: new Date(s.expires_at * 1000).toISOString() };
 }
 
 export function verifyWebhook(raw, signature) {

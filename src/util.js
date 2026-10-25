@@ -32,11 +32,36 @@ export async function save(rel, data) {
   return p;
 }
 
+// An exclusive claim (2026-10-25, the first adversarial test): the record is written only if no record is at the key,
+// and the caller learns whether it won. Blob refuses an existing key when allowOverwrite is false, on the server, so
+// two instances claiming one key at once cannot both win; locally the file is created exclusively. Used where one
+// payment or one stopped run must start its work once: a Stripe session, a resume of a stopped run.
+export async function claim(rel, data) {
+  // A nonce makes each claim's bytes its own, so a refused write is told apart from a write that landed and then
+  // errored: the key is read back, and a record there that is not this one means another claim won.
+  const body = JSON.stringify({ ...(typeof data === "object" && data ? data : { value: data }), claim_nonce: createHash("sha256").update(String(Math.random()) + Date.now()).digest("hex").slice(0, 16) }, null, 1);
+  const p = join(STORE, rel);
+  mkdirSync(dirname(p), { recursive: true });
+  if (BLOB) {
+    const { put } = await blob();
+    try { await put(BLOB_PREFIX + rel, body, { access: "private", allowOverwrite: false, addRandomSuffix: false, contentType: typeOf(rel) }); }
+    catch (e) {
+      const there = await fromBlob(rel, false).catch(() => null);
+      if (there === body) { writeFileSync(p, body); return true; }
+      if (there !== null) return false;
+      throw e;
+    }
+    writeFileSync(p, body);
+    return true;
+  }
+  try { writeFileSync(p, body, { flag: "wx" }); return true; } catch (e) { if (e.code === "EEXIST") return false; throw e; }
+}
+
 // Read order: what this process wrote, the committed seed, then Blob (the latest version, uncached). Records that more
 // than one process writes (an order's progress, quote, receipt, refund and result pointer; the worker's queues; the
 // calibration) are read from Blob first, since this process's copy may be older than another's write (2026-10-25: an
 // instance that had queued an order showed it queued while the worker ran and delivered it).
-const SHARED = /^(progress|quotes|receipts|refunds|delivered|jobs|worker|calibration|settlements|landable|limits)\//;
+const SHARED = /^(progress|quotes|receipts|refunds|delivered|jobs|worker|calibration|settlements|landable|limits|claims|checkouts|payments)\//;
 async function fromBlob(rel, json) {
   const { get } = await blob();
   const r = await get(BLOB_PREFIX + rel, { access: "private", useCache: false }).catch((e) => { if (e?.name === "BlobNotFoundError") return null; throw e; });

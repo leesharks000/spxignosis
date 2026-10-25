@@ -13,7 +13,7 @@ import { accounts } from "./accounts.js";
 import { lookupName } from "./lookup.js";
 import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
 import { frontPage, orderPage, apiPage } from "./front.js";
-import { load, save, list, BLOB, sha256, UA } from "./util.js";
+import { load, save, list, claim, BLOB, sha256, UA } from "./util.js";
 import { kept, undeliveredRefund } from "./cost.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
 import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, facilitatorName, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
@@ -38,13 +38,36 @@ app.post("/v1/stripe/webhook", express.raw({ type: "application/json", limit: "1
   const s = ev.data.object, id = s.metadata?.quote_id;
   const q = id && await load(`quotes/${id}.json`);
   if (!q || s.payment_status !== "paid") return res.json({ received: true, note: "no paid quote in this session" });
+  // Each Stripe session is taken up once (2026-10-25, the first adversarial test): the first delivery of its event
+  // claims it, so a repeated or concurrent delivery starts nothing twice.
+  const first = await claim(`payments/sessions/${s.id}.json`, { quote_id: id, at: new Date().toISOString(), payment_intent: s.payment_intent, amount_usd: s.amount_total / 100 });
+  const prior = await load(`receipts/${id}.json`);
+  // A second payment for a quote another session already paid is money with no work to buy: it is recorded and
+  // refunded as an undelivered order is (undeliveredRefund), and the order it duplicates is untouched.
+  // The refund is retried on every delivery of the event until it is sent (Stripe's refund is idempotent on the payment
+  // and amount, so a retry cannot refund twice); while it is not sent the event is answered 500, so Stripe delivers it
+  // again.
+  if (prior?.stripe_session && prior.stripe_session !== s.id) {
+    const was = await load(`payments/duplicates/${s.id}.json`);
+    if (!["succeeded", "pending"].includes(was?.refund?.status)) {
+      const owed = undeliveredRefund("card", s.amount_total / 100);
+      const r = await refundUnused(s.payment_intent, owed, `a second payment for ${id}, which session ${prior.stripe_session} had paid`).catch((e) => ({ status: "failed", error: String(e.message || e).slice(0, 200) }));
+      await save(`payments/duplicates/${s.id}.json`, { quote_id: id, session: s.id, payment_intent: s.payment_intent, paid_usd: s.amount_total / 100, owed_usd: owed, refund: r || { status: "none owed" },
+        first_at: was?.first_at || new Date().toISOString(), attempts: (was?.attempts || 0) + 1, at: new Date().toISOString() });
+      if (r && !["succeeded", "pending"].includes(r.status)) return res.status(500).json({ received: true, note: "a second payment for an order already paid: recorded; its refund failed and is retried when Stripe sends this event again", quote_id: id });
+    }
+    return res.json({ received: true, note: "a second payment for an order already paid: recorded and refunded", quote_id: id });
+  }
   // A paid order is run once. A message for one already delivered or refunded is acknowledged; one still running (its
   // progress written in the last five minutes) is left to run; a paid order whose run stopped is resumed, so a message
-  // re-sent from Stripe recovers it (2026-10-24: the first card test stopped after its sentences, nothing delivered).
+  // re-sent from Stripe recovers it (2026-10-24: the first card test stopped after its sentences, nothing delivered),
+  // through the same exclusive claim as POST /v1/quotes/{id}/resume.
   if (await load(`delivered/${id}.json`)) return res.json({ received: true, note: "already delivered" });
   if (await load(`refunds/${id}.json`)) return res.json({ received: true, note: "already refunded" });
-  const prior = await load(`receipts/${id}.json`), pr = await load(`progress/${id}.json`);
+  const pr = await load(`progress/${id}.json`);
   if (prior && pr && Date.now() - Date.parse(pr.at) < 5 * 60e3) return res.json({ received: true, note: "running" });
+  if (!first && !prior) return res.json({ received: true, note: "this session's order is being started" });
+  if (prior && !(await resumeClaim(id, pr))) return res.json({ received: true, note: "already resumed" });
   res.json({ received: true, running: id, resumed: !!prior }); // Stripe gets its answer at once; the work runs after.
   // The work after the answer is registered with the platform (waitUntil), which otherwise may stop it once the
   // response is sent; outside Vercel it simply runs.
@@ -186,6 +209,7 @@ app.post("/v1/quotes/:quote_id/settle", async (req, res) => {
 
 // A paid card order whose run stopped (nothing delivered, nothing refunded, no progress for six minutes) is started
 // again; anyone may ask, since it only does work already paid for, and what was read comes from the ledger.
+const resumeClaim = (id, pr) => claim(`claims/resume/${id}/${sha256(String(pr?.at || "no-progress")).slice(0, 16)}.json`, { quote_id: id, resumed_from: pr || null, at: new Date().toISOString() });
 app.post("/v1/quotes/:quote_id/resume", async (req, res) => {
   const id = req.params.quote_id;
   const [q, rc, pr] = await Promise.all([load(`quotes/${id}.json`), load(`receipts/${id}.json`), load(`progress/${id}.json`)]);
@@ -194,11 +218,20 @@ app.post("/v1/quotes/:quote_id/resume", async (req, res) => {
   if (refundOpen(rf)) return res.json({ note: "finished; the refund owed had failed and is sent again", refund_state: await retryRefund(id) });
   if ((await load(`delivered/${id}.json`)) || rf) return res.json({ note: "already finished" });
   if (pr && Date.now() - Date.parse(pr.at) < 6 * 60e3) return res.status(409).json({ note: "still running", progress: pr });
+  // One resume of one stopped run (2026-10-25: two resumes at once both started the order): the claim is keyed on the
+  // progress record being resumed, so every resume of that run contends for one key and one wins.
+  if (!(await resumeClaim(id, pr))) return res.status(409).json({ note: "already resumed", progress: pr });
   await save(`progress/${id}.json`, { stage: "resumed", detail: "started again after its run stopped", at: new Date().toISOString() });
   res.status(202).json({ resumed: id });
   waitUntil(runCard(q, id, { paid: rc.paid_usd, payment_intent: rc.stripe_payment_intent, channel: rc.channel }));
 });
 app.use(express.json({ limit: "64kb" }));
+// A body that is not JSON is answered in JSON (2026-10-25): a parse error on /mcp as JSON-RPC's -32700, elsewhere as an error.
+app.use((e, req, res, next) => {
+  if (e?.type !== "entity.parse.failed") return next(e);
+  if (req.path === "/mcp") return res.status(200).json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "parse error: the body is not JSON" } });
+  res.status(400).json({ error: "the body is not JSON" });
+});
 
 
 const INDEX = {
@@ -392,7 +425,9 @@ app.get("/v1/non", async (req, res) => {
 });
 // The tools (MCP, Streamable HTTP, stateless): POST a JSON-RPC message; GET answers that no stream is offered.
 app.post("/mcp", async (req, res) => {
-  const out = await handleMcp(req.body, { base: BASE, service: SERVICE });
+  let out;
+  try { out = await handleMcp(req.body, { base: BASE, service: SERVICE }); }
+  catch (e) { return res.status(200).json({ jsonrpc: "2.0", id: req.body?.id ?? null, error: { code: -32603, message: `internal error: ${String(e.message || e).slice(0, 200)}` } }); }
   if (!out || (Array.isArray(out) && !out.length)) return res.status(202).end();
   res.set("MCP-Protocol-Version", MCP_PROTOCOL).json(out);
 });
@@ -414,7 +449,7 @@ app.get("/v1/sentence", async (req, res, next) => {
   try {
     const { text, url, mode = "opening" } = req.query;
     const p = await prepareSentence({ text, url, mode });
-    if (p.state === "not found" || p.state === "uncited" || p.state === "not grounded") return res.status(p.status).json(p);
+    if (["not found", "not identical", "uncited", "not grounded"].includes(p.state)) return res.status(p.status).json(p); // answered before any payment
     if (p.state === "recorded") return res.json({ ...(await readSentence(p.request_id)), price_usd: 0, free: "this reading exists; it is served as recorded. Re-reading against changed sources is new work." });
     req.sentence = p; next(); // quoted: the payment layer answers 402 with this price
   } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }); }
@@ -445,7 +480,13 @@ app.post("/v1/openings/:quote_id/checkout", async (req, res) => {
   if (!q) return res.status(404).json({ error: "unknown quote" });
   if (Date.parse(q.expires) < Date.now()) return res.status(410).json({ error: "quote expired" });
   if (await load(`receipts/${q.quote_id}.json`)) return res.status(409).json({ error: "this quote is already paid", status: `/v1/quotes/${q.quote_id}/status` });
-  try { res.json({ ...(await checkoutFor(q, { base: BASE })), status: `/v1/quotes/${q.quote_id}/status`, note: q.max_price_usd < CARD_MINIMUM_USD ? `card payments start at $${CARD_MINIMUM_USD.toFixed(2)}, and an order at that minimum keeps it whole (Stripe keeps its fee on any refund); agents paying over x402 pay the sentence's own price` : "charged for the work done, and never less than what it cost (model and payment fee); the rest is refunded" }); }
+  try {
+    // One open session per quote (2026-10-25): a second request while the first session is open is answered with it,
+    // so one quote is not offered two payments. A session that has expired is replaced.
+    const open = await load(`checkouts/${q.quote_id}.json`);
+    const co = open && Date.parse(open.expires_at) > Date.now() + 60e3 ? { ...open, reused: true } : await checkoutFor(q, { base: BASE });
+    if (!co.reused) await save(`checkouts/${q.quote_id}.json`, co);
+    res.json({ ...co, status: `/v1/quotes/${q.quote_id}/status`, note: q.max_price_usd < CARD_MINIMUM_USD ? `card payments start at $${CARD_MINIMUM_USD.toFixed(2)}, and an order at that minimum keeps it whole (Stripe keeps its fee on any refund); agents paying over x402 pay the sentence's own price` : "charged for the work done, and never less than what it cost (model and payment fee); the rest is refunded" }); }
   catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }); }
 });
 // Where a quote stands, for either channel: quoted, paid, running, delivered, refunded.
@@ -504,7 +545,11 @@ app.get("/v1/sentence", async (req, res) => {
     // Nothing read: the payment, settled before the reading, is refunded as an undelivered order is (2026-10-25).
     if (!out.result || ["unread", "withheld"].includes(out.result.status)) return res.status(502).json({ ...out, ...(await refundSentence(req, `sentence ${req.sentence.request_id} not read`)) });
     res.json({ ...out, price_usd: req.sentence.price_usd, contributes: contributesSentence(req.sentence) });
-  } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e), charged: false }); }
+  } catch (e) {
+    // The payment settled before the reading (paymentFlow upfront), so a failure here is a paid sentence not delivered:
+    // it is refunded as the unread branch is, and the answer says it was charged (2026-10-25: it answered that nothing was charged).
+    res.status(e.status || 502).json({ error: String(e.message || e), ...(await refundSentence(req, `sentence ${req.sentence?.request_id} failed: ${String(e.message || e).slice(0, 120)}`)) });
+  }
 });
 
 // A sentence paid for and not read: the settlement is found by its payment's signature and refunded as an undelivered

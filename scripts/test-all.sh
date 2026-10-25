@@ -54,3 +54,8 @@ echo "$asjson" | grep -q '"service"' && echo "ok   pages: GET / still answers JS
 [ "$ordr" = "200" ] && [ "$badord" = "404" ] && echo "ok   pages: an order has its page, and a malformed id is refused" || { echo "FAIL pages: order $ordr / $badord"; exit 1; }
 echo "$apip" | grep -q 'GET /v1/quotes/{quote_id}/status' && echo "ok   pages: /api lists the operations" || { echo "FAIL pages: /api"; exit 1; }
 grep -q 'success_url: `${base}/order/' src/payments.js && echo "ok   pages: the card checkout returns to the order page" || { echo "FAIL pages: checkout return"; exit 1; }
+# The first adversarial test (2026-10-25): its seven defects reproduced against the code and shown fixed, the unit-level
+# ones in a fresh store of their own, the payment and execution ones against a server with a fake Stripe key.
+mkdir -p "$S/break-unit" "$S/break-http"
+GNOSIS_STORE="$S/break-unit" node test/break-probe.mjs
+node test/break-http.mjs "$S/break-http"

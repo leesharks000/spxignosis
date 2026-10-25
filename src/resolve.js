@@ -21,10 +21,29 @@ function htmlToText(h) {
     .replace(/\s+/g, " ").trim();
 }
 
-export async function snapshot(url) {
+// A source is read again when its snapshot is older than the policy for its state (2026-10-25, the first adversarial
+// test: a snapshot was kept by URL forever, so a changed source never reached the execution keys, and a source restored
+// after a 404 stayed dead). Fetched: 7 days (GNOSIS_SOURCE_TTL_DAYS); dead, blocked or thin: 1 day; a transient failure
+// (no answer, 429, 5xx): 1 hour. On a revalidation the same bytes keep the snapshot and record the check; new bytes, or
+// a dead source answering again, make a new current snapshot, and the one it replaces is kept under snapshots/history/,
+// never overwritten, so every reading made against it keeps its evidence; a transient failure never replaces good bytes.
+const DAY = 86400e3, SOURCE_TTL = Number(process.env.GNOSIS_SOURCE_TTL_DAYS || 7) * DAY;
+const transient = (st) => st === 0 || st === 429 || st >= 500;
+const ttlOf = (snap) => snap.availability === "fetched" ? SOURCE_TTL : transient(snap.status) ? 3600e3 : DAY;
+export async function snapshot(url, { fresh = false } = {}) {
   const key = `snapshots/sources/${sha256(url).slice(0, 24)}.json`;
   const hit = await load(key);
-  if (hit) return hit;
+  if (hit && !fresh && Date.now() - Date.parse(hit.checked || hit.retrieved) < ttlOf(hit)) return hit;
+  const now = await fetchSnapshot(url);
+  if (!hit) { await save(key, now); return now; }
+  if (now.raw_sha256 === hit.raw_sha256 && now.status === hit.status) { const kept = { ...hit, checked: now.retrieved }; await save(key, kept); return kept; }
+  if (transient(now.status) && hit.availability === "fetched") { const kept = { ...hit, checked: now.retrieved, last_check: { at: now.retrieved, status: now.status, kept: "the earlier bytes: the source did not answer" } }; await save(key, kept); return kept; }
+  await save(`snapshots/history/${sha256(url).slice(0, 24)}/${hit.retrieved.replace(/[:.]/g, "-")}.json`, hit);
+  const next = { ...now, previous: { retrieved: hit.retrieved, status: hit.status, availability: hit.availability, raw_sha256: hit.raw_sha256, text_sha256: hit.text_sha256 } };
+  await save(key, next);
+  return next;
+}
+async function fetchSnapshot(url) {
   let r;
   try { r = await politeFetch(url); } catch (e) { r = { status: 0, body: "", contentType: "", error: String(e) }; }
   // An http link that redirects to a site root has lost its path; try the same path over https.
@@ -40,7 +59,6 @@ export async function snapshot(url) {
     raw_sha256: r.body ? sha256(r.body) : null, text, text_sha256: text ? sha256(text) : null,
     availability: redirectedToRoot ? "dead-redirect" : r.status === 200 && text.length > 200 ? "fetched" : r.status === 200 ? "fetched-thin" : r.status === 403 || r.status === 401 ? "paywalled-or-blocked" : r.status === 404 ? "dead" : "unavailable",
   };
-  await save(key, snap);
   return snap;
 }
 

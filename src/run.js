@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.21.12", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.22.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -98,7 +98,7 @@ export function withArticleSources(claims, cited) {
 
 // Quote (free): S0–S2, a per-claim cost estimate from the passages that would be sent, and a price that clears it.
 export async function quote(oldid, { tier = "opening", claims: only, quote_id = null, ttl_ms = 15 * 60_000 } = {}) {
-  if (!TIERS[tier]) throw new Error(`unknown tier ${tier}`);
+  if (!TIERS[tier]) throw Object.assign(new Error(`unknown tier ${tier}: one of ${Object.keys(TIERS).join(", ")}`), { status: 400 });
   const { pinned, claims, sources } = await prepare(oldid, only);
   const model = TIERS[tier].reader_model;
   const reader = makeReader(undefined, model);
