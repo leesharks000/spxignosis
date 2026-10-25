@@ -25,7 +25,11 @@ export function s7Key(input, { legacyRelease = null } = {}) {
   // Everything the row is computed from: T, B, the strings, the names whose works count as the entity's, the division's
   // rule, the archive's read files, the protocol, models and mode.
   return sha256(JSON.stringify({ T: input.T.sha256, field: input.field.map((b) => [b.id, b.text_sha256 || b.availability]), aliases: input.aliases, works_by: input.works_by || [], about: ABOUT_RULE,
-    release: legacyRelease || readFiles(archiveRelease()), blog: blogIndexSha(), protocol: S7_PROTOCOL, models: MODELS, mode: mode() }));
+    release: legacyRelease || readFiles(archiveRelease()), blog: blogIndexSha(), protocol: S7_PROTOCOL, models: MODELS, mode: mode(),
+    // A commissioned object is also keyed by what was commissioned: its kind, its description, the act and its type
+    // (2026-10-25: two operator requests of one name with different descriptions reused one execution). Rows of the
+    // encyclopedia and of /non carry no object_kind, so their keys are as they were.
+    ...(input.object_kind ? { object: [input.object_kind, input.object_description || "", input.commission || "", input.entity?.type || ""] } : {}) }));
 }
 // Keys a reading or row was kept under before the archive was identified by its files: for each kept row of this entity
 // whose release shows the same read files as now, its key recomputed with that release (commit included) and accepted

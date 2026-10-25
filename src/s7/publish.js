@@ -10,8 +10,18 @@ export async function publicationState(s7, { fetchPublic = true } = {}) {
   if (!s7?.composed) return { state: "not composed", stages: { composed: false } };
   const rowRel = `datasets/negative-of-the-negative/v2/rows/${s7.row_key}.json`;
   const want = (s7.manifest?.files || []).find((f) => f.path === rowRel)?.sha256;
+  // Landed is observed in the archive's repository: the local checkout where there is one (the worker), else the
+  // archive's main branch as published (the deployed service holds no archive; 2026-10-25: it could never observe a
+  // landing). Its row file must hash to the landing tree's.
   const local = join(ARCHIVE, rowRel);
-  const landed = !!want && existsSync(local) && sha256(readFileSync(local)) === want;
+  let landed = !!want && existsSync(local) && sha256(readFileSync(local)) === want;
+  let landedAt = landed ? "the archive checkout" : null;
+  if (!landed && want && fetchPublic) {
+    try {
+      const r = await fetch(`https://raw.githubusercontent.com/leesharks000/alexanarch/main/${rowRel}`, { signal: AbortSignal.timeout(8000) });
+      if (r.ok && sha256(await r.text()) === want) { landed = true; landedAt = "the archive's main branch"; }
+    } catch {}
+  }
   const checked = !!s7.audit?.ran && !!s7.audit?.complete;
   let pub = { observed: false, detail: "not checked" };
   // Public means the site serves this version of the row: the row file the site serves hashes to the landing tree's
@@ -26,7 +36,7 @@ export async function publicationState(s7, { fetchPublic = true } = {}) {
   }
   const isPublic = pub.observed && pub.status === 200 && pub.version_matches;
   return { state: isPublic ? "public" : landed ? "landed" : checked ? "checked" : "composed",
-    stages: { composed: true, checked, landed, public: pub }, row: s7.row_key, url: s7.non_url, row_sha256: want || null,
+    stages: { composed: true, checked, landed, ...(landedAt ? { landed_observed_in: landedAt } : {}), public: pub }, row: s7.row_key, url: s7.non_url, row_sha256: want || null,
     provenance: s7.provenance || null,
     ...(s7.provenance?.class === "attested" ? { hold: "T is a composition the caller attests and the service did not observe: the row is held from landing until the registry's intake seats the composition as a capture" } : {}),
     note: landed ? null : "the row awaits landing in the archive, which its landing workflow does by itself; its landing tree is held by the service under its execution key" };
