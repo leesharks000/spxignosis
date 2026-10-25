@@ -20,8 +20,19 @@ export const stripe = KEY ? new Stripe(KEY, { apiVersion: "2026-05-27.preview" }
 export const LIVE = !!KEY && /^(sk|rk)_live_/.test(KEY);
 export const CARD_MINIMUM_USD = 0.5; // Stripe's minimum for a card charge
 
+// Mainnet when the Stripe account is live (2026-10-25: its Stablecoins and Crypto payment method is enabled), or when
+// Coinbase facilitator keys are set; GNOSIS_NETWORK overrides either way. The facilitator on mainnet is Coinbase's where
+// its keys are set, and otherwise PayAI's (https://facilitator.payai.network: no account or API key, network gas paid by
+// the facilitator, free credits held by the receiving address; on 2026-10-25 it read the standard exact (EIP-3009) USDC
+// authorization on Base mainnet and rejected only a dummy signature). Dexter (https://x402.dexter.cash, no account, no
+// fee) lists the same network and scheme and is set with GNOSIS_FACILITATOR; that day it answered verify requests with
+// "pricing unavailable; retry shortly". A facilitator only verifies the payer's signed authorization and submits it;
+// the authorization names the receiving address, so the funds go to Stripe's deposit address whatever relays them.
+export const PAYAI = "https://facilitator.payai.network";
+export const DEXTER = "https://x402.dexter.cash";
 export function x402Config() {
-  const mainnet = !!(process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET) && process.env.GNOSIS_NETWORK !== "eip155:84532";
+  const cdp = !!(process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET);
+  const mainnet = process.env.GNOSIS_NETWORK ? process.env.GNOSIS_NETWORK === "eip155:8453" : (cdp || LIVE);
   return {
     network: process.env.GNOSIS_NETWORK || (mainnet ? "eip155:8453" : "eip155:84532"),
     payTo: (process.env.STRIPE_DEPOSIT_ADDRESS || process.env.GNOSIS_PAY_TO || "").toLowerCase() || null,
@@ -56,12 +67,14 @@ export async function depositAddress() {
 
 export async function facilitatorConfig() {
   const { mainnet } = x402Config();
-  if (mainnet) {
+  if (process.env.GNOSIS_FACILITATOR) return { url: process.env.GNOSIS_FACILITATOR };
+  if (mainnet && process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET) {
     const { createFacilitatorConfig } = await import("@coinbase/x402");
     return createFacilitatorConfig(process.env.CDP_API_KEY_ID, process.env.CDP_API_KEY_SECRET);
   }
-  return { url: process.env.GNOSIS_FACILITATOR || "https://x402.org/facilitator" };
+  return { url: mainnet ? PAYAI : "https://x402.org/facilitator" };
 }
+export const facilitatorName = () => process.env.GNOSIS_FACILITATOR || (x402Config().mainnet ? (process.env.CDP_API_KEY_ID ? "Coinbase CDP" : PAYAI) : "https://x402.org/facilitator (test network)");
 
 // Records a settled x402 payment as a Stripe PaymentIntent. requirements.amount is in atomic USDC (6 decimals).
 export async function recordSettlement({ result, requirements }) {

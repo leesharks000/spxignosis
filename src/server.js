@@ -14,7 +14,7 @@ import { lookupName } from "./lookup.js";
 import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
 import { load, save, BLOB } from "./util.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
-import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
+import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, facilitatorName, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
 
 const { network: NETWORK, mainnet } = x402Config();
 // The receiving address: from the environment, or created through Stripe once crypto is approved (payments.js).
@@ -245,7 +245,7 @@ ${ops}
 }
 // Agents and scripts get the service description as JSON; a browser gets the same description as a page.
 app.get("/", (req, res) => {
-  const index = { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK}` : mainnet ? `not ready: no receiving address yet${DEPOSIT.error ? " (Stripe declined to create one: crypto not yet approved, or the key lacks the permission)" : ""}; the x402 routes answer 503` : "not configured yet: the x402 routes answer 503" },
+  const index = { ...INDEX, payments: { card: stripe ? (LIVE ? "live (Stripe Checkout)" : "test mode (Stripe sandbox)") : "not configured", agents: PAY_TO ? `x402 on ${NETWORK} (USDC; facilitator ${facilitatorName()})` : mainnet ? `not ready: no receiving address yet${DEPOSIT.error ? " (Stripe declined to create one: crypto not yet approved, or the key lacks the permission)" : ""}; the x402 routes answer 503` : "not configured yet: the x402 routes answer 503" },
     // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
     reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
     worker_start: DISPATCH.token ? "on request, and every ten minutes" : "every ten minutes (GitHub's schedule; no dispatch token set)",
@@ -548,4 +548,4 @@ app.get("/v1/results/:id/portable/:name", async (req, res) => {
 });
 
 const port = Number(process.env.PORT || 4402);
-app.listen(port, () => console.log(`SPXI-gnΩsis ${SERVICE.version} on :${port} · ${NETWORK}${mainnet ? " (mainnet, Coinbase facilitator)" : " (test network)"} · pay to ${PAY_TO} (${payToKind}) · cards ${stripe ? (LIVE ? "live" : "test") : "off"}`));
+app.listen(port, () => console.log(`SPXI-gnΩsis ${SERVICE.version} on :${port} · ${NETWORK}${mainnet ? ` (mainnet, facilitator ${facilitatorName()})` : " (test network)"} · pay to ${PAY_TO} (${payToKind}) · cards ${stripe ? (LIVE ? "live" : "test") : "off"}`));
