@@ -13,7 +13,7 @@ import { accounts } from "./accounts.js";
 import { lookupName } from "./lookup.js";
 import { handleMcp, MCP_PROTOCOL } from "./mcp.js";
 import { frontPage, orderPage, apiPage } from "./front.js";
-import { load, save, list, BLOB, sha256 } from "./util.js";
+import { load, save, list, BLOB, sha256, UA } from "./util.js";
 import { kept, undeliveredRefund } from "./cost.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
 import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, facilitatorName, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
@@ -204,7 +204,7 @@ app.use(express.json({ limit: "64kb" }));
 const INDEX = {
   service: SERVICE, network: NETWORK,
   operations: {
-    "POST /v1/quote": "free. body {oldid, tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
+    "POST /v1/quote": "free. body {oldid (or article: a Wikipedia link or title, pinned to its current revision), tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
     "POST /v1/openings/{quote_id}": "paid by agents (x402, USDC on Base, settling to the service's Stripe balance; answers 503 until a receiving address is set). Pays for a quote and starts its work; answers 202 with the status address, where the result id appears on delivery (an order that consults the archive is run by the archive worker). A quote already paid answers with its result, or where it stands, without a second charge; what the work did not use is refunded.",
     "GET /v1/sentence?text=&url=&mode=": "the sentence as you have it and the Wikipedia page it came from: free where it has been read (as recorded); otherwise 402 with the price, then the opening (two readings); mode=preliminary, one quick pass; mode=grounded, the opening with the archive's claims on the sentence from a commissioned /non row (two cents more; where no row holds the sentence, the commission is offered and nothing is charged)",
@@ -304,8 +304,23 @@ async function quoteAllowed(req) {
   await Promise.all([save(`limits/quotes/${hour}/all.json`, { n: (all?.n || 0) + 1 }), save(`limits/quotes/${hour}/${who}.json`, { n: (one?.n || 0) + 1 })]);
   return { ok: true };
 }
+// A Wikipedia link or title to its current revision, pinned (2026-10-25): the front page's form sent the browser to
+// Wikipedia's API, which throttles anonymous callers (429); the service asks with its own user agent.
+async function pinArticle(v) {
+  v = String(v || "").trim();
+  const id = v.match(/[?&]oldid=(\d+)/) || v.match(/^(\d+)$/);
+  if (id) return { oldid: Number(id[1]) };
+  const w = v.match(/wikipedia\.org\/wiki\/([^?#]+)/), t = v.match(/[?&]title=([^&#]+)/);
+  const title = (w ? decodeURIComponent(w[1]) : t ? decodeURIComponent(t[1].replace(/\+/g, " ")) : v).replace(/_/g, " ").trim();
+  if (!title || /^https?:/i.test(title)) throw Object.assign(new Error("article: a link to an English Wikipedia article, its title, or a revision id"), { status: 400 });
+  const r = await fetch(`https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=ids&redirects=1&format=json&formatversion=2&titles=${encodeURIComponent(title)}`, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15000) });
+  const pg = (await r.json())?.query?.pages?.[0];
+  if (!pg || pg.missing || !pg.revisions?.[0]?.revid) throw Object.assign(new Error(`English Wikipedia holds no article titled "${title}"`), { status: 404 });
+  return { oldid: pg.revisions[0].revid, title: pg.title };
+}
 app.post("/v1/quote", async (req, res) => {
   try {
+    if (req.body && !req.body.oldid && req.body.article && !req.body.object && !req.body.entity) req.body = { ...req.body, oldid: (await pinArticle(req.body.article)).oldid };
     const { oldid, entity, object, commission, tier = "opening", claims } = req.body || {};
     // A commission names what is done (open, construct) and the object it is done to (an entity, or an operator).
     // An object is always a commission: the archive is consulted on commission only.
@@ -329,7 +344,7 @@ app.post("/v1/quote", async (req, res) => {
     if (entity) return res.json(await quoteEntity(entity, { tier: objTier }));
     if (!/^\d+$/.test(String(oldid))) return res.status(400).json({ error: "oldid (a Wikipedia revision id) or entity {name, aliases?, type?, works_by?, capture?, sources?: [url]} is required" });
     res.json(await quote(Number(oldid), { tier, claims }));
-  } catch (e) { res.status(502).json({ error: String(e.message || e) }); }
+  } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }); }
 });
 
 // Payment records are kept apart from evidence. store/receipts/<quote_id>.json holds the settlement the facilitator

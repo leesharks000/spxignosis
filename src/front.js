@@ -119,6 +119,12 @@ pre{font:13px/1.5 var(--mono);background:var(--panel);border:1px solid var(--rul
 .agent{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px}
 footer{border-top:1px solid var(--rule);padding:22px 0 40px;font-size:.86rem;color:var(--muted)}
 footer a{color:var(--muted)}
+.chips{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:880px){.chips{grid-template-columns:1fr}}
+.chip{border:1px solid var(--rule-2);border-radius:8px;padding:12px 14px;background:var(--bg)}
+.chip-t{display:block;font-family:var(--serif);font-size:1.05rem;line-height:1.35;text-decoration:none;color:var(--ink)}.chip-t:hover{color:var(--red)}
+.chip-t::after{content:" ↗";font-family:var(--sans);font-size:.8em;color:var(--muted)}
+.chip-m{display:block;margin-top:6px;font-size:.82rem;color:var(--muted)}
 .spxi-instrument{font:12.5px/1.5 var(--mono);margin:0 0 10px;padding:.45em .7em;border-left:3px solid #8a5a00;background:rgba(138,90,0,.07)}
 /* order page */
 .steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:18px 0 24px;padding:0;list-style:none;counter-reset:s}
@@ -331,6 +337,10 @@ export function frontPage(index) {
 </div>
 </div>
 </div></section>
+<section class="band" id="documents" style="padding:36px 0"><div class="wrap">
+<p class="kicker">The documents</p>
+<ul class="chips"><li class="chip"><a class="chip-t" href="https://www.google.com/search?q=%22The%20Negative%20of%20the%20Negative%2C%20v2%20%E2%80%94%20the%20Compositional%20Edition%22" title="search for this title">The Negative of the Negative, v2 — the Compositional Edition</a><span class="chip-m">EA-NEGONT-02 v0.9 · the procedure a commission follows · <a href="https://www.alexanarch.org/s/records/1690/">#1690</a> · AXN:0700</span></li><li class="chip"><a class="chip-t" href="https://www.google.com/search?q=%22Opening%20the%20Encyclopedia%3A%20The%20Entity%20as%20Ontological%20Commodity%20Form%22" title="search for this title">Opening the Encyclopedia: The Entity as Ontological Commodity Form</a><span class="chip-m">EA-WIKI-OPEN-01 v1.1 · the specification of the service · <a href="https://www.alexanarch.org/s/records/1697/">#1697</a> · AXN:0708</span></li><li class="chip"><a class="chip-t" href="https://www.google.com/search?q=%22SPXI-gn%CE%A9sis%3A%20Opening%20What%20Is%20Composed%20and%20Constructing%20What%20Is%20Not%22" title="search for this title">SPXI-gnΩsis: Opening What Is Composed and Constructing What Is Not</a><span class="chip-m">EA-MPAI-GNOSIS-01 v1.0 · the service's metadata packet · <a href="https://www.alexanarch.org/s/records/1703/">#1703</a> · AXN:0726</span></li></ul>
+</div></section>
 </main>` + FOOT(index) + `<script>${FRONT_JS}</script></body></html>`;
 }
 
@@ -349,20 +359,10 @@ const FRONT_JS = `
   function busy(form,on,label){var b=$('button[type=submit]',form);b.disabled=on;if(label)b.textContent=label}
   function post(body){return fetch('/v1/quote',{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('the service answered '+r.status));return j})})}
   function toOrder(j){location.href='/order/'+encodeURIComponent(j.quote_id)}
-  // a Wikipedia link or title to its pinned revision
-  function revision(v){
-    v=v.trim(); var m=v.match(/[?&]oldid=(\\d+)/); if(m) return Promise.resolve({oldid:Number(m[1])});
-    if(/^\\d+$/.test(v)) return Promise.resolve({oldid:Number(v)});
-    var t=v; var w=v.match(/wikipedia\\.org\\/wiki\\/([^?#]+)/); if(w) t=decodeURIComponent(w[1]); var q=v.match(/[?&]title=([^&#]+)/); if(!w&&q) t=decodeURIComponent(q[1].replace(/\\+/g,' '));
-    t=t.replace(/_/g,' ');
-    return fetch('https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=ids&redirects=1&format=json&origin=*&titles='+encodeURIComponent(t)).then(function(r){return r.json()}).then(function(j){
-      var p=j.query&&j.query.pages&&j.query.pages[Object.keys(j.query.pages)[0]]; if(!p||p.missing!==undefined||!p.revisions) throw new Error('English Wikipedia holds no article titled “'+esc(t)+'”');
-      return {oldid:p.revisions[0].revid,title:p.title}})
-  }
   $('#p-open').addEventListener('submit',function(e){e.preventDefault();var f=e.target,a=$('#o-article').value,c=$('#o-capture').value.trim(),tier=$('input[name=tier]:checked',f).value;
     if(!a.trim()&&!c){say(f,'Name a Wikipedia article, or an AI answer by the name it is about.',1);return}
     busy(f,true,'Quoting…');say(f,'');
-    var go=a.trim()?revision(a).then(function(r){if(r.title)$('#o-rev').innerHTML='Pinned: “'+esc(r.title)+'”, revision '+r.oldid+'.';return post({oldid:r.oldid,tier:tier})}):post({commission:'open',object:{kind:'entity',name:c}});
+    var go=a.trim()?post({article:a.trim(),tier:tier}):post({commission:'open',object:{kind:'entity',name:c}});
     go.then(toOrder).catch(function(x){busy(f,false,'Get a free quote');say(f,esc(x.message),1)})});
   $('#p-construct').addEventListener('submit',function(e){e.preventDefault();var f=e.target,kind=$('input[name=kind]:checked',f).value,name=$('#c-name').value.trim(),desc=$('#c-desc').value.trim();
     var strings=$('#c-strings').value.split(',').map(function(s){return s.trim()}).filter(Boolean), sources=$('#c-sources').value.split(/\\s+/).filter(function(s){return /^https?:\\/\\//.test(s)});
