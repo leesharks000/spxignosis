@@ -29,7 +29,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.17.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.17.2", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -137,7 +137,7 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
     claims_read: lines.length, claims_read_against_the_article: lines.filter((l) => !claims.find((c) => c.id === l.id).cited).length,
     claims_ledgered: lines.filter((l) => l.ledgered).length,
     lines, s7: s7 || undefined, package_price_usd: package_price || undefined,
-    estimated_cost_usd: Math.round(est_cost * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
+    estimated_cost_usd: Math.round(est_cost * 1e4) / 1e4, max_price_usd: max, currency: "USD (card, Stripe Checkout); agents pay the same amount in USDC once x402 is configured",
     pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
       measured_cost_per_claim: MEASURED[model] || null, execution_budget_usd: Math.round((max / POLICY.sentence_margin) * 100) / 100,
       rule: "price per claim = max(floor_per_claim, estimated cost × sentence_margin), rounded up to the cent; the archive's consultation priced in two stages from the traversal it would run, each max(its floor, estimated cost × margin): the reading (traversal, admission, extraction, the ontology read twice) and the construction (the knowledge object, compression, delta and audit); a stage is charged when it delivers, at its measured cost × margin, never above its line, and a stage that does not deliver is refunded; work already in the ledger at the ledgered rates",
@@ -265,7 +265,7 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
     tier, tier_steps: spec.transcript?.text ? `S3 on each sentence of T against its cards (at most 30), S7–S9${spec.transcript.supplied ? "; the supplied composition was discerned at the quote, and its row is held from landing until the registry seats it" : ""}` : compare ? "S0′ (the comparison article, under Wikipedia's content policies, notability not applied), S3 on each of its sentences, S7–S8" : "S7–S8: the object composed from the archive and the named sources, with no T",
     reader_model: TIERS[tier].reader_model, lines: [], s7, construction: !compare ? null : { protocol: CONSTRUCTION_PROTOCOL, est_cost_usd: Math.round(construct * 1e4) / 1e4, price_usd: construct_price },
     sentence_price_usd: sentence_price, sentences_estimated: nSent, package_price_usd: package_price || undefined,
-    estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USDC (test network)",
+    estimated_cost_usd: Math.round((construct + nSent * perSentEst + e.est_cost_usd) * 1e4) / 1e4, max_price_usd: max, currency: "USD (card, Stripe Checkout); agents pay the same amount in USDC once x402 is configured",
     pricing: { table: PRICE_TABLE.version, floor_per_claim: POLICY.floor_per_claim[tier], sentence_margin: POLICY.sentence_margin, margin: POLICY.margin,
       rule: "each constructed sentence's check at max(floor_per_claim, estimated cost × sentence_margin); the construction and the archive's consultation with the row each at max(floor, estimated cost × margin); the charge is for completed work only" },
     execution_contract: {

@@ -15,7 +15,9 @@ import Stripe from "stripe";
 
 const KEY = process.env.STRIPE_SECRET_KEY || null;
 export const stripe = KEY ? new Stripe(KEY, { apiVersion: "2026-05-27.preview" }) : null;
-export const LIVE = !!KEY && KEY.startsWith("sk_live_");
+// A live key is a secret key (sk_live_) or a restricted key (rk_live_); the operator's is restricted (2026-10-25: the index
+// reported a live account as the sandbox).
+export const LIVE = !!KEY && /^(sk|rk)_live_/.test(KEY);
 export const CARD_MINIMUM_USD = 0.5; // Stripe's minimum for a card charge
 
 export function x402Config() {
