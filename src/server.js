@@ -50,6 +50,21 @@ async function cardWork(q, s, id, prior) {
   await runCard(q, id, { paid, payment_intent: s.payment_intent });
 }
 
+// The worker is started the moment there is work for it (2026-10-25: GitHub's schedule starts late or skips): a
+// quote request or a paid order that consults the archive dispatches the workflow through GitHub's API, with a token
+// that can only run this repository's workflows (GITHUB_DISPATCH_TOKEN). The ten-minute schedule stays as the backstop;
+// a dispatch while a run is going is held by the workflow's concurrency group. The last attempt is recorded.
+const DISPATCH = { repo: "leesharks000/spxignosis", workflow: "archive-worker.yml", token: process.env.GITHUB_DISPATCH_TOKEN || null };
+async function startWorker(why) {
+  if (!DISPATCH.token) return;
+  const r = await fetch(`https://api.github.com/repos/${DISPATCH.repo}/actions/workflows/${DISPATCH.workflow}/dispatches`, {
+    method: "POST", signal: AbortSignal.timeout(15000),
+    headers: { Authorization: `Bearer ${DISPATCH.token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "SPXI-gnosis" },
+    body: JSON.stringify({ ref: "main" }),
+  }).then(async (x) => ({ status: x.status, body: x.status === 204 ? "" : (await x.text()).slice(0, 200) })).catch((e) => ({ status: 0, body: String(e.message || e) }));
+  await save("worker/dispatch.json", { why, at: new Date().toISOString(), status: r.status, ok: r.status === 204, detail: r.body || undefined }).catch(() => {});
+}
+
 // One invocation of a paid card order. The platform stops an invocation at about five minutes; a run that reaches its
 // time budget (RUN_SECONDS) hands itself on to a fresh invocation through /v1/quotes/{id}/continue, where the claims
 // already read come from the ledger, until the order is delivered (2026-10-24: "this needs to be able to run long
@@ -61,6 +76,7 @@ async function runCard(q, id, { paid, payment_intent, hop = 0 }) {
   if (needsArchive(q) && !HAS_ARCHIVE) {
     if (!(await load(`${WORKER.runs}/${id}.json`))) await save(`${WORKER.runs}/${id}.json`, { quote_id: id, token: randomUUID(), paid, payment_intent, queued: new Date().toISOString() });
     await save(`progress/${id}.json`, { stage: "queued", detail: "queued for the archive worker, which runs orders that consult the archive", at: new Date().toISOString() });
+    await startWorker(`run ${id}`);
     return;
   }
   try {
@@ -157,6 +173,7 @@ app.get("/", (req, res) => {
   const index = { ...INDEX, payments: PAY_TO ? "configured" : "not configured yet: paid routes answer 503",
     // whether the live reader can run: the key's presence only, never its value (2026-10-24: the first card test read no sentence)
     reader: (process.env.GNOSIS_READER || "anthropic") === "replay" ? "replay (recorded readings)" : process.env.ANTHROPIC_API_KEY ? "live: the model key is set" : "not ready: ANTHROPIC_API_KEY is not set, so no sentence can be read",
+    worker_start: DISPATCH.token ? "on request, and every ten minutes" : "every ten minutes (GitHub's schedule; no dispatch token set)",
     storage: BLOB ? "private Vercel Blob, with this instance's /tmp in front" : process.env.VERCEL ? "local only (/tmp, not shared between instances): connect a Blob store" : "local folder" };
   if (!req.accepts(["application/json", "text/html"]) || req.accepts(["application/json", "text/html"]) === "application/json") return res.json(index);
   res.type("html").send(frontPage(index));
@@ -202,8 +219,9 @@ app.post("/v1/quote", async (req, res) => {
       if (!object && !entity && !/^\d+$/.test(String(oldid))) return res.status(400).json({ error: "oldid (a Wikipedia revision id) or entity {name, aliases?, type?, works_by?, capture?, sources?: [url]} is required" });
       const id = `Q-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
       await save(`${WORKER.quote_requests}/${id}.json`, { quote_id: id, body: req.body, tier: object || entity ? objTier : tier, at: new Date().toISOString() });
+      waitUntil(startWorker(`quote ${id}`));
       return res.status(202).json({ quote_id: id, state: "estimating", status: `/v1/quotes/${id}/status`,
-        note: "the archive is consulted on this tier: the quote is priced by the archive worker, which traverses the archive (usually within half an hour); its price appears at the status address, and it holds for a day" });
+        note: `the archive is consulted on this tier: the quote is priced by the archive worker, which traverses the archive (${DISPATCH.token ? "started now; usually a few minutes" : "on its schedule, usually within half an hour"}); its price appears at the status address, and it holds for a day` });
     }
     if (object) return res.json(await quoteEntity({ ...object, ...(commission ? { commission } : {}) }, { tier: objTier }));
     // An entity the encyclopedia does not hold is opened from its name and strings, with T from the Capture Registry or
