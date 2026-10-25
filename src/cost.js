@@ -10,6 +10,8 @@ export const PRICE_TABLE = {
 };
 
 // usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }
+// Up to the cent, without float noise turning an exact cent into the next one (5.1000000000000005 is $5.10).
+export const ceilCent = (x) => Math.ceil(Math.round(x * 1e6) / 1e4) / 100;
 export function callCost(model, u = {}) {
   let p = PRICE_TABLE.models[model];
   if (!p) return null;
@@ -53,14 +55,15 @@ export function estimateClaim(model, promptTokens, outFirst = 1200, outSecond = 
 // fact-check listed at $0.10 had no paying buyers in its first month (observed 2026-10-23). The archive is consulted
 // only on commission, priced from its traversal at the commission margin.
 export const POLICY = {
-  margin: 2.0, // commissions: S7, the construction, the package (3.0 until 2026-10-24: "we might need to bring it down to 2x for the commissioned article")
+  margin: 3.0, // commissions: S7, the construction, the package (2.0 from 2026-10-24 to 2026-10-25; back to 3.0 for the full article while the service stabilizes and failure-adjusted margin is measured)
   sentence_margin: 1.5,
   floor_per_claim: { check: 0.01, ledger: 0.05, opening: 0.05, commission: 0.05, portable: 0.05 }, // the list price of a sentence
   ledgered_per_claim: { check: 0.005, ledger: 0.01, opening: 0.01, commission: 0.01, portable: 0.01 }, // a reading already in the ledger
   floor_s7: 1.0, // the archive's consultation and the /non row, fresh: the two stages' floors together
   floor_s7_reading: 0.75, // the reading: traversal, admission, extraction, the ontology read twice (2026-10-25)
   floor_s7_construction: 0.25, // the construction: the knowledge object, compression, delta, audit
-  s7_budget_ratio: 1.5, // model spending on S7 stops at price / ratio
+  s7_budget_ratio: 1.5, // the budget of a quote made before 2026-10-25: price / ratio
+  s7_contingency: 1.5, // model spending on a stage stops at its estimated cost × contingency, never above its price: the allowance is set from the work, apart from the margin (2026-10-25)
   ledgered_s7: 0.10, // a /non row already composed for the same input
   grounded_sentence: 0.02, // a sentence served the archive's claims on it from a commissioned row, added to its own price
   portable_package: 0.25, // the knowledge object packaged, charged when the audit marks no unit
@@ -74,8 +77,11 @@ export function s7Stages(estimate, { readingLedgered = false } = {}) {
   const st = estimate?.stages || {};
   const line = (names, floor, ledgered) => {
     const est = ledgered ? 0 : names.reduce((n, k) => n + (st[k] || 0), 0);
-    const price = ledgered ? POLICY.ledgered_s7 : Math.ceil(Math.max(floor, est * POLICY.margin) * 100) / 100;
-    return { est_cost_usd: Math.round(est * 1e4) / 1e4, price_usd: price, budget_usd: Math.round((price / POLICY.s7_budget_ratio) * 100) / 100, ...(ledgered ? { from_checkpoint: true } : {}) };
+    const price = ledgered ? POLICY.ledgered_s7 : ceilCent(Math.max(floor, est * POLICY.margin));
+    // The allowance follows the work: the estimate times the contingency, at least the floor's share of cost, never above
+    // the price. The margin above it funds failed work, payment fees and maintenance (2026-10-25).
+    const budget = ledgered ? 0 : Math.min(price, Math.max(est * POLICY.s7_contingency, floor / POLICY.margin));
+    return { est_cost_usd: Math.round(est * 1e4) / 1e4, price_usd: price, budget_usd: Math.round(budget * 100) / 100, ...(ledgered ? { from_checkpoint: true } : {}) };
   };
   return { reading: line(S7_STAGES.reading, POLICY.floor_s7_reading, readingLedgered), construction: line(S7_STAGES.construction, POLICY.floor_s7_construction, false) };
 }
@@ -85,9 +91,9 @@ export function stageCharge(stage, quoted) {
   if (!stage?.delivered || !quoted) return 0;
   if (quoted.from_checkpoint || stage.from_checkpoint) return Math.min(quoted.price_usd, POLICY.ledgered_s7);
   const floor = stage.name === "construction" ? POLICY.floor_s7_construction : POLICY.floor_s7_reading;
-  return Math.min(quoted.price_usd, Math.ceil(Math.max(floor, (stage.cost_usd || 0) * POLICY.margin) * 100) / 100);
+  return Math.min(quoted.price_usd, ceilCent(Math.max(floor, (stage.cost_usd || 0) * POLICY.margin)));
 }
 export function priceClaim(tier, estCost, ledgered) {
   if (ledgered) return POLICY.ledgered_per_claim[tier];
-  return Math.ceil(Math.max(POLICY.floor_per_claim[tier], estCost * POLICY.sentence_margin) * 100) / 100;
+  return ceilCent(Math.max(POLICY.floor_per_claim[tier], estCost * POLICY.sentence_margin));
 }

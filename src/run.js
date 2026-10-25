@@ -23,13 +23,13 @@ import { archiveRelease } from "./s7/traverse.js";
 import { validateReading, reconcile, NORMALIZATION, deltaText } from "./validate.js";
 import { sha256, save, load, STORE } from "./util.js";
 import { renderOpenedHTML, annotations } from "./emit.js";
-import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED, s7Stages, stageCharge } from "./cost.js";
+import { estimateTokens, estimateClaim, priceClaim, callCost, PRICE_TABLE, POLICY, MEASURED, s7Stages, stageCharge, ceilCent } from "./cost.js";
 import { packageRow, writePackage } from "./writer.js";
 
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.17.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.17.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -148,7 +148,7 @@ export async function quote(oldid, { tier = "opening", claims: only, quote_id = 
       search_scope: ADMITS.has(tier) ? "the sources the article cites (the disclosed field B); and the Crimson Hexagonal Archive by its own procedure (EA-NEGONT-02 v0.9 §3.4): every deposit text and every blog post the blog–deposit map does not assign to a deposit, scanned for the entity's strings (the article's title and the names its lead gives) at D, R and O; one citation hop from the deposits admitted by reading, screened by string; admission by two reading passes" : "cited sources only at this tier",
       archive_release: s7?.estimate?.release || (s7 ? archiveRelease() : null),
       publication: ADMITS.has(tier) ? `the entity's /non row is public (CC BY 4.0) at ${s7.non_url} once landed: the opening contributes to the opened Wikipedia` : undefined,
-      execution_budget: s7 ? `model spending for the archive's consultation stops at $${s7.budget_usd} (the quoted lines divided by ${POLICY.s7_budget_ratio})${s7.stages ? `, and $${s7.stages.construction.budget_usd} of it is held for the construction while the reading runs` : ""}; passes beyond it are recorded as not run, and the row is composed from what was read, marked` : undefined,
+      execution_budget: s7 ? `model spending for the archive's consultation stops at $${s7.budget_usd} (each stage's estimated cost × ${POLICY.s7_contingency}, never above its line)${s7.stages ? `, and $${s7.stages.construction.budget_usd} of it is held for the construction while the reading runs` : ""}; passes beyond it are recorded as not run, and the row is composed from what was read, marked` : undefined,
       deliverables: s7 ? { reading: "the reading dossier: the traversal, the admitted deposits with their readings, the archive and field ledgers with every claim's quote checked, and both ontology readings with the determination of the case and ρ (in the landing tree)", construction: "the knowledge object, its compression and the field-only arm, the delta read against T, and the reverse entailment audit (the /non row)" } : undefined,
       context_rule: "passages first; when a reading pass reports that the passages lack what a judgment needs, the passages are widened and the claim is read again, once",
       retrieval_budget: { max_sources: 100, max_bytes_per_source: 5_000_000 },
@@ -250,8 +250,8 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
   const s7 = { id: "S7", row: input.row, entity: input.entity.name, non_url: NON_URL(input.entity.slug), key: null, ledgered: false, estimate: e, stages,
     est_cost_usd: Math.round((stages.reading.est_cost_usd + stages.construction.est_cost_usd) * 1e4) / 1e4,
     price_usd: Math.round((stages.reading.price_usd + stages.construction.price_usd) * 100) / 100 };
-  s7.budget_usd = Math.round(((s7.price_usd + Math.ceil(construct * POLICY.margin * 100) / 100) / POLICY.s7_budget_ratio) * 100) / 100;
-  const construct_price = construct ? Math.ceil(Math.max(0.10, construct * POLICY.margin) * 100) / 100 : 0;
+  s7.budget_usd = Math.round((stages.reading.budget_usd + stages.construction.budget_usd + construct * POLICY.s7_contingency) * 100) / 100;
+  const construct_price = construct ? ceilCent(Math.max(0.10, construct * POLICY.margin)) : 0;
   const package_price = tier === "portable" ? POLICY.portable_package : 0;
   const max = Math.round((construct_price + nSent * sentence_price + s7.price_usd + package_price) * 100) / 100;
   const q = {
@@ -473,7 +473,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
     budget_usd: q.max_price_usd ? q.max_price_usd / POLICY.sentence_margin : Infinity });
   const { entries, evidence, breaches } = s3;
   let completed = s3.completed, charge = s3.charge, actual = s3.actual + preLog.cost();
-  if (construction?.article && q.construction) charge += Math.min(q.construction.price_usd, Math.ceil(Math.max(0.10, preLog.cost() * POLICY.margin) * 100) / 100);
+  if (construction?.article && q.construction) charge += Math.min(q.construction.price_usd, ceilCent(Math.max(0.10, preLog.cost() * POLICY.margin)));
   // S7–S8: the archive consulted by its own procedure; the entity's /non row composed and written for landing.
   let s7 = null;
   if (q.s7) {
@@ -511,7 +511,7 @@ export async function runOpening(quoteId, { onProgress = () => {}, deadline = In
       s7.stages.reading.charge_usd = stageCharge(s7.stages.reading, q.s7.stages.reading);
       s7.stages.construction.charge_usd = stageCharge(s7.stages.construction, q.s7.stages.construction);
       s7.charge_usd = Math.round((s7.stages.reading.charge_usd + s7.stages.construction.charge_usd) * 100) / 100;
-    } else if (s7.composed) s7.charge_usd = Math.min(q.s7.price_usd, Math.ceil(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin) * 100) / 100);
+    } else if (s7.composed) s7.charge_usd = Math.min(q.s7.price_usd, ceilCent(Math.max(POLICY.floor_s7, (s7.cost_usd || 0) * POLICY.margin)));
     charge += s7.charge_usd || 0;
     // Each sentence of the article, with what the archive's claims do to it (the ontology pass's alignment).
     const { row, ledger } = await readLanding(s7, input.row);
