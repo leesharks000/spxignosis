@@ -17,6 +17,7 @@ import { frontPage, orderPage, apiPage } from "./front.js";
 import { load, save, list, claim, BLOB, sha256, UA } from "./util.js";
 import { kept, undeliveredRefund } from "./cost.js";
 import { prepareSentence, readSentence, requestId } from "./sentence.js";
+import { randomOpenPick, randomConstructBody, RANDOM_POOLS } from "./random.js";
 import { stripe, LIVE, x402Config, depositAddress, facilitatorConfig, facilitatorName, recordSettlement, checkoutFor, verifyWebhook, refundUnused, CARD_MINIMUM_USD } from "./payments.js";
 
 const { network: NETWORK, mainnet } = x402Config();
@@ -239,7 +240,7 @@ app.use((e, req, res, next) => {
 const INDEX = {
   service: SERVICE, network: NETWORK,
   operations: {
-    "POST /v1/quote": "free. body {oldid (or article: a Wikipedia link or title, pinned to its current revision), tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an entity the encyclopedia does not hold, {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
+    "POST /v1/quote": "free. body {oldid (or article: a Wikipedia link or title, pinned to its current revision), tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an object (an entity, whether or not the encyclopedia holds it, or an operator), {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted; or {random: open|construct, tier?, pool?: wikipedia|archive}: the service picks a random Wikipedia article and one sentence in it that cites a source (open, read at tier check or opening), or, for construct, a random Wikipedia article, constructed as an alternative to it from the sources it cites, or an entity the archive names with no /non entry (pool chosen at random unless named), and the quote carries the pick as random. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
     "POST /v1/openings/{quote_id}": "paid by agents (x402, USDC on Base, settling to the service's Stripe balance; answers 503 until a receiving address is set). Pays for a quote and starts its work; answers 202 with the status address, where the result id appears on delivery (an order that consults the archive is run by the archive worker). A quote already paid answers with its result, or where it stands, without a second charge; what the work did not use is refunded.",
     "GET /v1/sentence?text=&url=&mode=": "the sentence as you have it and the Wikipedia page it came from: free where it has been read (as recorded); otherwise 402 with the price, then the opening (two readings); mode=preliminary, one quick pass; mode=grounded, the opening with the archive's claims on the sentence from a commissioned /non row (two cents more; where no row holds the sentence, the commission is offered and nothing is charged)",
@@ -281,7 +282,7 @@ Jack said, "The foundations of this world are unsound, and the foundations of th
 
 ${SERVICE.name} ${SERVICE.version}, protocol ${SERVICE.protocol}. SPXI method 0.17 (the opening), also 0.16 (the Negative of the Negative): https://www.spxi.dev/methods/#m-0-17
 
-A reader of this file finds the service description as JSON at https://gnosis.spxi.dev/ (Accept: application/json). A quote is free: POST https://gnosis.spxi.dev/v1/quote with {"oldid": <revision id>, "tier": "check" | "opening" | "commission"} or, for an entity the encyclopedia does not hold, {"object": {"name": …}}. Prices derive from measured model cost: typically, as of 2026-10-25, a sentence is 2¢ checked and 22¢ opened; a commission adds the archive's consultation, priced from its traversal. People pay by card (Stripe Checkout); agents pay per request over x402 (USDC on Base mainnet), and the same requests are served as MCP tools at POST https://gnosis.spxi.dev/mcp. GET https://gnosis.spxi.dev/v1/non?name=<name> finds a /non entry free.
+A reader of this file finds the service description as JSON at https://gnosis.spxi.dev/ (Accept: application/json). A quote is free: POST https://gnosis.spxi.dev/v1/quote with {"oldid": <revision id>, "tier": "check" | "opening" | "commission"} or, for an object, {"object": {"name": …}}: an entity the encyclopedia does not hold gets its first account, and one it holds gets an alternative to its article; {"random": "open"} or {"random": "construct"} lets the service pick, and the quote says what it picked. Prices derive from measured model cost: typically, as of 2026-10-25, a sentence is 2¢ checked and 22¢ opened; a commission adds the archive's consultation, priced from its traversal. People pay by card (Stripe Checkout); agents pay per request over x402 (USDC on Base mainnet), and the same requests are served as MCP tools at POST https://gnosis.spxi.dev/mcp. GET https://gnosis.spxi.dev/v1/non?name=<name> finds a /non entry free.
 
 ## The Negative of the Negative
 
@@ -355,6 +356,23 @@ async function pinArticle(v) {
 }
 app.post("/v1/quote", async (req, res) => {
   try {
+    // A random request (2026-10-26): the service picks the article and sentence, or the object, and the quote says
+    // what it picked. Opening reads one sentence at the tier asked; constructing continues as any construction.
+    if (req.body?.random) {
+      const { random: act, pool, tier: rt } = req.body;
+      if (!["open", "construct"].includes(act)) return res.status(400).json({ error: "random is open or construct" });
+      const lim = await quoteAllowed(req);
+      if (!lim.ok) return res.status(lim.status).set("Retry-After", String(lim.retry)).json({ error: lim.why, retry_after_seconds: lim.retry });
+      if (act === "open") {
+        const tier = rt || "opening";
+        if (!["check", "opening"].includes(tier)) return res.status(400).json({ error: "a random sentence is checked (tier check) or opened (tier opening)" });
+        const p = await randomOpenPick();
+        const q = await quote(p.oldid, { tier, claims: [p.claim_id] });
+        await save(`quotes/${q.quote_id}.json`, { ...q, random: p.random, only: [p.claim_id] });
+        return res.json({ ...q, random: p.random });
+      }
+      req.body = { ...(await randomConstructBody({ pool })), ...(rt ? { tier: rt } : {}) };
+    }
     if (req.body && !req.body.oldid && req.body.article && !req.body.object && !req.body.entity) req.body = { ...req.body, oldid: (await pinArticle(req.body.article)).oldid };
     const { oldid, entity, object, commission, tier = "opening", claims } = req.body || {};
     // A commission names what is done (open, construct) and the object it is done to (an entity, or an operator).
@@ -370,11 +388,17 @@ app.post("/v1/quote", async (req, res) => {
       const id = `Q-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
       await save(`${WORKER.quote_requests}/${id}.json`, { quote_id: id, body: req.body, tier: object || entity ? objTier : tier, at: new Date().toISOString() });
       waitUntil(startWorker(`quote ${id}`));
-      return res.status(202).json({ quote_id: id, state: "estimating", status: `/v1/quotes/${id}/status`,
+      return res.status(202).json({ quote_id: id, state: "estimating", status: `/v1/quotes/${id}/status`, ...(req.body.random ? { random: req.body.random } : {}),
         note: `the archive is consulted on this tier: the quote is priced by the archive worker, which traverses the archive (${DISPATCH.token ? "started now; usually a few minutes" : "on its schedule, usually within half an hour"}); its price appears at the status address, and it holds for a day` });
     }
-    if (object) return res.json(await quoteEntity({ ...object, ...(commission ? { commission } : {}) }, { tier: objTier }));
-    // An entity the encyclopedia does not hold is opened from its name and strings, with T from the Capture Registry or
+    if (object) {
+      const q = await quoteEntity({ ...object, ...(commission ? { commission } : {}) }, { tier: objTier });
+      if (!req.body.random) return res.json(q);
+      const stored = await load(`quotes/${q.quote_id}.json`);
+      await save(`quotes/${q.quote_id}.json`, { ...stored, random: req.body.random });
+      return res.json({ ...q, random: req.body.random });
+    }
+    // An object is opened from its name and strings, with T from the Capture Registry or
     // constructed from sources the service fetches; a composition the caller supplies is refused.
     if (entity) return res.json(await quoteEntity(entity, { tier: objTier }));
     if (!/^\d+$/.test(String(oldid))) return res.status(400).json({ error: "oldid (a Wikipedia revision id) or entity {name, aliases?, type?, works_by?, capture?, sources?: [url]} is required" });
@@ -500,7 +524,7 @@ app.get("/v1/quotes/:quote_id/status", async (req, res) => {
   if (!q) {
     const [rq, qe] = await Promise.all([load(`${WORKER.quote_requests}/${id}.json`), load(`${WORKER.quote_errors}/${id}.json`)]);
     if (qe) return res.json({ quote_id: id, state: "not quoted", error: qe.error, at: qe.at });
-    if (rq) return res.json({ quote_id: id, state: "estimating", requested: rq.at, worker: WORKER.where, note: "the archive worker has not priced it yet" });
+    if (rq) return res.json({ quote_id: id, state: "estimating", requested: rq.at, worker: WORKER.where, note: "the archive worker has not priced it yet", ...(rq.body?.random ? { random: rq.body.random } : {}) });
     return res.status(404).json({ error: "unknown quote" });
   }
   const rc = await load(`receipts/${id}.json`), out = await load(`delivered/${id}.json`), pr = await load(`progress/${id}.json`), rf = await load(`refunds/${id}.json`);

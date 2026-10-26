@@ -59,3 +59,5 @@ grep -q 'success_url: `${base}/order/' src/payments.js && echo "ok   pages: the 
 mkdir -p "$S/break-unit" "$S/break-http"
 GNOSIS_STORE="$S/break-unit" node test/break-probe.mjs
 node test/break-http.mjs "$S/break-http"
+# The random request (2026-10-26): the pick is a cited sentence of a pinned article, or an object from the pool asked, and is described.
+node test/random-probe.mjs || exit 1

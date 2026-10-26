@@ -38,6 +38,8 @@ async function priceOne(id) {
     const q = object ? await quoteEntity({ ...object, ...(commission ? { commission } : {}) }, { tier: rq.tier, quote_id: id, ttl_ms: QUOTE_TTL })
       : entity ? await quoteEntity(entity, { tier: rq.tier, quote_id: id, ttl_ms: QUOTE_TTL })
       : await quote(Number(oldid), { tier: rq.tier, claims, quote_id: id, ttl_ms: QUOTE_TTL });
+    // A random request's pick travels with its quote (2026-10-26).
+    if (rq.body?.random) await save(`quotes/${id}.json`, { ...(await load(`quotes/${id}.json`)), random: rq.body.random });
     console.log(`quoted ${id}: ${q.tier}, $${q.max_price_usd}`);
   } catch (e) {
     await save(`${WORKER.quote_errors}/${id}.json`, { quote_id: id, error: String(e.message || e).slice(0, 600), at: new Date().toISOString() });
