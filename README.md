@@ -4,7 +4,7 @@ Opens existing compositions against their sources and constructs sourced knowled
 
 *Fund the counterinfrastructure. Rebuild the foundations of the world.*
 
-> Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I am making all things new.” — after [The Gospel of Antioch](https://www.alexanarch.org/s/records/71/), saying 11, and Revelation 21:5, its order inverted
+> Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I am making everything new.” — after [The Gospel of Antioch](https://www.alexanarch.org/s/records/71/), saying 11, and Revelation 21:5, its order inverted
 
 SPXI methods: the opening is [0.17](https://www.spxi.dev/methods/#m-0-17) and /non is [0.16](https://www.spxi.dev/methods/#m-0-16) of the [SPXI method inventory](https://www.spxi.dev/methods/).
 
