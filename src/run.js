@@ -30,7 +30,7 @@ import { packageRow, writePackage } from "./writer.js";
 // How many claims are read at once, and how long one invocation reads before it hands the run on (seconds).
 export const READ_CONCURRENCY = Number(process.env.GNOSIS_READ_CONCURRENCY || 6);
 export const RUN_SECONDS = Number(process.env.GNOSIS_RUN_SECONDS || 210);
-export const SERVICE = { name: "SPXI-gnΩsis", version: "0.23.0", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
+export const SERVICE = { name: "SPXI-gnΩsis", version: "0.23.1", protocol: "EA-WIKI-OPEN-01 v1.1 (#1697)" };
 export const NON_URL = (entity) => `https://www.alexanarch.org/non/${entity}/`;
 
 // Which model reads at which tier. Check runs on the small model; openings on the middle one.
@@ -324,7 +324,7 @@ export async function quoteEntity(spec, { tier = "commission", quote_id = null, 
 
 // S3 over a set of sentences: each read against the sources it cites, two passes, code checks, reconciliation; the
 // claim ledger serves any sentence whose state matches. Shared by the encyclopedia path and the constructed article.
-export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline = Infinity, concurrency = READ_CONCURRENCY, runCache = null, budget_usd = Infinity }) {
+export async function readSentences({ claims, sources, pinned, model, reader, priceOf, onProgress, usage, deadline = Infinity, concurrency = READ_CONCURRENCY, runCache = null, budget_usd = Infinity, inference = true }) {
   const E = [], V = [], B = [];
   let completed = 0, charge = 0, actual = 0;
   // One claim's reading; claims are read several at a time (2026-10-24: one at a time, an eight-sentence check outran
@@ -348,11 +348,14 @@ export async function readSentences({ claims, sources, pinned, model, reader, pr
     // The order's spend never passes its execution budget (its price over the sentence margin): past it, a claim is not
     // read, is recorded as such, and is not charged (2026-10-24).
     else if (!r && actual >= budget_usd) err = `not read: the order's execution budget ($${budget_usd.toFixed(2)}) is spent`;
+    // An unpaid request retrieves recorded work and never calls a model (2026-10-27): with inference off, a claim the
+    // ledger does not hold is not read, and the caller is answered with a price.
+    else if (!r && !inference) err = "not read: an unpaid request retrieves recorded work and never calls a model"
     else if (!r) { try { r = await reader.read(c, srcs, pinned); } catch (e) { err = String(e.message || e); billFailed(e); } }
     if (runCache && !fromLedger && !fromRun && !unreadBefore) await save(`${runCache}/${key}.json`, r || { unread: err || "no reading available for this claim" });
     // Windowing can drop the passage that revises a claim. When a pass says the passages lack what it needs,
     // widen them and read again, once; both readings' costs are counted.
-    if (r && !fromLedger && !fromRun && actual < budget_usd && r.passes.some((p) => p.reading?.needs_more_context)) {
+    if (inference && r && !fromLedger && !fromRun && actual < budget_usd && r.passes.some((p) => p.reading?.needs_more_context)) {
       for (const p of r.passes) if (p.usage) { for (const k of Object.keys(usage)) usage[k] += p.usage[k] || 0; actual += callCost(p.model, p.usage) || 0; }
       try { const r2 = await reader.read(c, srcs, pinned, { size: 3000, keep: 8 }); if (r2) { r = r2; expanded = true; if (runCache) await save(`${runCache}/${key}.json`, { ...r2, expanded: true }); } } catch (e) { err = String(e.message || e); billFailed(e); }
     }

@@ -476,7 +476,16 @@ app.get("/v1/sentence", async (req, res, next) => {
     const { text, url, mode = "opening" } = req.query;
     const p = await prepareSentence({ text, url, mode });
     if (["not found", "not identical", "uncited", "not grounded"].includes(p.state)) return res.status(p.status).json(p); // answered before any payment
-    if (p.state === "recorded") return res.json({ ...(await readSentence(p.request_id)), price_usd: 0, free: "this reading exists; it is served as recorded. Re-reading against changed sources is new work." });
+    if (p.state === "recorded") {
+      // Free: the recorded reading, served from the ledger with no model call (2026-10-27). Where the ledger no longer
+      // matches (a source's bytes changed since the reading), the sentence is new work and is quoted.
+      const out = await readSentence(p.request_id, { inference: false });
+      if (out.result && out.result.status !== "unread" && out.result.from_ledger)
+        return res.json({ ...out, price_usd: 0, free: "this reading exists; it is served as recorded. Re-reading against changed sources is new work." });
+      const q = await prepareSentence({ text, url, mode });
+      if (q.state !== "quoted") return res.status(q.status || 409).json(q.status ? q : { ...q, note: "the recorded reading does not match the sentence's current sources, and a price could not be set; ask again" });
+      req.sentence = q; return next();
+    }
     req.sentence = p; next(); // quoted: the payment layer answers 402 with this price
   } catch (e) { res.status(e.status || 502).json({ error: String(e.message || e) }); }
 });
@@ -558,7 +567,7 @@ if (PAY_TO) app.use(paymentMiddleware({
         result: { status: "contested", support: ["partially-supported", "interpretation-beyond-paraphrase"], attributization: { value: "partial", reason: "an act of self-presentation (a claim of priority) restated as a property of a book" }, retained_authority: { value: "mixed" }, spans: [{ quote: "περὶ δὲ τοῦ συλλογίζεσθαι παντελῶς οὐδὲν εἴχομεν πρότερον ἄλλο λέγειν", source_ref: "S1", role: "support" }] },
         evidence: { verdict: { status: "contested", differs: ["support"] } } } },
     }),
-    description: "Use when a received claim needs checking against its source before it is cited or relied on: send the sentence and the Wikipedia page it came from; returns whether its cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary for one quick pass; mode=grounded adds the Crimson Hexagonal Archive's claims on the sentence where the article has been commissioned. The paid reading is kept and served free to later callers; the response names it under contributes.",
+    description: "Use when a claim must be checked against its source before it is cited: send the sentence and its Wikipedia page; returns whether the cited source supports it, what the source says (quoted), and what the sentence adds or drops. Two readings by default; mode=preliminary, one pass; mode=grounded adds the Crimson Hexagonal Archive's claims where the article was commissioned. A sentence already read is served free (200); a new reading is paid, kept, and served free to later callers.",
     mimeType: "application/json",
   },
   "POST /v1/openings/:quote_id": {
@@ -578,7 +587,7 @@ if (PAY_TO) app.use(paymentMiddleware({
       pathParamsSchema: { type: "object", properties: { quote_id: { type: "string", description: "a quote from POST /v1/quote (free), which states its deliverables and maximum" } }, required: ["quote_id"] },
       output: { example: { quote_id: "Q-0123456789abcdef", state: "paid, running", status: "/v1/quotes/Q-0123456789abcdef/status", note: "the result is named at the status address when delivered; a commission's /non row lands public under CC BY 4.0" } },
     }),
-    description: "Use when an existing representation of an entity cannot support the task: opens a pinned Wikipedia revision (or an entity it does not hold), each sentence kept verbatim and checked against its cited source, the entity composed with the Crimson Hexagonal Archive admitted by the archive's own procedure. Pays the quote's maximum and answers 202 with a status address to poll; the result, which names the public /non row it composed under contributes, is retrieved by id. What the work does not use is refunded.",
+    description: "Use when an existing representation of an entity cannot support the task: opens a pinned Wikipedia revision (or an entity it lacks), each sentence kept verbatim and checked against its cited source, the entity composed with the Crimson Hexagonal Archive by its own procedure. Needs a quote_id from POST /v1/quote (free). Pays the quote's maximum; answers 202 with a status address; the result names its public /non row. What the work does not use is refunded.",
     mimeType: "application/json",
   },
 }, resourceServer));

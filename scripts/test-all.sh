@@ -61,3 +61,5 @@ GNOSIS_STORE="$S/break-unit" node test/break-probe.mjs
 node test/break-http.mjs "$S/break-http"
 # The random request (2026-10-26): the pick is a cited sentence of a pinned article, or an object from the pool asked, and is described.
 node test/random-probe.mjs || exit 1
+# The free route never calls a model (2026-10-27): a recorded sentence is served from the ledger, or quoted.
+mkdir -p "$S/free-route" && GNOSIS_STORE="$S/free-route" node test/free-route-probe.mjs || exit 1

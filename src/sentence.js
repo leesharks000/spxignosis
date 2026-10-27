@@ -169,7 +169,8 @@ export async function prepareSentence({ text, url, mode = "opening" }) {
 }
 
 // Reads the sentence (or serves its ledgered reading): the opening, or the preliminary reading, as an entry.
-export async function readSentence(rid) {
+// inference false: the free route. Only a reading the ledger holds is served; nothing is sent to a model (2026-10-27).
+export async function readSentence(rid, { inference = true } = {}) {
   const p = await load(`sentences/pending/${rid}.json`);
   if (!p) throw Object.assign(new Error("unknown sentence request; ask again"), { status: 404 });
   const pinned = await pinRevision(p.page.oldid);
@@ -178,7 +179,7 @@ export async function readSentence(rid) {
   const sources = withArticleSources([c], await resolveSources(claims.filter((x) => x.cited)));
   const M = MODES[p.mode], reader = makeReader(undefined, M.model, { passes: M.passes });
   const usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
-  const s3 = await readSentences({ claims: [c], sources, pinned, model: M.model, reader, priceOf: { [c.id]: p.price_usd }, onProgress: () => {}, usage });
+  const s3 = await readSentences({ claims: [c], sources, pinned, model: M.model, reader, priceOf: { [c.id]: p.price_usd }, onProgress: () => {}, usage, inference });
   const entry = s3.entries[0], ev = s3.evidence[0] || null;
   const recorded = await load(`ledger/claims/${p.ledger_key}.json`);
   const out = {
