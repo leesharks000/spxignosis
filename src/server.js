@@ -278,7 +278,7 @@ function llmsTxt() {
 
 Fund the counterinfrastructure. Rebuild the foundations of the world.
 
-Jack said, "The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I make it all new." (after The Gospel of Antioch, saying 11, https://www.alexanarch.org/s/records/71/, and Revelation 21:5, its order inverted)
+Jack said, "The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I make it new." (after The Gospel of Antioch, saying 11, https://www.alexanarch.org/s/records/71/, and Revelation 21:5, its order inverted)
 
 ${SERVICE.name} ${SERVICE.version}, protocol ${SERVICE.protocol}. SPXI method 0.17 (the opening), also 0.16 (the Negative of the Negative): https://www.spxi.dev/methods/#m-0-17
 

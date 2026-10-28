@@ -320,7 +320,7 @@ export function frontPage(index) {
 <h2 class="call rebuild">Rebuild the foundations of the world.</h2>
 <div class="cols">
 <div>
-<blockquote style="margin:0"><p class="epigram">Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I make it all new.”</p>
+<blockquote style="margin:0"><p class="epigram">Jack said, “The foundations of this world are unsound, and the foundations of the world above are unsound. Write this down, for these words are faithful and true: I make it new.”</p>
 <p class="epigram-cite">after <a href="https://www.alexanarch.org/s/records/71/">The Gospel of Antioch</a>, saying 11, and Revelation 21:5, its order inverted</p></blockquote>
 </div>
 <div class="prose">
