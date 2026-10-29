@@ -98,8 +98,8 @@ export async function checkoutFor(q, { base }) {
   const s = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: Math.round(amount * 100), product_data: {
-      name: `SPXI-gnΩsis — ${q.commission || (q.kind === "entity" ? "construct" : "open")}: ${q.article?.title || q.entity?.name}`.slice(0, 250),
-      description: (amount <= CARD_MINIMUM_USD && q.max_price_usd < CARD_MINIMUM_USD ? `Quote ${q.quote_id}. A card charge is at least $${CARD_MINIMUM_USD.toFixed(2)}, and an order at that minimum keeps it whole. The /non row it composes is public under CC BY 4.0.` : `Quote ${q.quote_id}. Charged for the work done, and never less than what it cost (model and payment fee); the rest is refunded. The /non row it composes is public under CC BY 4.0.`).slice(0, 500) } } }],
+      name: (q.kind === "audit" ? `SPXI-gnΩsis — erasure audit: ${q.node?.name}` : `SPXI-gnΩsis — ${q.commission || (q.kind === "entity" ? "construct" : "open")}: ${q.article?.title || q.entity?.name}`).slice(0, 250),
+      description: (amount <= CARD_MINIMUM_USD && q.max_price_usd < CARD_MINIMUM_USD ? `Quote ${q.quote_id}. A card charge is at least $${CARD_MINIMUM_USD.toFixed(2)}, and an order at that minimum keeps it whole. The /non row it composes is public under CC BY 4.0.` : `Quote ${q.quote_id}. Charged for the work done, and never less than what it cost (model and payment fee); the rest is refunded. ${q.kind === "audit" ? "The audit is public under CC BY 4.0." : "The /non row it composes is public under CC BY 4.0."}`).slice(0, 500) } } }],
     payment_intent_data: { metadata: { quote_id: q.quote_id, service: "SPXI-gnosis", channel: "card" } },
     metadata: { quote_id: q.quote_id },
     success_url: `${base}/order/${q.quote_id}?paid=1&session={CHECKOUT_SESSION_ID}`, // the order page (2026-10-25: a person who paid was sent to raw JSON)

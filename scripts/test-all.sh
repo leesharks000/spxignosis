@@ -63,3 +63,5 @@ node test/break-http.mjs "$S/break-http"
 node test/random-probe.mjs || exit 1
 # The free route never calls a model (2026-10-27): a recorded sentence is served from the ledger, or quoted.
 mkdir -p "$S/free-route" && GNOSIS_STORE="$S/free-route" node test/free-route-probe.mjs || exit 1
+# The erasure audit (2026-10-29): the free screen calls no model; atoms from the source by two agreeing readings; the module's metrics.
+mkdir -p "$S/audit" && GNOSIS_STORE="$S/audit" GNOSIS_BLOB=off node test/audit-probe.mjs || exit 1

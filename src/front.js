@@ -62,10 +62,11 @@ code,.mono{font-family:var(--mono);font-size:.86em;overflow-wrap:anywhere}
 .tabs button{appearance:none;border:0;background:none;font:600 .95rem var(--sans);color:var(--muted);padding:10px 10px 9px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red)}
 .pane[hidden]{display:none}
-@media (max-width:520px){.tabs .long{display:none}.tabs button{flex:1}}
+/* four tabs (2026-10-29, the audit): the short labels at every width, so no tab scrolls out of view */
+.tabs .long{display:none}.tabs button{flex:1}
 label{display:block;font-weight:600;font-size:.9rem;margin:12px 0 5px}
 label .opt{font-weight:normal;color:var(--muted)}
-input[type=text],input[type=url],textarea{width:100%;font:16px/1.4 var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--rule-2);border-radius:6px;padding:10px 11px}
+input[type=text],input[type=url],textarea,.pane select{width:100%;font:16px/1.4 var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--rule-2);border-radius:6px;padding:10px 11px}
 textarea{min-height:76px;resize:vertical}
 input:focus,textarea:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--red);outline-offset:1px}
 .hint{font-size:.84rem;color:var(--muted);margin:5px 0 0}
@@ -174,6 +175,7 @@ export function frontPage(index) {
 <button role="tab" aria-selected="true" aria-controls="p-open" id="t-open">Open<span class="long"> a composition</span></button>
 <button role="tab" aria-selected="false" aria-controls="p-construct" id="t-construct">Construct<span class="long"> an object</span></button>
 <button role="tab" aria-selected="false" aria-controls="p-read" id="t-read">Read<span class="long"> what exists</span></button>
+<button role="tab" aria-selected="false" aria-controls="p-audit" id="t-audit">Audit<span class="long"> erasure</span></button>
 </div>
 
 <form class="pane" id="p-open" role="tabpanel" aria-labelledby="t-open" novalidate>
@@ -226,6 +228,24 @@ export function frontPage(index) {
 <input type="text" id="r-name" name="name" placeholder="Sophistical Refutations" autocomplete="off">
 <p class="hint">Reading /non is free: every entry, its data, and every claim it quotes.</p>
 <button class="btn" type="submit">Find the entry</button>
+<div class="out" aria-live="polite"></div>
+</form>
+
+<form class="pane" id="p-audit" role="tabpanel" aria-labelledby="t-audit" hidden novalidate>
+<p class="hint">The <a href="https://www.provenanceerasure.org/module/">Self-Audit Module v3.2</a>: what the answers did with a source's provenance. The atoms come from the source, never from the answers.</p>
+<label for="a-name">What the answers are about</label>
+<input type="text" id="a-name" name="name" placeholder="Self-Audit Module for Public Summarizers" autocomplete="off">
+<label for="a-type">What it is <span class="opt">(from the source or a registry, never from the answers)</span></label>
+<select id="a-type" name="existence_type"><option value="real">a real work, person or organization</option><option value="pseudonym">a pseudonym or heteronym</option><option value="fictional">a fictional entity</option><option value="construct">a construct (a term, a framework)</option></select>
+<label for="a-source">The source <span class="opt">(a link; or paste its text below)</span></label>
+<input type="text" id="a-source" name="source" placeholder="https://www.alexanarch.org/s/records/817/" autocomplete="off" inputmode="url">
+<details><summary>Paste the source's text instead</summary><textarea id="a-source-text" name="source_text" placeholder="the source's text"></textarea></details>
+<label for="a-answers">The answers <span class="opt">(paste each; separate answers with a line holding only ---)</span></label>
+<textarea id="a-answers" name="answers" placeholder="Google AI Overview, 29 Oct 2026&#10;The Self-Audit Module is…&#10;---&#10;ChatGPT, 29 Oct 2026&#10;…"></textarea>
+<label for="a-captures">Or answers seated in the Capture Registry <span class="opt">(their addresses, comma separated)</span></label>
+<input type="text" id="a-captures" name="captures" placeholder="what-is-spxi-gnosis-aio-20261025" autocomplete="off">
+<div class="row-btns"><button class="btn quiet" type="button" id="a-free">Check existence — free</button><button class="btn" type="submit">Get a free quote for the audit</button></div>
+<p class="hint">The existence check runs by rule, with no model: it finds the phrasings of existence denial near the name. The audit reads every answer twice for each atom and for the gate, with the quotes, and computes the family metrics.</p>
 <div class="out" aria-live="polite"></div>
 </form>
 </div>
@@ -376,6 +396,20 @@ const FRONT_JS = `
   function busy(form,on,label){var b=$('button[type=submit]',form);b.disabled=on;if(label)b.textContent=label}
   function post(body){return fetch('/v1/quote',{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('the service answered '+r.status));return j})})}
   function toOrder(j){location.href='/order/'+encodeURIComponent(j.quote_id)}
+  if(location.hash==='#audit'){show('t-audit');var rq=$('#request');if(rq)rq.scrollIntoView()}
+  function auditBody(scope){var name=$('#a-name').value.trim(),src=$('#a-source').value.trim(),st=$('#a-source-text').value.trim();
+    var ans=$('#a-answers').value.split(/\\n\\s*---\\s*\\n/).map(function(t){return t.trim()}).filter(Boolean).map(function(t,i){var l=t.split('\\n');return {label:(l.length>1?l[0]:'answer '+(i+1)).slice(0,120),text:l.length>1?l.slice(1).join('\\n'):t}});
+    var caps=$('#a-captures').value.split(',').map(function(s){return s.trim()}).filter(Boolean);
+    if(!name)throw new Error('Name what the answers are about.'); if(!ans.length&&!caps.length)throw new Error('Paste at least one answer, or name a capture.');
+    var a={node:{name:name,existence_type:$('#a-type').value},renderings:ans,captures:caps,scope:scope};
+    if(scope==='full'){if(st)a.source={text:st};else if(/^https?:\\/\\//.test(src))a.source={url:src};else throw new Error('Give the source: a link, or its text.')}
+    return {audit:a}}
+  $('#p-audit').addEventListener('submit',function(e){e.preventDefault();var f=e.target,b;try{b=auditBody('full')}catch(x){say(f,esc(x.message),1);return}
+    busy(f,true,'Quoting…');say(f,'');post(b).then(toOrder).catch(function(x){busy(f,false,'Get a free quote for the audit');say(f,esc(x.message),1)})});
+  $('#a-free').addEventListener('click',function(){var f=$('#p-audit'),b,btn=$('#a-free');try{b=auditBody('existence')}catch(x){say(f,esc(x.message),1);return}
+    btn.disabled=true;btn.textContent='Checking…';say(f,'');post(b).then(function(j){btn.disabled=false;btn.textContent='Check existence — free';
+      say(f,'<p><b>'+esc(j.gate)+'</b></p><ul>'+j.renderings.map(function(r){return '<li><b>'+esc(r.label)+'</b> · '+esc(r.screen)+(r.denial_sentences.length?'<blockquote>'+r.denial_sentences.map(function(x){return esc(x.sentence)}).join('<br>')+'</blockquote>':'')+'</li>'}).join('')+'</ul><p class="hint">'+esc(j.rule)+'</p>')})
+      .catch(function(x){btn.disabled=false;btn.textContent='Check existence — free';say(f,esc(x.message),1)})});
   $('#p-open').addEventListener('submit',function(e){e.preventDefault();var f=e.target,a=$('#o-article').value,c=$('#o-capture').value.trim(),tier=$('input[name=tier]:checked',f).value;
     if(!a.trim()&&!c){say(f,'Name a Wikipedia article, or an AI answer by the name it is about.',1);return}
     busy(f,true,'Quoting…');say(f,'');
@@ -421,6 +455,7 @@ const ORDER_JS = `
   function again(ms){clearTimeout(timer);timer=setTimeout(load,ms)}
   function what(q){
     if(!q) return {title:'',deliver:[],publish:''};
+    if(q.kind==='audit') return {title:'Erasure audit: '+esc(q.node&&q.node.name),deliver:(q.deliverables||[]).map(esc).concat(['against '+esc(q.source&&q.source.label)+', across '+((q.renderings||[]).length)+' answer'+((q.renderings||[]).length===1?'':'s')+': '+(q.renderings||[]).map(function(r){return esc(r.label)}).join(' · ')]),publish:esc(q.publication||''),cap:null,rnd:null};
     var s7=q.s7, obj=q.entity, tier=q.tier, title=q.article&&q.article.title||obj&&obj.name||'';
     var act=q.commission||(q.kind==='entity'?'construct':'open');
     var d=[], pub='';

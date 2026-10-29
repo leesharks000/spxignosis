@@ -7,6 +7,7 @@ import { bazaarResourceServerExtension, declareDiscoveryExtension } from "@x402/
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { decodePaymentResponseHeader, decodePaymentSignatureHeader } from "@x402/core/http";
 import { quote, quoteEntity, runOpening, SERVICE, RUN_SECONDS, ADMITS } from "./run.js";
+import { quoteAudit, auditInputs, existenceScreen } from "./audit.js";
 import { deliver, HAS_ARCHIVE, WORKER, needsArchive } from "./deliver.js";
 import { randomUUID } from "node:crypto";
 import { publicationState } from "./s7/publish.js";
@@ -240,6 +241,7 @@ app.use((e, req, res, next) => {
 const INDEX = {
   service: SERVICE, network: NETWORK,
   operations: {
+    "POST /v1/quote (audit)": "free. body {audit: {node: {name, aliases?, existence_type: real|pseudonym|fictional|construct}, source: {url} or {text, label?}, renderings?: [{label, text, surface?, date?, query?}], captures?: [Capture Registry slug], atoms?: [{type, value}], scope?: existence|full}}. scope existence: the existence screen, by rule, with no model, answered at once and free. scope full (default): the erasure audit quoted, the Self-Audit Module v3.2 (provenanceerasure.org/module): the provenance atoms taken from the source, each answer read twice for each atom and for the ABN gate, every quote checked verbatim, the family metrics (FC, ACP, ASI, coverage, condition, CC) computed; priced from its estimate × 3, at least $0.50.",
     "POST /v1/quote": "free. body {oldid (or article: a Wikipedia link or title, pinned to its current revision), tier?: check|ledger|opening|commission|portable, claims?: [ids]} or, for an object (an entity, whether or not the encyclopedia holds it, or an operator), {commission?: open|construct, object: {kind?: entity|operator, name, aliases? (entity), strings? (operator: the phrases in which it is performed and in which entities speak it), description?, works_by?, capture?: obs_id|slug, transcript?: {text, surface, date, cite_list} (open: admitted through discernment), sources?: [url], compare?: encyclopedia (construct)}, tier?: commission|portable}; the legacy {entity: {...}} form is accepted; or {random: open|construct, tier?, pool?: wikipedia|archive}: the service picks a random Wikipedia article and one sentence in it that cites a source (open, read at tier check or opening), or, for construct, a random Wikipedia article, constructed as an alternative to it from the sources it cites, or an entity the archive names with no /non entry (pool chosen at random unless named), and the quote carries the pick as random. A revision is opened; an object is opened where a composition is found or supplied, and constructed otherwise. Pins the revision and resolves its sources; an opening prices each sentence in cents and never consults the archive; at the commission and portable tiers the archive traversal runs and is priced; returns scope, cost-based prices, the execution contract and the maximum price.",
     "GET /v1/results/{result_id}/portable/{file}": "portable tier: the entity's knowledge object from its /non row (article.md, article.html, article.jsonld, article.json, manifest.json, LICENSE.txt; CC BY 4.0, with the Wikipedia article's quoted sentences CC BY-SA 4.0)",
     "POST /v1/openings/{quote_id}": "paid by agents (x402, USDC on Base, settling to the service's Stripe balance; answers 503 until a receiving address is set). Pays for a quote and starts its work; answers 202 with the status address, where the result id appears on delivery (an order that consults the archive is run by the archive worker). A quote already paid answers with its result, or where it stands, without a second charge; what the work did not use is refunded.",
@@ -356,6 +358,12 @@ async function pinArticle(v) {
 }
 app.post("/v1/quote", async (req, res) => {
   try {
+    // The erasure audit (2026-10-29): the Self-Audit Module v3.2 over a source and the answers that render it. Its
+    // existence screen is free and calls no model; the full audit is quoted here at once (it does not consult the archive).
+    if (req.body?.audit) {
+      if (req.body.audit.scope === "existence") { const inp = await auditInputs(req.body.audit); return res.json(existenceScreen(inp.node, inp.renderings)); }
+      return res.json(await quoteAudit(req.body));
+    }
     // A random request (2026-10-26): the service picks the article and sentence, or the object, and the quote says
     // what it picked. Opening reads one sentence at the tier asked; constructing continues as any construction.
     if (req.body?.random) {

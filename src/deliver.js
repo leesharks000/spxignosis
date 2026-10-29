@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { runOpening } from "./run.js";
+import { runAudit } from "./audit.js";
 import { save } from "./util.js";
 import { ARCHIVE } from "./s7/input.js";
 
@@ -21,7 +22,10 @@ export const needsArchive = (q) => !!(q?.s7 || q?.kind === "entity");
 // Whether a run delivered work: a completed claim, a composed row, or a delivered reading of the archive.
 export const deliveredWork = (r) => { const non = r?.composition?.non; return (r?.composition?.summary?.completed || 0) > 0 || !!non?.composed || !!non?.stages?.reading?.delivered; };
 export async function deliver(q, { deadline } = {}) {
-  const r = await runOpening(q.quote_id, { deadline, onProgress: (p) => { save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }).catch((e) => console.error("progress write:", e.message)); } });
+  // An erasure audit (2026-10-29) is its own run: the Self-Audit Module over a source and the answers that render it.
+  const r = q.kind === "audit"
+    ? await runAudit(q, { deadline })
+    : await runOpening(q.quote_id, { deadline, onProgress: (p) => { save(`progress/${q.quote_id}.json`, { ...p, at: new Date().toISOString() }).catch((e) => console.error("progress write:", e.message)); } });
   // Completion follows the commissioned operation: a composed row is delivered work even where T needed no S3 check, and
   // so is a completed reading of the archive (its dossier) where the construction did not deliver (2026-10-25).
   // The row is in the composition (r.composition.non); r carries no non of its own (2026-10-25: every commission with no
